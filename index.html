@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Control LLDM - Cloud V7</title>
+	
+	<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
+
+<script>
+  // Registro del Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('PWA lista:', reg))
+        .catch(err => console.log('Error al registrar PWA:', err));
+    });
+  }
+</script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #2980b9;
+            --bg-body: #f4f6f7;
+            --card-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            --cloud-btn: #34495e;
+        }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; margin: 0; padding: 0; background: var(--bg-body); user-select: none; -webkit-tap-highlight-color: transparent; }
+        
+        /* HEADER */
+        header { 
+            background: #fff; padding: 20px; text-align: center; 
+            border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px;
+        }
+        header h1 { margin: 0; color: #154360; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+
+        .container { padding: 15px; max-width: 1000px; margin: 0 auto; }
+        
+        /* --- DASH GRID: ESTILO PROFESIONAL Y RECTO --- */
+.dash-grid { 
+    display: grid; 
+    gap: 15px; 
+    grid-template-columns: repeat(2, 1fr); 
+    padding: 5px;
+}
+
+.dash-card {
+    background: #ffffff;
+    padding: 20px 10px;
+    border-radius: 15px; 
+    text-align: center;
+    cursor: pointer;
+    /* Quitamos cualquier borde cursivo o inclinado */
+    border: 1px solid #e0e6ed;
+    display: flex;
+    flex-direction: column;
+    /* Alineación matemática estricta */
+    align-items: center; 
+    justify-content: center;
+    min-height: 125px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto de elevación recta al presionar */
+.dash-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.dash-card i {
+    display: block; /* Forzamos que se comporte como bloque para que no se incline */
+    font-style: normal; /* Eliminamos cualquier cursiva por defecto */
+    font-size: 2.8rem; 
+    margin-bottom: 12px;
+    line-height: 1;
+    /* Aseguramos que el icono esté centrado exacto */
+    width: 100%;
+    text-align: center;
+}
+
+.dash-card span {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #34495e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+/* --- GRADIENTES SUTILES PARA QUITAR LO PLANO --- */
+.c-men { 
+    background: linear-gradient(to bottom, #ffffff, #f0f7ff);
+    border-bottom: 5px solid #2980b9 !important;
+}
+.c-women { 
+    background: linear-gradient(to bottom, #ffffff, #faf5ff);
+    border-bottom: 5px solid #8e44ad !important;
+}
+.c-attend { 
+    background: linear-gradient(to bottom, #ffffff, #f0fff4);
+    border-bottom: 5px solid #27ae60 !important;
+    grid-column: span 2; 
+}
+.c-stats { 
+    background: linear-gradient(to bottom, #ffffff, #fffaf0);
+    border-bottom: 5px solid #d35400 !important;
+}
+.c-avg { 
+    background: linear-gradient(to bottom, #ffffff, #f0fdfa);
+    border-bottom: 5px solid #16a085 !important;
+}
+.c-cloud { 
+    background: #34495e !important;
+    border-bottom: 5px solid #1a252f !important;
+}
+.c-cloud span { color: #ffffff !important; }
+
+
+        /* VISTAS */
+        .view { display: none; background: white; padding: 20px; border-radius: 15px; box-shadow: var(--card-shadow); margin-bottom: 50px; }
+        .active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ELEMENTOS UI */
+        input, select { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: #fafafa; box-sizing: border-box; }
+        .btn-action { width: 100%; padding: 15px; background: var(--secondary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; margin-top: 10px; }
+        .btn-back { background: #95a5a6; margin-bottom: 15px; width: auto; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; display: inline-flex; align-items: center; }
+        
+                /* LISTAS Y CHECKBOX (MODIFICADO) */
+        .member-list { list-style: none; padding: 0; max-height: 50vh; overflow-y: auto; }
+        .member-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; align-items: center; }
+        
+        /* Fila de asistencia: Usa space-between para separar texto del check */
+        .attendance-list li { 
+            padding: 15px; 
+            border-bottom: 1px solid #eee; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 1.2rem; 
+            cursor: pointer;
+        }
+
+        /* Nuevo: Agrupa número y nombre a la izquierda */
+        .name-container {
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+
+        /* Nuevo: Estilo para el número (1., 2., etc.) */
+        .list-number {
+            font-weight: bold;
+            color: #7f8c8d; /* Gris elegante */
+            min-width: 40px; /* Espacio fijo para que se alineen verticalmente */
+            margin-right: 5px;
+        }
+
+        .big-checkbox { transform: scale(2.0); margin-left: 15px; }
+
+                /* --- TABLA SÁBANA: LÍNEAS NEGRAS E INMOVILIZACIÓN --- */
+
+.table-wrapper { 
+    overflow: auto; 
+    border: 2px solid #000000; /* Borde exterior negro */
+    border-radius: 8px; 
+    max-height: 75vh; 
+    position: relative; 
+    background: white;
+    transform: translateZ(0); 
+}
+
+table.sheet-table { 
+    border-collapse: separate; 
+    border-spacing: 0;
+    font-size: 12px; 
+    min-width: 1400px; 
+    width: 100%; 
+    border: 1px solid #000000;
+}
+
+/* LÍNEAS DE TODA LA TABLA EN NEGRO */
+.sheet-table th, .sheet-table td { 
+    border-right: 1px solid #000000 !important; 
+    border-bottom: 1px solid #000000 !important; 
+    text-align: center; 
+    padding: 4px; 
+    background: #fff;
+}
+
+/* 1. CABECERAS FIJAS (FILAS SUPERIORES) */
+.sheet-table thead th { 
+    background-color: #f2f3f4 !important; 
+    position: sticky; 
+    z-index: 20; 
+    border-bottom: 2px solid #000000 !important;
+}
+
+.sheet-table thead tr:nth-child(1) th { top: 0; height: 20px; }
+.sheet-table thead tr:nth-child(2) th { top: 20px; height: 25px; }
+
+/* 2. COLUMNA DE NOMBRES Y HORARIOS (Fija a la IZQUIERDA) */
+.col-name, .col-time { 
+    position: sticky; 
+    z-index: 15; 
+    background-color: #ffffff !important; 
+}
+
+.col-name { 
+    left: 0; 
+    text-align: left !important; 
+    padding-left: 8px !important; 
+    border-right: 2px solid #000000 !important; 
+    width: 180px; 
+    min-width: 180px; 
+    font-weight: bold;
+}
+
+.col-time { 
+    left: 180px; 
+    width: 50px; 
+    background: #f8f9fa !important; 
+    font-size: 10px;
+    border-right: 1px solid #000000 !important;
+}
+
+/* 3. COLORES DE LOS NÚMEROS DE TOTALES SOLICITADOS */
+
+/* Totales en Negro */
+.txt-total-negro {
+    color: #000000 !important;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Totales Dominicales en Rojo */
+.txt-red {
+    color: #ff0000 !important;
+    font-weight: bold;
+}
+
+/* Totales Servicios Especiales (Azul Encendido / Eléctrico) */
+.txt-special-blue {
+    color: #0000ff !important;
+    font-weight: bold;
+}
+
+/* 4. ESQUINAS SUPERIORES (Z-INDEX MÁXIMO) */
+.sheet-table thead th.col-name, 
+.sheet-table thead th.col-time {
+    z-index: 40; 
+    top: 0; 
+    border-bottom: 2px solid #000000 !important;
+}
+
+/* Separador visual para grupos de 3 filas */
+.row-separator { 
+    border-bottom: 2px solid #000000 !important; 
+}
+
+/* Estilo para los puntos de asistencia */
+.dot-red { color: #c0392b; font-size: 1.5em; line-height: 0; }
+.dot-cyan { color: #00acc1; font-size: 1.5em; line-height: 0; }
+.dot-black { color: #2c3e50; font-size: 1.5em; line-height: 0; }
+
+.row-separator { border-bottom: 2px solid #555 !important; }
+
+
+        /* ESTILOS TABLET (MEDIA QUERY) */
+        @media (min-width: 768px) {
+            .container { max-width: 95%; padding: 25px; }
+            .dash-grid { 
+                grid-template-columns: repeat(4, 1fr); /* 4 columnas en tablet */
+                gap: 20px; 
+            }
+            .c-attend { grid-column: span 2; } /* Botón central más grande */
+            
+            /* Textos más grandes en tablet */
+            .dash-card span { font-size: 1.1rem; }
+            .dash-card i { font-size: 3rem; }
+            header h1 { font-size: 1.8rem; }
+            .member-item, .attendance-list li { font-size: 1.4rem; padding: 20px; }
+            input, select, .btn-action { font-size: 1.2rem; padding: 18px; }
+            
+            /* Tabla más legible */
+            table.sheet-table { font-size: 14px; }
+            .col-name { width: 250px; min-width: 250px; }
+        }
+
+        /* COLORES Y PUNTOS */
+        .dot-red { color: #c0392b; font-size: 1.5em; line-height: 0; }
+        .dot-cyan { color: #00acc1; font-size: 1.5em; line-height: 0; }
+        .dot-black { color: #2c3e50; font-size: 1.5em; line-height: 0; }
+        .txt-red { color: #c0392b !important; }
+        .txt-cyan { color: #00acc1 !important; }
+        
+        /* TOTALES */
+        .footer-group td { background-color: #ebf5fb; font-weight: bold; color: #2e86c1; border-top: 2px solid #2e86c1; }
+        .footer-grand td { background-color: #fcf3cf; font-weight: 900; color: #d35400; border-top: 3px double #d35400; font-size: 1.1em; }
+        .avg-card { background: #fff; border-left: 8px solid; margin-bottom: 15px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        /* LOADING OVERLAY */
+        #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index: 999; align-items: center; justify-content: center; flex-direction: column; }
+        .spinner { width: 40px; height: 40px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* --- ESTILOS DE CONFIGURACIÓN --- */
+.config-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); /* Fondo oscuro semitransparente */
+    z-index: 2000; /* Por encima de todo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px); /* Efecto borroso elegante */
+}
+
+.config-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 85%;
+    max-width: 320px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+    animation: popIn 0.3s ease;
+}
+
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.btn-close {
+    background: #ecf0f1;
+    color: #7f8c8d;
+    border: none;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+@keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+        /* --- PANTALLA DE ACCESO VISTOSA --- */
+        #loginView {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1a2a6c, #b21f1f, #fdbb2d);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 5000; text-align: center; color: white; padding: 20px; box-sizing: border-box;
+        }
+        @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.4); padding: 40px 20px; border-radius: 20px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 500px; width: 100%;
+        }
+        .inst-name { font-size: 1.6rem; font-weight: 800; letter-spacing: 2px; color: #d4af37; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .inst-sub { font-size: 0.75rem; font-weight: 400; line-height: 1.4; margin-bottom: 25px; opacity: 0.9; }
+        .inst-dept { font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; color: #fff; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 15px; margin-bottom: 5px; }
+       .inst-title { 
+    width: 100%;
+    margin-bottom: 40px; 
+    text-align: center;
+    color: #fff;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 1; /* Evita que las líneas se encimen */
+}
+
+        .btn-access {
+            background: linear-gradient(45deg, #2980b9, #27ae60);
+            color: white; border: none; padding: 18px 40px; font-size: 1.1rem;
+            font-weight: bold; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 0 20px rgba(39, 174, 96, 0.4);
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-access:active { transform: scale(0.95); }
+
+/* Estilos para campos editables en el Header */
+.header-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    color: #fff;
+    text-align: center;
+    font-family: inherit;
+    margin: 2px 0;
+    padding: 4px;
+    border-radius: 5px;
+    width: 80%;
+    max-width: 300px;
+    transition: all 0.3s;
+}
+
+.header-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid #d4af37;
+    outline: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.header-label {
+    font-size: 0.7rem;
+    color: #d4af37;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 8px;
+    letter-spacing: 1px;
+}
+
+/* HEADER COMPACTO PARA MÓVIL */
+header { 
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 12px 10px; /* Reducido de 30px a 12px */
+    text-align: center; 
+    border-bottom-left-radius: 15px; 
+    border-bottom-right-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+    margin-bottom: 15px;
+    border-bottom: 2px solid #d4af37;
+    position: relative;
+}
+
+header h1 { 
+    color: #ffffff; 
+    font-size: 1.1rem; /* Reducido de 1.6rem */
+    font-weight: 800; 
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    margin: 0 0 5px 0;
+}
+
+header p {
+    color: #94a3b8;
+    font-size: 0.7rem; /* Letra más pequeña */
+    font-weight: 600;
+    margin: 2px 0;
+}
+
+/* BOTÓN CONFIGURACIÓN INTEGRADO */
+.btn-config-top {
+    position: absolute; 
+    top: 8px; 
+    right: 8px; 
+    background: rgba(255,255,255,0.1); 
+    border: none; 
+    font-size: 18px; 
+    cursor: pointer; 
+    z-index: 100;
+    padding: 5px;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+/* CAMPOS EDITABLES MÁS ANGOSTOS */
+.header-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #ffffff !important;
+    text-align: center;
+    font-size: 0.85rem; /* Tamaño de letra reducido */
+    font-weight: 500;
+    margin: 4px 0;
+    padding: 6px; /* Más bajo */
+    border-radius: 8px;
+    width: 85%;
+    max-width: 350px;
+}
+
+.header-label {
+    font-size: 0.6rem; /* Etiquetas muy pequeñas y discretas */
+    color: #d4af37;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-top: 8px;
+    display: block;
+}
+
+/* Clase para ocultar el header con transición */
+.header-hidden {
+    display: none !important;
+}
+
+/* Ocultar en pantalla */
+.only-print { display: none; }
+
+/* --- ESTILO PARA CHROME EN WINDOWS --- */
+@media print {
+    /* Ocultar todo */
+    body * { visibility: hidden; }
+    
+    /* Mostrar solo el área de impresión y sus hijos */
+    #semestral-print-area, #semestral-print-area * { visibility: visible; }
+    
+    #semestral-print-area { 
+        position: absolute; 
+        left: 0; 
+        top: 0; 
+        width: 100%; 
+    }
+    
+    /* Forzar que los botones no ocupen espacio */
+    .no-print { display: none !important; }
+
+    @page { 
+        size: letter landscape; 
+        margin: 0.5cm; 
+    }
+}
+
+/* Estilo de la tabla tipo Excel con líneas negras */
+.semestral-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    margin-bottom: 20px;
+}
+
+.semestral-table th, .semestral-table td {
+    border: 1px solid #000 !important;
+    padding: 3px 1px;
+    text-align: center;
+}
+
+.bg-gris { 
+    background-color: #e0e0e0 !important; 
+    -webkit-print-color-adjust: exact; 
+    font-weight: bold;
+}
+
+.header-institucional {
+    text-align: center;
+    color: black;
+    margin-bottom: 10px;
+}
+
+    </style>
+    
+</head>
+<body>
+    <div id="printHeader" class="only-print">
+    <div class="print-title">"LA LUZ DEL MUNDO"</div>
+    <div class="print-subtitle">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+    <div class="print-dept">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
+    <div style="font-size: 16pt; font-weight: 900; margin: 10px 0; border-top: 2px solid #000; border-bottom: 2px solid #000; padding: 5px 0;">
+        CONTROL DE ASISTENCIA
+    </div>
+
+
+
+    <div class="print-data-row">
+        <span id="pdf-iglesia"></span> &nbsp; | &nbsp; 
+        <span id="pdf-ministro"></span> &nbsp; | &nbsp; 
+        <span id="pdf-periodo"></span>
+    </div>
+</div>
+
+    <div id="loginView">
+    <div class="login-box">
+        <div class="inst-name">"LA LUZ DEL MUNDO"</div>
+        <div class="inst-sub">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+        <div class="inst-dept">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
+        <div class="inst-title">C O N T R O L &nbsp; D E &nbsp; A S I S T E N C I A</div>
+        <button class="btn-access" onclick="enterSystem()">Acceder al Sistema</button>
+    </div>
+</div>
+
+    
+  
+
+<div id="configModal" class="config-modal" style="display: none;">
+    <div class="config-content">
+        <h3 style="margin-top:0; color:#2c3e50;">Configuración</h3>
+        <p style="font-size:14px; color:#7f8c8d;">Gestión de almacenamiento local</p>
+        
+        <button class="btn-action" style="background:#e67e22;" onclick="exportarJSON()">
+    📂 Exportar Respaldo (JSON)
+</button>
+
+<div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+    
+    <input type="file" id="inputImportar" style="display: none;" accept=".json" onchange="procesarImportacion(this)">
+
+    <button class="btn-action" style="background:#27ae60;" onclick="document.getElementById('inputImportar').click()">
+        📥 Importar Respaldo
+    </button>
+</div>
+
+
+        
+        <button onclick="borrarDatos()" class="btn-danger">
+            🗑️ Borrar Memoria Local
+        </button>
+        
+        <button onclick="toggleConfig()" class="btn-close">
+            Cancelar
+        </button>
+    </div>
+</div>
+
+
+<div id="loading">
+    <div class="spinner"></div>
+    <p style="margin-top:20px; font-weight:bold; color:#555;">Sincronizando con la Nube...</p>
+</div>
+
+<header id="mainHeader">
+    
+    <h1>La Luz del Mundo</h1>
+    <p>MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</p>
+    
+    <label class="header-label">IGLESIA</label>
+    <input type="text" id="conf-iglesia" class="header-input" placeholder="Nombre de la Iglesia" onchange="saveHeaderConf()">
+    
+    <label class="header-label">MINISTRO LOCAL</label>
+    <input type="text" id="conf-ministro" class="header-input" placeholder="Nombre del Ministro" onchange="saveHeaderConf()">
+</header>
+
+<div id="searchContainer" style="display:none; padding: 10px 15px; background: #fff; border-bottom: 1px solid #ddd;">
+    <div style="position: relative; display: flex; align-items: center;">
+        <input type="text" id="nameSearch" placeholder="🔍 Buscar nombre..." 
+               oninput="filterNames()" 
+               style="margin-bottom:0; padding-left: 40px; padding-right: 40px; border-radius: 20px; border: 2px solid #2980b9; width: 100%;">
+        
+        <button id="clearSearchBtn" onclick="clearSearch()" 
+                style="position: absolute; right: 10px; background: blue; border: none; border-radius: 50%; width: 26px; height: 26px; color: white; font-size: 14px; cursor: pointer; display: none; display: flex; align-items: center; justify-content: center; z-index: 10;">
+            ✕
+        </button>
+    </div>
+</div>
+
+
+
+
+<div class="container">
+    
+    <div id="menuView" class="view active" style="background:transparent; box-shadow:none; padding:0;">
+        <div class="dash-grid">
+            <button class="dash-card c-men" onclick="showManage('hombres')"><i>👨</i><span>Lista de Hermanos</span></button>
+            <button class="dash-card c-women" onclick="showManage('mujeres')"><i>👩</i><span>Lista de Hermanas</span></button>
+            <button class="dash-card c-attend" onclick="showAttendanceSetup()"><i>📝</i><span>TOMAR ASISTENCIA</span></button>
+            
+            <button class="dash-card c-stats" onclick="showStats()"><i>📊</i><span>Cuadro Mensual</span></button>
+            <button class="dash-card c-avg" onclick="showAverages()"><i>📅</i><span>Promedios</span></button>
+ 
+            <button class="dash-card c-cloud" onclick="uploadData()"><i>☁️</i><span>SUBIR</span></button>
+            <button class="dash-card c-cloud" onclick="downloadData()"><i>⬇️</i><span>BAJAR</span></button>
+            <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
+        <i>📋</i><span>Reporte / Supervisión</span>
+    </button>
+	<div class="dash-card c-stats" onclick="generarReporteSemestral()">
+    <i>📊</i>
+    <span>Reporte Semestral</span>
+</div>
+    <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #f1f2f6); border-bottom: 5px solid #7f8c8d;" onclick="toggleConfig()">
+    <i>⚙️</i><span>Configuración</span>
+</button>
+<div class="dash-card c-cloud" onclick="location.href='CENSOLLDM.html'" 
+             style="background: #34495e !important; grid-column: span 2; min-height: 110px;">
+            <i>👨‍👩‍👧‍👦</i><span style="color:white !important; font-weight: bold;">IR A CENSO LOCAL</span>
+        </div>
+        </div>
+     </div>
+   </div>
+   
+</div> <div id="censusView" class="view">
+    <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
+    
+    <div style="background:#1e293b; color:white; padding:15px; border-radius:15px; margin-bottom:15px; text-align:center;">
+        <h3 style="margin:0; font-size:1.1rem;">INFORME DE SUPERVISIÓN</h3>
+        <p style="margin:5px 0 0 0; font-size:0.75rem; opacity:0.8;">Censo Manual y Asistencia</p>
+    </div>
+
+    <div style="background:white; padding:20px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; box-shadow: var(--card-shadow);">
+        <label class="header-label" style="color:#2c3e50; font-size: 0.8rem;">Total Miembros Activos</label>
+        <input type="number" id="censo-activos" placeholder="0" style="font-size: 1.5rem; text-align: center; border: 2px solid #2980b9; width:100%; box-sizing:border-box;">
+        
+        <label class="header-label" style="color:#2c3e50; font-size: 0.8rem; margin-top: 15px;">Total Miembros Temporales</label>
+        <input type="number" id="censo-temporales" placeholder="0" style="font-size: 1.5rem; text-align: center; border: 2px solid #7f8c8d; width:100%; box-sizing:border-box;">
+        
+        <label class="header-label" style="color:#2c3e50; font-size: 0.8rem; margin-top: 15px;">Comisión de Estadística</label>
+        <input type="text" id="comision-nombres" placeholder="Nombres del personal..." style="margin-bottom:15px;">
+        
+        <button class="btn-action" style="background:#27ae60; margin:0; height: 60px; font-size: 1.1rem;" onclick="generarInformeCenso()">GENERAR INFORME PDF 📄</button>
+    </div>
+
+    <div id="censusPrintArea" class="only-print">
+        <div id="censusContent"></div>
+    </div>
+</div>
+
+
+    <div id="manageView" class="view">
+        <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
+        <h2 id="manageTitle" style="margin-top:0;">Gestionar</h2>
+        <input type="file" id="txtInput" accept=".txt" style="display:none" onchange="handleFile(event)">
+        <button class="btn-action" style="background:#2980b9; margin-bottom:15px;" onclick="document.getElementById('txtInput').click()">📂 Importar .TXT</button>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="newName" placeholder="Nombre completo..." onkeypress="if(event.key==='Enter') addMem()">
+            <button class="btn-action" onclick="addMem()" style="width:auto; margin:0; background:#27ae60;">➕</button>
+        </div>
+        <p>Total: <strong id="memCount">0</strong></p>
+        <ul id="manageList" class="member-list"></ul>
+    </div>
+
+    <div id="setupView" class="view">
+        <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
+        <h2>Seleccionar Oración</h2>
+        <input type="date" id="attDate" onchange="updateSv()">
+        <select id="attService"></select>
+        <div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
+            <button class="dash-card c-men" style="min-height:100px;" onclick="startAtt('hombres')"><i>👨</i> Hombres</button>
+            <button class="dash-card c-women" style="min-height:100px;" onclick="startAtt('mujeres')"><i>👩</i> Mujeres</button>
+        </div>
+    </div>
+
+    <div id="takingView" class="view">
+        <button class="btn-action btn-back" onclick="showAttendanceSetup()">⬅ Atrás</button>
+        <h3 id="takingTitle" style="color:var(--primary); margin-top:0;"></h3>
+        <ul id="attList" class="attendance-list"></ul>
+        <button class="btn-action" style="background:#27ae60;" onclick="saveAtt()">✅ GUARDAR ASISTENCIA</button>
+    </div>
+
+    <div id="statsView" class="view" style="max-width: 100%;">
+        <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <input type="month" id="sMonth" onchange="renderSheet()" style="margin:0;">
+            <select id="sGroup" onchange="renderSheet()" style="margin:0;">
+                <option value="hombres">Hombres</option>
+                <option value="mujeres">Mujeres</option>
+                
+            </select>
+            
+        <button onclick="descargarPDF()" style="background:#e74c3c; color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer; font-weight:bold;">
+            PDF 📄
+        </button>
+    </div>
+    <div id="sheetContainer" class="table-wrapper"></div>
+</div>
+
+    <div id="avgView" class="view">
+        <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
+        <h3>Promedios Mensuales</h3>
+        <input type="month" id="aMonth" onchange="calcAvg()">
+        <div id="avgContent" style="margin-top:15px;"></div>
+    </div>
+
+</div>
+
+<div id="view-semestral" class="view" style="background:white;">
+    <div class="no-print" style="padding: 15px; background: #eee; margin-bottom: 20px; border-radius: 10px; display: flex; gap: 10px;">
+        <button class="btn-back" onclick="goHome()" style="margin:0;">⬅ Volver al Menú</button>
+        <button class="btn-action" onclick="window.print()" style="margin:0; background:#27ae60; width: auto; padding: 10px 20px;">📄 DESCARGAR PDF / IMPRIMIR</button>
+    </div>
+
+    <div id="semestral-print-area">
+        <div class="header-institucional">
+            <div style="font-size: 14pt; font-weight: bold;">"LA LUZ DEL MUNDO"</div>
+            <div style="font-size: 9pt;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+            <div style="font-size: 11pt; font-weight: bold; margin-top: 5px;">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
+            <div id="semestral-titulo-dinamico" style="font-size: 13pt; font-weight: 900; background: #000; color: #fff; margin: 10px 0; padding: 5px; text-transform: uppercase;">
+                CONTROL DE ASISTENCIA SEMESTRAL
+            </div>
+        </div>
+        
+        <div id="semestral-content"></div>
+    </div>
+</div>
+
+<div id="banner-instalar" style="display:none; background: #2c3e50; color: white; padding: 20px; text-align: center; position: fixed; bottom: 0; width: 100%; z-index: 9999;">
+    <p style="margin: 0 0 10px 0;">¡Instala <b>Control LLDM</b> en tu inicio para acceso rápido!</p>
+    <button onclick="instalarApp()" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+        INSTALAR AHORA
+    </button>
+</div>
+
+<script>
+let eventoInstalacion;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Evita que el navegador muestre el aviso pequeño por defecto
+    e.preventDefault();
+    // Guarda el evento para usarlo luego
+    eventoInstalacion = e;
+    
+    // Aquí puedes mostrar un cartel, un botón o un banner llamativo
+    document.getElementById('banner-instalar').style.display = 'block';
+});
+
+async function instalarApp() {
+    if (eventoInstalacion) {
+        eventoInstalacion.prompt(); // Muestra el cartel de instalación
+        const { outcome } = await eventoInstalacion.userChoice;
+        if (outcome === 'accepted') {
+            console.log('El usuario instaló la app');
+        }
+        eventoInstalacion = null;
+        document.getElementById('banner-instalar').style.display = 'none';
+    }
+}
+</script>
+
+
+
+<script type="module">
+    // =======================================================
+    // ⚠️ ZONA DE CONFIGURACIÓN FIREBASE - PEGA TUS DATOS AQUÍ
+    // =======================================================
+    // 1. Importaciones necesarias para Realtime Database
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { getDatabase, ref, set, get, child, remove } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js";
+
+    // Tu configuración (La misma que ya tienes)
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWheRDkFk1ty5FjPfNxhrrp4EulAvcK08",
+        authDomain: "estdistica-lldm-venecia.firebaseapp.com",
+        databaseURL: "https://estdistica-lldm-venecia-default-rtdb.firebaseio.com",
+        projectId: "estdistica-lldm-venecia",
+        storageBucket: "estdistica-lldm-venecia.appspot.com",
+        messagingSenderId: "887700314956",
+        appId: "1:887700314956:web:0ccb0cf248229aeeae0de9"
+    };
+
+    // Inicialización
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db);
+
+    // --- UTILIDAD PARA CONTROLAR EL TIEMPO DE ESPERA (TIMEOUT) ---
+// Esta función envuelve cualquier proceso de Firebase y lo cancela si tarda mucho
+const conTimeout = (promesa, ms = 5000) => {
+    return Promise.race([
+        promesa,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+    ]);
+};
+
+// --- FUNCIÓN SUBIR Y FUSIONAR (CON TIMEOUT) ---
+window.uploadData = async function() {
+    // 1. Obtener datos locales actuales
+    const localData = JSON.parse(localStorage.getItem('lldm_v6_total_color'));
+    if (!localData) return alert("No hay datos en este dispositivo.");
+
+    if(!confirm("¿Sincronizar con la nube? Se combinarán tus listas y asistencias nuevas con los datos de Firebase.")) return;
+    document.getElementById('loading').style.display = 'flex';
+
+    try {
+        // 2. Obtener lo que hay en la nube con un tiempo de espera (Timeout)
+        const snapshot = await conTimeout(get(child(dbRef, 'churchData')), 6000);
+        let cloudData = snapshot.exists() ? snapshot.val() : { hombres: [], mujeres: [], asistencias: [] };
+
+        // 3. FUSIÓN DE MIEMBROS (Hombres y Mujeres)
+        // Usamos un Set para eliminar duplicados y asegurar que los nombres nuevos se queden
+        const fusionarListas = (loc, cld) => {
+            const unidos = [...(cld || []), ...(loc || [])];
+            return [...new Set(unidos)].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+        };
+
+        cloudData.hombres = fusionarListas(localData.hombres, cloudData.hombres);
+        cloudData.mujeres = fusionarListas(localData.mujeres, cloudData.mujeres);
+
+        // 4. FUSIÓN DE ASISTENCIAS (La parte crítica)
+        if (!cloudData.asistencias) cloudData.asistencias = [];
+        
+        localData.asistencias.forEach(locRes => {
+            // Buscamos si este mismo culto ya existe en la nube
+            const index = cloudData.asistencias.findIndex(cldRes => 
+                cldRes.date === locRes.date && 
+                cldRes.service === locRes.service && 
+                cldRes.type === locRes.type
+            );
+
+            if (index !== -1) {
+                // SI EXISTE: Lo reemplazamos con el local (porque el local es el más nuevo/corregido)
+                cloudData.asistencias[index] = locRes;
+            } else {
+                // NO EXISTE: Lo añadimos como nuevo
+                cloudData.asistencias.push(locRes);
+            }
+        });
+
+        // 5. Guardar el resultado final en la nube
+        await conTimeout(set(ref(db, 'churchData'), cloudData), 6000);
+
+        // 6. Actualizar el teléfono con la versión final combinada
+        localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
+        
+        alert("✅ Sincronización exitosa. Los datos locales y de la nube han sido combinados.");
+        location.reload();
+
+    } catch (error) {
+        if (error.message === 'timeout') {
+            alert("⚠️ Error: Tiempo de espera agotado. Revisa tu conexión a internet.");
+        } else {
+            alert("❌ Error al subir: " + error.message);
+        }
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+};
+
+
+// --- FUNCIÓN BAJAR (CON TIMEOUT) ---
+window.downloadData = async function() {
+    document.getElementById('loading').style.display = 'flex';
+    try {
+        // Intentar obtener datos con límite de 5 segundos
+        const snapshot = await conTimeout(get(child(dbRef, 'churchData')));
+        
+        if (snapshot.exists()) {
+            const cloudData = snapshot.val();
+            const localData = JSON.parse(localStorage.getItem('lldm_v6_total_color'));
+            
+            const cloudStr = JSON.stringify(cloudData);
+            const localStr = JSON.stringify(localData);
+
+            if (cloudStr === localStr) {
+                if(!confirm("☁️ Tu dispositivo ya tiene la misma versión. ¿Deseas descargar de todos modos?")) {
+                    document.getElementById('loading').style.display = 'none';
+                    return;
+                }
+            } else {
+                if(!confirm("✅ Hay cambios nuevos en la nube. ¿Deseas actualizar tu dispositivo?")) {
+                    document.getElementById('loading').style.display = 'none';
+                    return;
+                }
+            }
+            
+            localStorage.setItem('lldm_v6_total_color', cloudStr);
+            alert("✅ Datos actualizados con éxito.");
+            location.reload();
+        } else {
+            alert("La nube está vacía.");
+        }
+    } catch (error) {
+        if (error.message === 'timeout') {
+            alert("⚠️ No se pudo conectar a la nube (Tiempo de espera agotado). Revisa tu internet.");
+        } else {
+            alert("❌ Error: " + error.message);
+        }
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+};
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    
+<script>
+    function hideHeader() { document.getElementById('mainHeader').classList.add('header-hidden'); }
+function showHeader() { document.getElementById('mainHeader').classList.remove('header-hidden'); }
+
+    const DB_KEY = 'lldm_v6_total_color';
+    // Inicializar si está vacío
+    let appData = JSON.parse(localStorage.getItem(DB_KEY)) || { hombres: [], mujeres: [], asistencias: [] };
+    let curType='', curAttType='', curSvStr='';
+
+    function save() { localStorage.setItem(DB_KEY, JSON.stringify(appData)); }
+    function sortL(l) { return l.sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'})); }
+    function hideAll() { document.querySelectorAll('.view').forEach(e=>e.classList.remove('active')); }
+    function goHome() { 
+    document.getElementById('searchContainer').style.display = 'none';
+    showHeader(); 
+    hideAll(); 
+    document.getElementById('menuView').classList.add('active'); 
+}
+    // --- GESTION ---
+   function showManage(t) { 
+    hideHeader();
+    hideAll(); 
+    curType=t; 
+    document.getElementById('manageView').classList.add('active'); 
+    document.getElementById('manageTitle').innerText=`Gestionar ${t}`; 
+    document.getElementById('searchContainer').style.display = 'block'; // MOSTRAR
+    document.getElementById('nameSearch').value = ''; // Limpiar
+    renderList(); 
+}
+    function renderList() {
+        const l=document.getElementById('manageList'); l.innerHTML=''; 
+        appData[curType].forEach((n,i)=>{
+            l.innerHTML+=`<li class="member-item"><span>${i+1}. ${n}</span> <button style="background:red;border:none;border-radius:4px;cursor:pointer;padding:5px 10px;" onclick="delMem(${i})">🗑</button></li>`;
+        });
+        document.getElementById('memCount').innerText=appData[curType].length;
+    }
+    function addMem() { const i=document.getElementById('newName'), n=i.value.trim(); if(!n)return; if(appData[curType].includes(n))return alert('Existe'); appData[curType].push(n); appData[curType]=sortL(appData[curType]); save(); i.value=''; renderList(); }
+    function delMem(i) { if(confirm('¿Borrar?')) { appData[curType].splice(i,1); save(); renderList(); } }
+    function handleFile(e) {
+        const f=e.target.files[0]; if(!f)return; const r=new FileReader();
+        r.onload=function(ev){
+            const ns=ev.target.result.split(/\r?\n/).map(x=>x.trim()).filter(x=>x!=='');
+            let c=0; ns.forEach(n=>{ if(!appData[curType].includes(n)){appData[curType].push(n); c++;} });
+            if(c>0){ appData[curType]=sortL(appData[curType]); save(); renderList(); alert(`Importados ${c}`); }
+        }; r.readAsText(f);
+    }
+
+    // --- CULTOS ---
+function showAttendanceSetup() { 
+    hideHeader(); 
+    hideAll(); 
+    document.getElementById('setupView').classList.add('active'); 
+    
+    // CORRECCIÓN: Evitar que el UTC adelante el día
+    if(!document.getElementById('attDate').value) {
+        const ahora = new Date();
+        // Ajustamos la zona horaria manualmente para obtener YYYY-MM-DD local
+        const año = ahora.getFullYear();
+        const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+        const dia = String(ahora.getDate()).padStart(2, '0');
+        
+        document.getElementById('attDate').value = `${año}-${mes}-${dia}`;
+    }
+    
+    updateSv(); 
+}
+
+
+    function updateSv() {
+    const d = document.getElementById('attDate').value, 
+          sel = document.getElementById('attService'); 
+    
+    sel.innerHTML = ''; 
+    if (!d) return;
+
+    // CORRECCIÓN DE FECHA LOCAL (GMT-6 El Salvador)
+    // Extraemos los números exactos del input (YYYY-MM-DD)
+    const [y, m, dayNum] = d.split('-').map(Number);
+    // Al pasar los 3 parámetros, JS crea la fecha en tiempo local del dispositivo
+    const dateLocal = new Date(y, m - 1, dayNum); 
+    const day = dateLocal.getDay();
+
+    let s = ["Oración 5:00 am"];
+    
+    if (day === 0) { // Domingo
+        s.push("Escuela Dominical 10:00 am", "Servicio Especial 5:00 pm");
+    } else {
+        s.push("Oración 9:00 am");
+        // Jueves es 4
+        s.push(day === 4 ? "Servicio Especial 6:00 pm" : "Oración 6:00 pm"); 
+    }
+
+    s.forEach(x => {
+        let o = document.createElement('option');
+        o.value = x;
+        o.innerText = x;
+        sel.appendChild(o);
+    });
+}
+
+    
+        function startAtt(t) {
+        if(!appData[t].length) return alert('Lista vacía');
+    curAttType=t; curSvStr=document.getElementById('attService').value;
+    appData[t]=sortL(appData[t]);
+    hideAll(); 
+    document.getElementById('takingView').classList.add('active');
+    document.getElementById('takingTitle').innerText=`${document.getElementById('attDate').value} - ${curSvStr}`;
+    document.getElementById('searchContainer').style.display = 'block'; // MOSTRAR
+    document.getElementById('nameSearch').value = '';
+        const ul=document.getElementById('attList'); ul.innerHTML='';
+        const ex=appData.asistencias.find(r=>r.date===document.getElementById('attDate').value && r.service===curSvStr && r.type===t);
+        const set=ex?new Set(ex.names):new Set();
+        
+        // --- CAMBIO AQUÍ: Usamos (n, i) para tener el número ---
+        appData[t].forEach((n, i)=>{
+            const li=document.createElement('li');
+            
+            // Nueva estructura HTML:
+            // IZQUIERDA: [Número + Nombre] ....... DERECHA: [Checkbox]
+            li.innerHTML=`
+                <div class="name-container">
+                    <span class="list-number">${i+1}.</span>
+                    <span>${n}</span>
+                </div> 
+                <input type="checkbox" class="big-checkbox achk" value="${n}" ${set.has(n)?'checked':''}>
+            `;
+            
+            li.onclick=(e)=>{if(e.target.type!=='checkbox'){const c=li.querySelector('input');c.checked=!c.checked}};
+            ul.appendChild(li);
+        });
+    }
+
+    function saveAtt() {
+    const d = document.getElementById('attDate').value;
+    const ns = Array.from(document.querySelectorAll('.achk:checked')).map(c => c.value);
+    
+    if (!d) return alert("Por favor, seleccione una fecha.");
+
+    // 1. GUARDAR LOCALMENTE (Prioridad única)
+    // Filtramos para evitar duplicados en la misma fecha/servicio y agregamos el nuevo
+    appData.asistencias = appData.asistencias.filter(r => !(r.date === d && r.service === curSvStr && r.type === curAttType));
+    appData.asistencias.push({date: d, service: curSvStr, type: curAttType, names: ns}); 
+    
+    // Ejecuta la grabación en la memoria del dispositivo
+    save(); 
+
+    // 2. LIMPIEZA DEL BUSCADOR
+    const searchInput = document.getElementById('nameSearch');
+    if (searchInput) {
+        searchInput.value = ''; // Borra el texto escrito
+        filterNames();          // Restablece la visibilidad de todos los hermanos/as
+    }
+
+    // 3. AVISO Y RETORNO
+    alert("✅ Asistencia guardada en la memoria del teléfono.Recuerde subirla a la nube");
+    goHome();
+}
+
+
+    // --- SABANA ---
+    function showStats() { 
+    hideHeader(); // Ocultamos header para ganar espacio
+    hideAll(); 
+    document.getElementById('statsView').classList.add('active'); 
+    if(!document.getElementById('sMonth').value){const n=new Date(); document.getElementById('sMonth').value=`${n.getFullYear()}-${(n.getMonth()+1).toString().padStart(2,'0')}`} 
+    renderSheet(); 
+}
+    function renderSheet() {
+    const mIn = document.getElementById('sMonth').value, 
+          grp = document.getElementById('sGroup').value, 
+          con = document.getElementById('sheetContainer');
+    
+    if (!mIn) return;
+
+    const [y, m] = mIn.split('-'); 
+    const dim = new Date(y, m, 0).getDate();
+    const names = sortL(appData[grp]);
+    
+    const grpRecs = appData.asistencias.filter(r => r.date.startsWith(mIn) && r.type === grp);
+    const allRecs = appData.asistencias.filter(r => r.date.startsWith(mIn));
+
+    const map = {}; const grpTot = {}; const grandTot = {};
+    names.forEach(n => { map[n] = {}; for (let d = 1; d <= dim; d++) map[n][d] = [0, 0, 0] });
+    for (let d = 1; d <= dim; d++) { grpTot[d] = [0, 0, 0]; grandTot[d] = [0, 0, 0]; }
+
+    grpRecs.forEach(r => {
+        const d = parseInt(r.date.split('-')[2]); 
+        const [slot, color] = getSlotColor(r.service);
+        if (slot !== -1) r.names.forEach(n => { 
+            if (map[n] && map[n][d]) { 
+                map[n][d][slot] = color; 
+                grpTot[d][slot]++; 
+            } 
+        });
+    });
+    
+    allRecs.forEach(r => {
+        const d = parseInt(r.date.split('-')[2]); 
+        const [slot] = getSlotColor(r.service);
+        if (slot !== -1) grandTot[d][slot] += (r.names ? r.names.length : 0);
+    });
+
+    const initials = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    let headRow1 = `<th class="col-name" rowspan="2">NOMBRES</th><th class="col-time" rowspan="2">H</th>`;
+    let headRow2 = ``;
+
+    // CORRECCIÓN PARA EL ENCABEZADO DE LA SÁBANA
+for (let d = 1; d <= dim; d++) {
+    // Forzamos a JS a crear la fecha exacta al mediodía (12:00) 
+    // Esto evita que por una diferencia de 6 horas el día "salte" al anterior o posterior
+    const dayIdx = new Date(y, m - 1, d, 12, 0, 0).getDay();
+    
+    // Si el día es Domingo (0), le ponemos un estilo rojo opcional para identificarlo rápido
+    const isSunday = dayIdx === 0 ? 'style="color:red"' : '';
+    
+    headRow1 += `<th ${isSunday}>${initials[dayIdx]}</th>`;
+    headRow2 += `<th>${d}</th>`;
+}
+
+    headRow1 += `<th class="col-name" rowspan="2">TOTAL</th>`;
+
+    let h = `<table class="sheet-table"><thead><tr>${headRow1}</tr><tr>${headRow2}</tr></thead><tbody>`;
+
+    names.forEach((n, i) => {
+        let t5am = 0, t9am = 0, t6pm = 0;
+        for (let d = 1; d <= dim; d++) {
+            if (map[n][d][0] !== 0) t5am++;
+            if (map[n][d][1] !== 0) t9am++;
+            if (map[n][d][2] !== 0) t6pm++;
+        }
+        
+        h += `<tr style="border-top:2px solid #000">
+                <td class="col-name" rowspan="3">${i + 1}. ${n}</td>
+                <td class="col-time">5am</td>`;
+        for (let d = 1; d <= dim; d++) h += `<td>${dt(map[n][d][0])}</td>`;
+        h += `<td class="txt-total-negro">${t5am}</td></tr>`;
+        
+        h += `<tr><td class="col-time">9/ED</td>`;
+        for (let d = 1; d <= dim; d++) h += `<td>${dt(map[n][d][1])}</td>`;
+        h += `<td class="txt-red">${t9am}</td></tr>`; // Total individual ED en rojo
+        
+        h += `<tr><td class="col-time">6/Es</td>`;
+        for (let d = 1; d <= dim; d++) h += `<td>${dt(map[n][d][2])}</td>`;
+        h += `<td class="txt-special-blue">${t6pm}</td></tr>`; // Total individual Especial en azul
+    });
+
+    h += genFooterRow("TOTAL GRUPO", grpTot, dim, y, m, "footer-group");
+    h += `<tr style="height:10px; background:white; border:none;"><td colspan="${dim + 3}"></td></tr>`;
+    h += genFooterRow("GRAN TOTAL", grandTot, dim, y, m, "footer-grand");
+    
+    h += `</tbody></table>`;
+    con.innerHTML = h;
+}
+
+function genFooterRow(title, dataObj, dim, y, m, cssClass) {
+    let sum5am = 0, sum9am = 0, sum6pm = 0;
+    for(let d=1; d<=dim; d++) {
+        sum5am += (dataObj[d][0] || 0);
+        sum9am += (dataObj[d][1] || 0);
+        sum6pm += (dataObj[d][2] || 0);
+    }
+
+    // FILA 5:00 AM
+    let h = `<tr class="${cssClass}"><td class="col-name" rowspan="3">${title}</td><td class="col-time">5am</td>`;
+    for (let d = 1; d <= dim; d++) {
+        h += `<td class="txt-total-negro">${dataObj[d][0] || ''}</td>`;
+    }
+    h += `<td class="txt-total-negro">${sum5am}</td></tr>`;
+
+    // FILA 9:00 AM / ED (CORREGIDO PARA EL SALVADOR)
+    h += `<tr class="${cssClass}"><td class="col-time">9/ED</td>`;
+    for (let d = 1; d <= dim; d++) {
+        // Forzamos la obtención del día de la semana local
+        const dayIdx = new Date(y, m - 1, d).getDay();
+        const colorClass = (dayIdx === 0) ? 'txt-red' : 'txt-total-negro';
+        h += `<td class="${colorClass}">${dataObj[d][1] || ''}</td>`;
+    }
+    h += `<td class="txt-red">${sum9am}</td></tr>`;
+
+    // FILA 6:00 PM / Especial (CORREGIDO PARA EL SALVADOR)
+    h += `<tr class="${cssClass}"><td class="col-time">6/Es</td>`;
+    for (let d = 1; d <= dim; d++) {
+        const dayIdx = new Date(y, m - 1, d).getDay();
+        const isSpecial = (dayIdx === 0 || dayIdx === 4); // Domingo o Jueves
+        const colorClass = isSpecial ? 'txt-special-blue' : 'txt-total-negro';
+        h += `<td class="${colorClass}">${dataObj[d][2] || ''}</td>`;
+    }
+    h += `<td class="txt-special-blue">${sum6pm}</td></tr>`;
+    
+    return h;
+}
+
+
+
+    function getSlotColor(s) {
+        s=s.toLowerCase();
+        if(s.includes('5:00 am')) return [0, 'dot-black'];
+        if(s.includes('dominical')) return [1, 'dot-red'];
+        if(s.includes('9:00 am')) return [1, 'dot-black'];
+        if(s.includes('especial')) return [2, 'dot-cyan'];
+        if(s.includes('6:00 pm')) return [2, 'dot-black'];
+        return [-1, ''];
+    }
+    function dt(c) { return c!==0 ? `<span class="${c}">●</span>` : ''; }
+
+    // --- PROMEDIOS ---
+    function showAverages() { 
+    hideHeader(); // Ocultamos header
+    hideAll(); 
+    document.getElementById('avgView').classList.add('active'); 
+    if(!document.getElementById('aMonth').value){const n=new Date(); document.getElementById('aMonth').value=`${n.getFullYear()}-${(n.getMonth()+1).toString().padStart(2,'0')}`} 
+    calcAvg(); 
+}
+    function calcAvg() {
+    const m = document.getElementById('aMonth').value, c = document.getElementById('avgContent');
+    if (!m) return;
+
+    // Estructura de categorías
+    const cats = {
+        'ED': { l: '1. Escuela Dominical', s: 0, n: 0, c: '#c0392b' },
+        'SunEsp': { l: '2. Servicio Domingo (5pm)', s: 0, n: 0, c: '#2980b9' },
+        'ThuEsp': { l: '3. Servicio Jueves (6pm)', s: 0, n: 0, c: '#2980b9' },
+        '5am': { l: '4. Oración 5:00 am', s: 0, n: 0, c: '#2c3e50' },
+        '9am': { l: '5. Oración 9:00 am', s: 0, n: 0, c: '#2c3e50' },
+        '6pm': { l: '6. Oración 6:00 pm', s: 0, n: 0, c: '#2c3e50' }
+    };
+
+    // 1. Filtrar asistencias del mes seleccionado
+    const asistenciasMes = appData.asistencias.filter(r => r.date.startsWith(m));
+
+    // 2. Agrupar por llave única (Fecha + Servicio) para fusionar Hombres y Mujeres
+    const agrupados = {};
+    asistenciasMes.forEach(r => {
+        const llave = `${r.date}_${r.service}`;
+        if (!agrupados[llave]) {
+            agrupados[llave] = { service: r.service, date: r.date, total: 0 };
+        }
+        agrupados[llave].total += r.names.length;
+    });
+
+    // 3. Procesar los grupos fusionados (CORREGIDO GMT-6)
+Object.values(agrupados).forEach(r => {
+    const s = r.service.toLowerCase();
+    
+    // Extraemos año, mes y día como números puros
+    const [yC, mC, dC] = r.date.split('-').map(Number);
+    
+    // Forzamos la creación de la fecha al mediodía (12:00) local
+    // Esto garantiza que en El Salvador el día de la semana sea el correcto
+    const dateObj = new Date(yC, mC - 1, dC, 12, 0, 0);
+    const day = dateObj.getDay(); // 0=Dom, 1=Lun, 4=Jue, etc.
+    
+    const t = r.total;
+
+
+        if (s.includes('dominical')) { 
+            cats.ED.s += t; cats.ED.n++; 
+        } else if (s.includes('5:00 am')) { 
+            cats['5am'].s += t; cats['5am'].n++; 
+        } else if (s.includes('9:00 am')) { 
+            cats['9am'].s += t; cats['9am'].n++; 
+        } else if (s.includes('especial') && day === 0) { 
+            cats.SunEsp.s += t; cats.SunEsp.n++; 
+        } else if (s.includes('especial') && day === 4) { 
+            cats.ThuEsp.s += t; cats.ThuEsp.n++; 
+        } else if (s.includes('6:00 pm') || (s.includes('oración') && !s.includes('especial'))) { 
+            cats['6pm'].s += t; cats['6pm'].n++; 
+        }
+    });
+
+    // 4. Renderizar tarjetas
+    let h = '';
+    ['ED', 'SunEsp', 'ThuEsp', '5am', '9am', '6pm'].forEach(k => {
+        const x = cats[k];
+        const avg = x.n > 0 ? (x.s / x.n).toFixed(1) : '0.0';
+        h += `
+            <div class="avg-card" style="border-color:${x.c}">
+                <div style="color:#777; font-size:0.9em">${x.l}</div>
+                <div style="font-size:1.8em; font-weight:bold; color:${x.c}">${avg}</div>
+                <div style="font-size:0.8em">Total Almas: ${x.s} / ${x.n} Cultos</div>
+            </div>`;
+    });
+    c.innerHTML = h || '<p>Sin datos.</p>';
+}
+
+    // Función para mostrar/ocultar el menú
+function toggleConfig() {
+    const modal = document.getElementById('configModal');
+    // Si está oculto (none), lo ponemos flex. Si no, lo ocultamos.
+    modal.style.display = (modal.style.display === 'none') ? 'flex' : 'none';
+}
+
+// Función para borrar la memoria
+function borrarDatos() {
+    // Preguntar seguridad doble vez para evitar accidentes
+    if(confirm("⚠️ ¿ESTÁS SEGURO?\n\nSe borrarán todos los registros de asistencia, nombres y datos guardados en este dispositivo. Esta acción no se puede deshacer.")) {
+        
+        // 1. Borrar LocalStorage
+        localStorage.clear();
+        
+        // 2. Mensaje de éxito
+        alert("La memoria ha sido limpiada correctamente.");
+        
+        // 3. Recargar la página para reiniciar la app limpia
+        location.reload();
+    }
+}
+
+// Función para entrar al sistema
+function enterSystem() {
+    const loginScreen = document.getElementById('loginView');
+    loginScreen.style.transition = 'opacity 0.6s ease, visibility 0.6s';
+    loginScreen.style.opacity = '0';
+    loginScreen.style.visibility = 'hidden';
+    
+    // Opcional: Sonido o vibración ligera si el navegador lo permite
+    if (window.navigator.vibrate) window.navigator.vibrate(50);
+}
+
+// Cargar datos al abrir la app
+document.addEventListener('DOMContentLoaded', () => {
+    const conf = JSON.parse(localStorage.getItem('lldm_header_conf')) || {
+        iglesia: "",
+        ministro: ""
+    };
+    document.getElementById('conf-iglesia').value = conf.iglesia;
+    document.getElementById('conf-ministro').value = conf.ministro;
+});
+
+// Guardar datos al escribir
+window.saveHeaderConf = function() {
+    const conf = {
+        iglesia: document.getElementById('conf-iglesia').value,
+        ministro: document.getElementById('conf-ministro').value
+    };
+    localStorage.setItem('lldm_header_conf', JSON.stringify(conf));
+};
+
+window.generarInformeCenso = function() {
+    // 1. Obtención de datos
+    const iglesia = document.getElementById('conf-iglesia').value || "Iglesia Local";
+    const ministro = document.getElementById('conf-ministro').value || "Ministro Responsable";
+    const comision = document.getElementById('comision-nombres').value;
+    
+    const activos = parseInt(document.getElementById('censo-activos').value) || 0;
+    const temporales = parseInt(document.getElementById('censo-temporales').value) || 0;
+    const totalCenso = activos + temporales;
+
+    const ahora = new Date();
+    const hoyParaCalculo = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 12, 0, 0);
+    const hoyStr = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    let filasTabla = "";
+    
+    // 2. Lógica de cálculo de los últimos 8 días
+    for (let i = 7; i >= 0; i--) {
+        let fechaCursor = new Date(hoyParaCalculo);
+        fechaCursor.setDate(hoyParaCalculo.getDate() - i);
+        
+        const isoFecha = fechaCursor.toISOString().split('T')[0];
+        const fechaFmt = `${String(fechaCursor.getDate()).padStart(2, '0')}/${String(fechaCursor.getMonth() + 1).padStart(2, '0')}/${fechaCursor.getFullYear()}`;
+        const diaSemana = fechaCursor.getDay(); 
+
+        const registros = appData.asistencias.filter(r => r.date === isoFecha);
+
+        const crearFila = (nombre, total, estilo, tag) => {
+            return `<tr style="${estilo}" class="bg-print-fix">
+                <td style="padding:6px 8px; border:1px solid #000;">${fechaFmt}</td>
+                <td style="padding:6px 8px; border:1px solid #000;">${nombre}${tag}</td>
+                <td style="padding:6px 8px; border:1px solid #000; text-align:center; font-weight:bold;">${total}</td>
+            </tr>`;
+        };
+
+        const estiloDom = "background-color: #fce4ec !important; color: #c2185b;"; // Rosa
+        const estiloEsp = "background-color: #e3f2fd !important; color: #1976d2;"; // Azul
+        const estiloNormal = "background-color: #ffffff !important;";
+
+        if (diaSemana === 0) {
+            let sumaDom = 0, sumaTarde = 0;
+            let hayDom = false, hayTarde = false;
+
+            registros.forEach(r => {
+                const s = r.service.toLowerCase();
+                if (s.includes("5:00 am") || s.includes("9:00 am")) return;
+                if (s.includes("dominical") || s.includes("10")) {
+                    sumaDom += r.names.length;
+                    hayDom = true;
+                } else {
+                    sumaTarde += r.names.length;
+                    hayTarde = true;
+                }
+            });
+            filasTabla += crearFila("ESCUELA DOMINICAL 10 AM", hayDom ? sumaDom : "-", estiloDom, " <b>(ED)</b>");
+            filasTabla += crearFila("SERVICIO ESPECIAL DOMINGO", hayTarde ? sumaTarde : "-", estiloEsp, " <b>(ESP)</b>");
+
+        } else if (diaSemana === 4) {
+            let sumaJue = 0; let hayJue = false;
+            registros.forEach(r => {
+                const s = r.service.toLowerCase();
+                if (s.includes("5 am") || s.includes("9 am") || (s.includes("5") && !s.includes("pm"))) return;
+                if (s.includes("6") || s.includes("especial")) {
+                    sumaJue += r.names.length; hayJue = true;
+                }
+            });
+            filasTabla += crearFila("SERVICIO ESPECIAL JUEVES", hayJue ? sumaJue : "-", estiloEsp, " <b>(ESP)</b>");
+
+        } else {
+            let sumaNormal = 0; let hayNormal = false;
+            registros.forEach(r => {
+                const s = r.service.toLowerCase();
+                if (s.includes("5") || s.includes("9")) return;
+                if (s.includes("6") || s.includes("especial")) {
+                    sumaNormal += r.names.length; hayNormal = true;
+                }
+            });
+            filasTabla += crearFila("ORACIÓN DE 6 PM", hayNormal ? sumaNormal : "-", estiloNormal, "");
+        }
+    }
+
+    // 3. Creación del elemento para renderizado (Clon optimizado)
+    const element = document.createElement('div');
+    element.style.width = "800px"; // Ancho fijo para Chrome PC
+    element.style.padding = "20px";
+    element.style.background = "white";
+    element.style.color = "black";
+    element.style.fontFamily = "Arial, sans-serif";
+
+    element.innerHTML = `
+        <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
+            <div style="font-size:20pt; font-weight:bold;">"LA LUZ DEL MUNDO"</div>
+            <div style="font-size:9pt; letter-spacing:1px; margin-bottom:10px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+            <div style="font-size:14pt; font-weight:bold; background:#000; color:#fff; padding:6px; display:inline-block; width:100%;">REPORTE SEMANAL PARA SUPERVISIÓN</div>
+        </div>
+
+        <div style="margin-bottom:20px; font-size:11pt; line-height:1.6;">
+            <b>IGLESIA:</b> ${iglesia.toUpperCase()}<br>
+            <b>MINISTRO:</b> ${ministro.toUpperCase()}<br>
+            <b>FECHA DE REPORTE:</b> ${hoyStr}
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; border:1.5px solid #000; font-size:11pt;">
+            <tr style="background:#f2f3f4 !important; text-align:center;" class="bg-print-fix">
+                <th style="padding:8px; border:1px solid #000; width:70%;">CONCEPTO DE CENSO</th>
+                <th style="padding:8px; border:1px solid #000; width:30%;">CANTIDAD</th>
+            </tr>
+            <tr><td style="padding:7px 12px; border:1px solid #000;">Miembros Activos</td><td style="padding:7px; border:1px solid #000; text-align:center;">${activos}</td></tr>
+            <tr><td style="padding:7px 12px; border:1px solid #000;">Miembros Temporales</td><td style="padding:7px; border:1px solid #000; text-align:center;">${temporales}</td></tr>
+            <tr style="background:#eeeeee !important; font-weight:bold; font-size:12pt;" class="bg-print-fix">
+                <td style="padding:8px 12px; border:1px solid #000; text-align:right;">TOTAL GENERAL DE MIEMBROS:</td>
+                <td style="padding:8px; border:1px solid #000; text-align:center; border-left:2.5px solid #000;">${totalCenso}</td>
+            </tr>
+        </table>
+
+        <div style="font-weight:bold; font-size:11pt; margin-bottom:8px; border-left:5px solid #000; padding-left:10px;">ASISTENCIA ÚLTIMOS 8 DÍAS</div>
+        
+        <table style="width:100%; border-collapse:collapse; border:1.5px solid #000; font-size:10pt;">
+            <tr style="background:#34495e !important; color:white !important; text-align:center;" class="bg-print-fix">
+                <th style="padding:8px; border:1px solid #000; width:25%;">FECHA</th>
+                <th style="padding:8px; border:1px solid #000; width:55%;">ORACIÓN / SERVICIO</th>
+                <th style="padding:8px; border:1px solid #000; width:20%;">TOTAL</th>
+            </tr>
+            ${filasTabla}
+        </table>
+        
+        <div style="margin-top:30px; font-size:10pt;">
+            <p><b>COMISIÓN DE ESTADÍSTICA PRESENTE:</b> ${comision.toUpperCase() || '________________________________'}</p>
+            <div style="margin-top:60px; display:flex; justify-content:space-around; text-align:center;">
+                <div>
+                    <div style="border-top:1.5px solid #000; width:220px; margin-bottom:5px;"></div>
+                    <p style="font-weight:bold; margin:0;">Firma del Ministro</p>
+                </div>
+                <div>
+                    <div style="border-top:1.5px solid #000; width:220px; margin-bottom:5px;"></div>
+                    <p style="font-weight:bold; margin:0;">Sello de la Iglesia</p>
+                </div>
+            </div>
+        </div>
+    `; 
+
+    // 4. Configuración de descarga
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Informe_Supervision_${iglesia}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            width: 800,
+            letterRendering: true 
+        },
+        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+    };
+
+    // 5. Generación del archivo
+    html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
+        if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+            Android.guardarArchivo(pdfBase64, "Informe_Supervision.pdf", "application/pdf");
+        } else {
+            html2pdf().set(opt).from(element).save();
+        }
+    });
+}
+
+function showCensus() {
+    hideHeader(); // Oculta el header para ganar espacio
+    document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+    document.getElementById('censusView').classList.add('active');
+}
+
+window.descargarPDF = function() {
+    const iglesia = document.getElementById('conf-iglesia').value || "IGLESIA LOCAL";
+    const ministro = document.getElementById('conf-ministro').value || "MINISTRO RESPONSABLE";
+    const mesInput = document.getElementById('sMonth').value;
+    const grupo = document.getElementById('sGroup').value;
+    
+    if (!mesInput) return alert("Por favor seleccione un mes");
+
+    const [year, month] = mesInput.split('-').map(Number);
+    const fechaUltimo = new Date(year, month, 0); 
+    const nombreMes = fechaUltimo.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
+    const periodoStr = `DEL 1 AL ${fechaUltimo.getDate()} DE ${nombreMes} DE ${year}`;
+
+    const originalTable = document.querySelector('.sheet-table');
+    if (!originalTable) return alert("No hay datos en la tabla");
+
+    const headerHTML = originalTable.querySelector('thead').outerHTML;
+    const filas = Array.from(originalTable.querySelectorAll('tbody tr'));
+    
+    // AJUSTE FINAL: 14 personas * 3 horarios = 42 filas por página
+    const filasPorPagina = 42; 
+
+    const contenedorPrincipal = document.createElement('div');
+
+    for (let i = 0; i < filas.length; i += filasPorPagina) {
+        const bloqueFilas = filas.slice(i, i + filasPorPagina).map(f => f.outerHTML).join('');
+        const esUltimaPagina = (i + filasPorPagina) >= filas.length;
+        
+        const pagina = document.createElement('div');
+        pagina.style.cssText = "page-break-after: always; background: white; width: 1350px; padding: 12px; box-sizing: border-box; font-family: Arial;";
+
+        // Firmas compactas solo al final del documento
+        const htmlFirmas = esUltimaPagina ? `
+            <div style="margin-top: 12px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
+                <div>
+                    <div style="border-top: 1.5px solid #000; width: 250px; margin-bottom: 4px;"></div>
+                    <b>MINISTRO RESPONSABLE</b>
+                </div>
+                <div>
+                    <div style="border-top: 1.5px solid #000; width: 250px; margin-bottom: 4px;"></div>
+                    <b>SECRETARIO DE ESTADÍSTICA</b>
+                </div>
+            </div>
+        ` : "";
+
+        pagina.innerHTML = `
+            <style>
+                .sheet-table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; }
+                .sheet-table th, .sheet-table td { 
+                    border: 0.5pt solid #000 !important; 
+                    padding: 0px !important; 
+                    font-size: 6.5pt !important; 
+                    text-align: center;
+                    height: 14px !important; 
+                    line-height: 14px !important;
+                }
+                .col-name { width: 155px !important; text-align: left !important; padding-left: 4px !important; font-weight: bold; overflow: hidden; white-space: nowrap; }
+                .col-time { width: 35px !important; font-size: 5.5pt !important; background: #f2f2f2 !important; }
+                
+                /* Columnas de días y totales fijas a 31px */
+                .sheet-table th:not(.col-name):not(.col-time), 
+                .sheet-table td:not(.col-name):not(.col-time) {
+                    width: 31px !important; 
+                }
+
+                .dot-red, .dot-cyan, .dot-black { font-size: 8.5pt !important; line-height: 1; margin: 0; padding: 0; }
+                .txt-red { color: #ff0000 !important; font-weight: bold; }
+                .txt-special-blue { color: #0000ff !important; font-weight: bold; }
+            </style>
+
+            <div style="text-align: center; border: 1.5px solid #000; padding: 5px; margin-bottom: 6px;">
+                <div style="font-size: 15pt; font-weight: bold;">"LA LUZ DEL MUNDO"</div>
+                <div style="font-size: 7.2pt; letter-spacing: 0.5px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+                <div style="font-size: 10.5pt; font-weight: bold; background: #000; color: #fff; padding: 2px; text-transform: uppercase; margin-top: 2px;">
+                    CONTROL DE ASISTENCIA - ${grupo.toUpperCase()}
+                </div>
+                <div style="font-size: 8.5pt; margin-top: 3px;">
+                    <b>IGLESIA:</b> ${iglesia.toUpperCase()} | <b>MINISTRO:</b> ${ministro.toUpperCase()}
+                </div>
+                <div style="font-size: 9.5pt; font-weight: bold; color: #c0392b;">${periodoStr}</div>
+            </div>
+
+            <table class="sheet-table">
+                ${headerHTML}
+                <tbody>${bloqueFilas}</tbody>
+            </table>
+
+            ${htmlFirmas}
+        `;
+        contenedorPrincipal.appendChild(pagina);
+    }
+
+    const opt = {
+        margin: 0,
+        filename: `Asistencia_14Pers_Oficio_${grupo}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            width: 1350 
+        },
+        jsPDF: { unit: 'pt', format: 'legal', orientation: 'landscape' }
+    };
+
+    html2pdf().set(opt).from(contenedorPrincipal).save();
+};
+
+function filterNames() {
+    const searchInput = document.getElementById('nameSearch');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    const term = searchInput.value.toLowerCase();
+    
+    // Control visual del botón de limpieza: 
+    // Si hay texto escrito, aparece la X. Si está vacío, se oculta.
+    if (clearBtn) {
+        clearBtn.style.display = term.length > 0 ? 'flex' : 'none';
+    }
+    
+    // 1. Filtrar en Listas de Gestión (Hermanos / Hermanas)
+    const manageItems = document.querySelectorAll('#manageList .member-item');
+    manageItems.forEach(item => {
+        // Buscamos el texto dentro del span (donde está el nombre)
+        const nameSpan = item.querySelector('span');
+        if (nameSpan) {
+            const text = nameSpan.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'flex' : 'none';
+        }
+    });
+
+    // 2. Filtrar en Listas de Asistencia (Pasar Lista)
+    const attendItems = document.querySelectorAll('#attList li');
+    attendItems.forEach(item => {
+        // Buscamos el texto dentro del contenedor del nombre
+        const nameContainer = item.querySelector('.name-container');
+        if (nameContainer) {
+            const text = nameContainer.innerText.toLowerCase();
+            item.style.display = text.includes(term) ? 'flex' : 'none';
+        }
+    });
+}
+
+window.clearSearch = function() {
+    const searchInput = document.getElementById('nameSearch');
+    
+    searchInput.value = ''; // Borra el texto del input
+    filterNames();          // Llama a la función anterior para mostrar toda la lista
+    searchInput.focus();    // Mantiene el cursor listo para volver a escribir
+};
+
+
+
+// --- FUNCIÓN PARA IMPORTAR RESPALDO JSON ---
+window.procesarImportacion = function(inputElement) {
+    // 1. Verificar si el usuario seleccionó un archivo
+    const file = inputElement.files[0];
+    if (!file) return;
+
+    // 2. Advertencia de seguridad antes de borrar lo actual
+    if (!confirm("⚠️ ¡CUIDADO!\n\nAl importar este archivo, se BORRARÁN los datos actuales que tienes en pantalla y se reemplazarán con los del respaldo.\n\n¿Estás seguro de continuar?")) {
+        // Si cancela, limpiamos el input para que pueda volver a seleccionar si quiere
+        inputElement.value = ''; 
+        return;
+    }
+
+    // 3. Leer el contenido del archivo
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            const contenido = e.target.result;
+            const datosImportados = JSON.parse(contenido);
+
+            // 4. Validación básica: ¿Es un archivo válido de nuestra App?
+            // Verificamos si tiene al menos una de las listas clave
+            if (datosImportados.hombres || datosImportados.mujeres || datosImportados.asistencias) {
+                
+                // Guardar en memoria local
+                localStorage.setItem('lldm_v6_total_color', JSON.stringify(datosImportados));
+                
+                alert("✅ ¡Datos restaurados exitosamente!\nLa aplicación se reiniciará ahora.");
+                location.reload(); // Recargar para mostrar los nuevos datos
+                
+            } else {
+                throw new Error("El archivo no parece ser un respaldo válido de esta aplicación.");
+            }
+
+        } catch (error) {
+            alert("❌ Error al importar: El archivo está dañado o no es correcto.\n\nDetalle: " + error.message);
+        }
+    };
+
+    // Leer el archivo como texto
+    reader.readAsText(file);
+};
+
+window.exportarJSON = function() {
+    const rawData = localStorage.getItem('lldm_v6_total_color');
+    if (!rawData) { alert("❌ No hay datos."); return; }
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    const inputIglesia = document.getElementById('conf-iglesia');
+    const churchName = inputIglesia && inputIglesia.value ? inputIglesia.value.replace(/\s+/g, '_') : "Datos";
+    const fileName = `Respaldo_${churchName}_${fecha}.json`;
+
+    // DETECTAR SI ESTAMOS EN ANDROID (APK)
+    if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+        try {
+            // TRUCO: Convertimos el texto JSON a Base64 para usar la función del PDF
+            // 1. Codificar UTF-8 correctamente para acentos/ñ
+            const utf8Bytes = encodeURIComponent(rawData).replace(/%([0-9A-F]{2})/g,
+                function(match, p1) { return String.fromCharCode('0x' + p1); });
+            
+            // 2. Convertir a Base64
+            const base64 = btoa(utf8Bytes);
+
+            // 3. ¡Usamos la misma función que usas para el PDF!
+            // Le pasamos el base64, el nombre .json y el tipo correcto
+            Android.guardarArchivo(base64, fileName, "application/json");
+            
+        } catch (e) {
+            alert("Error al preparar archivo para Android: " + e.message);
+        }
+    } 
+    // MODO PC / NAVEGADOR
+    else {
+        const blob = new Blob([rawData], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+};
+
+function generarReporteSemestral() {
+    // 1. Preparar contenedores
+    const container = document.getElementById('semestral-content');
+    const tituloDinamico = document.getElementById('semestral-titulo-dinamico');
+    container.innerHTML = ''; 
+    
+    const datos = JSON.parse(localStorage.getItem('lldm_v6_total_color')) || { hombres: [], mujeres: [], asistencias: [] };
+    
+    // 2. Calcular los últimos 6 meses y el Periodo
+    const mesesNombres = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+    const mesesCortos = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+    const hoy = new Date();
+    const ultimos6Meses = [];
+    
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        ultimos6Meses.push({
+            id: d.toISOString().substring(0, 7),
+            corto: mesesCortos[d.getMonth()],
+            full: mesesNombres[d.getMonth()] + " " + d.getFullYear()
+        });
+    }
+
+    // 3. Inyectar solo el periodo en tu encabezado HTML
+    tituloDinamico.innerText = `CONTROL DE ASISTENCIA SEMESTRAL: ${ultimos6Meses[0].full} A ${ultimos6Meses[5].full}`;
+
+    const crearTabla = (lista, tituloGrupo) => {
+        if (!lista || lista.length === 0) return '';
+
+        let html = `
+            <div style="background:#444; color:#fff; padding:5px; font-weight:bold; text-align:center; margin-top:15px; border:1px solid #000;">
+                ${tituloGrupo.toUpperCase()}
+            </div>
+            <table class="semestral-table">
+                <thead>
+                    <tr class="bg-gris">
+                        <th rowspan="2" style="width:30px;">N°</th>
+                        <th rowspan="2" style="width:200px; text-align:left; padding-left:5px;">NOMBRE COMPLETO</th>
+                        ${ultimos6Meses.map(m => `<th colspan="5">${m.corto}</th>`).join('')}
+                        <th rowspan="2" style="width:40px; background:#ccc;">T.G.</th>
+                    </tr>
+                    <tr class="bg-gris">
+                        ${ultimos6Meses.map(() => `<th>5a</th><th>9a</th><th>6p</th><th>ED</th><th style="background:#d0d0d0">T</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        lista.forEach((nombre, index) => {
+            let totalSemestre = 0;
+            html += `<tr>
+                <td>${index + 1}</td>
+                <td style="text-align:left; padding-left:5px; font-weight:bold;">${nombre}</td>`;
+            
+            ultimos6Meses.forEach(mes => {
+                let c5=0, c9=0, c6=0, ced=0;
+                const registros = datos.asistencias.filter(a => a.date.startsWith(mes.id));
+                
+                registros.forEach(reg => {
+                    if (reg.names.includes(nombre)) {
+                        const s = reg.service.toLowerCase();
+                        if (s.includes("5:00 am")) c5++;
+                        else if (s.includes("9:00 am")) c9++;
+                        else if (s.includes("dominical") || s.includes("10:00 am")) ced++;
+                        else if (s.includes("6:00 pm") || s.includes("especial")) c6++;
+                    }
+                });
+
+                let totalMes = c5 + c9 + c6 + ced;
+                totalSemestre += totalMes;
+                html += `<td>${c5||'-'}</td><td>${c9||'-'}</td><td>${c6||'-'}</td><td>${ced||'-'}</td><td style="background:#f2f2f2; font-weight:bold;">${totalMes||'-'}</td>`;
+            });
+            html += `<td style="background:#ccc; font-weight:bold;">${totalSemestre||'-'}</td></tr>`;
+        });
+
+        html += `</tbody></table>`;
+        return html;
+    };
+
+    // Construir contenido final
+    let contenidoFinal = crearTabla(datos.hombres, "Lista de Hermanos");
+    
+    // Salto de página manual para las Hermanas
+    contenidoFinal += `<div style="page-break-after: always; height:1px;"></div>`;
+    
+    contenidoFinal += crearTabla(datos.mujeres, "Lista de Hermanas");
+
+    // Firmas al final
+    contenidoFinal += `
+        <div style="margin-top:30px; display:flex; justify-content:space-around; text-align:center; font-size:9pt;">
+            <div><div style="border-top:1px solid #000; width:220px; margin-bottom:5px;"></div>MINISTRO RESPONSABLE</div>
+            <div><div style="border-top:1px solid #000; width:220px; margin-bottom:5px;"></div>SECRETARIO DE ESTADÍSTICA</div>
+        </div>`;
+
+    container.innerHTML = contenidoFinal;
+    
+    // Cambiar a la vista del reporte
+    hideHeader();
+    hideAll();
+    document.getElementById('view-semestral').classList.add('active');
+}
+
+
+
+</script>
+</body>
+</html>

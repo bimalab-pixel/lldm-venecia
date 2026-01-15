@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Censo LLDM - Elite Pro V17</title>
+	
+	<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2c3e50">
+
+<script>
+  // Registro del Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('PWA lista:', reg))
+        .catch(err => console.log('Error al registrar PWA:', err));
+    });
+  }
+</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+
+
+    <style>
+        :root {
+            --primary-dark: #0f172a;
+            --accent-gold: #d4af37;
+            --text-black: #000000;
+            --neon-blue: #2980b9;
+            --neon-purple: #8e44ad;
+            --neon-green: #27ae60;
+            --neon-orange: #d35400;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: #ffffff; color: var(--text-black); 
+            margin: 0; padding: 0; user-select: none;
+        }
+
+       /* HEADER OSCURO */
+header { 
+    background: #0f172a; 
+    padding: 20px 15px; 
+    text-align: center; 
+    border-bottom: 3px solid #d4af37;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+header h1 { 
+    color: #ffffff; 
+    font-size: 1.2rem; 
+    margin-bottom: 10px; 
+    text-transform: uppercase;
+}
+
+/* Estilo para los Inputs */
+.header-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 5px;
+    color: #d4af37; /* Color Dorado */
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+    width: 90%;
+    max-width: 300px;
+    padding: 5px;
+    margin: 4px 0;
+    transition: all 0.3s ease;
+}
+
+.header-input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+    color: #ffffff;
+    outline: none;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.label-header {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+        .container { padding: 10px; max-width: 1100px; margin: auto; }
+
+        /* GRID ADAPTABLE */
+        .dash-grid { 
+            display: grid; 
+            gap: 12px; 
+            grid-template-columns: repeat(2, 1fr); /* 2 columnas en móvil */
+        }
+        
+        @media (min-width: 768px) {
+            .dash-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+            header h1 { font-size: 1.8rem; }
+        }
+
+        .dash-card {
+            background: #ffffff; padding: 20px 10px; border-radius: 15px; text-align: center;
+            cursor: pointer; border: 1px solid #e0e6ed; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; min-height: 110px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.2s;
+        }
+        .dash-card:active { transform: scale(0.95); }
+        .dash-card i { font-style: normal; font-size: 2.2rem; margin-bottom: 8px; }
+        .dash-card span { font-weight: 700; font-size: 0.75rem; color: #34495e; text-transform: uppercase; }
+
+        .c-men { background: linear-gradient(to bottom, #ffffff, #f0f7ff); border-bottom: 6px solid var(--neon-blue) !important; }
+        .c-women { background: linear-gradient(to bottom, #ffffff, #faf5ff); border-bottom: 6px solid var(--neon-purple) !important; }
+        .c-kids { background: linear-gradient(to bottom, #ffffff, #f0fff4); border-bottom: 6px solid var(--neon-green) !important; }
+        .c-stats { background: linear-gradient(to bottom, #ffffff, #fffaf0); border-bottom: 6px solid var(--neon-orange) !important; }
+        .c-config { background: #34495e !important; border-bottom: 6px solid #1a252f !important; }
+        .c-config span { color: #ffffff !important; }
+        .c-cloud { border-bottom: 6px solid #64748b !important; }
+
+        .view { display: none; background: #ffffff; padding: 15px; border-radius: 15px; margin-bottom: 30px; border: 2px solid #000; }
+        .active { display: block; }
+
+        /* SCROLL PARA TABLAS */
+        .table-wrapper { 
+            overflow-x: auto; 
+            margin-top: 15px; 
+            border: 2px solid #000; 
+            border-radius: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        table { width: 100%; border-collapse: collapse; background: white; color: #000; min-width: 600px; }
+        th { background: #f2f3f4; padding: 10px; border: 1px solid #000; color: #000; font-weight: 900; font-size: 0.8rem; }
+        td { padding: 8px; border: 1px solid #000; text-align: left; color: #000 !important; font-weight: 700; font-size: 0.85rem; }
+        
+        .editable { background: #fffde7; outline: none; border: 1px dashed #999 !important; min-width: 100px; }
+
+        /* TABLA DE ESTADISTICAS ADAPTABLE */
+        .stats-table { width: 100%; margin: 0 auto; border: 3px solid #000; border-collapse: collapse; background: white; color: #000; }
+        .stats-table td { border: 2px solid #000; padding: 10px; font-weight: 900; font-size: 0.9rem; }
+        .row-cat { text-align: left; padding-left: 10px; background: #f8f9fa; }
+        .total-row { background: #cbd5e1 !important; border-top: 3px solid #000; }
+
+        /* BOTONES */
+        .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.7rem; }
+        .btn-blue { background: var(--primary-dark); color: white; }
+        .btn-back { background: #000; color: white; margin-bottom: 15px; border-radius: 30px; width: 100%; }
+        .btn-import { background: #fff; border: 2px solid #000; color: #000; }
+
+        /* Ajustes de controles en tabla para móvil */
+        input[type="date"], select {
+            font-size: 0.8rem;
+            padding: 2px;
+            max-width: 100%;
+        }
+        
+        /* Nuevos estilos para filtros */
+.table-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 150px;
+    padding: 8px;
+    border: 2px solid #000;
+    border-radius: 5px;
+    font-size: 0.8rem;
+}
+
+.filter-select {
+    padding: 8px;
+    border: 2px solid #000;
+    border-radius: 5px;
+    background: white;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.btn-sort {
+    background: #f1f5f9;
+    border: 2px solid #000;
+    color: #000;
+    font-size: 0.7rem;
+    padding: 8px;
+}
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>La Luz del Mundo</h1>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
+        <span style="color: #ffffff; font-size: 0.75rem; font-weight: 800; letter-spacing: 2px;">CENSO OFICIAL</span>
+        
+        <input type="text" id="churchName" class="header-input" 
+               placeholder="Nombre de la Iglesia" oninput="saveHeaderInfo()">
+        
+        <div style="width: 100%;">
+            <span class="label-header">MINISTRO LOCAL</span><br>
+            <input type="text" id="ministerName" class="header-input" 
+                   style="font-size: 0.8rem;" placeholder="Nombre del Ministro" 
+                   oninput="saveHeaderInfo()">
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <div id="mainMenu" class="view active" style="background:transparent; border:none; box-shadow:none;">
+        
+        <div class="dash-grid">
+    <div class="dash-card c-men" onclick="showView('hombresView')"><i>👨‍💼</i><span>Hombres</span></div>
+    <div class="dash-card c-women" onclick="showView('mujeresView')"><i>👩‍💼</i><span>Mujeres</span></div>
+    <div class="dash-card c-kids" onclick="showView('kidsView')"><i>👶</i><span>Niñez</span></div>
+    <div class="dash-card c-stats" onclick="showView('statsView')"><i>📊</i><span>Totales</span></div>
+    
+    <div class="dash-card" onclick="exportarCensoTXT()" style="background: #334155; border-bottom: 6px solid #94a3b8;">
+    <i style="color: #cbd5e1;">📝</i><span style="color: white;">Exportar TXT</span>
+</div>
+
+    <div class="dash-card c-cloud" onclick="location.href='index.html'"><i>📅</i><span>Ir a Control de  Asistencia</span></div>
+    
+    <div class="dash-card c-men" onclick="subirNubeCenso()" style="background:#e8f5e9; border:1px solid #27ae60;">
+        <i style="color:#27ae60;">☁️</i><span style="color:#1b5e20;">Subir Nube</span>
+    </div>
+    <div class="dash-card c-women" onclick="bajarNubeCenso()" style="background:#e3f2fd; border:1px solid #2196f3;">
+        <i style="color:#2196f3;">📥</i><span style="color:#0d47a1;">Bajar Nube</span>
+    </div>
+    
+    
+    <div class="dash-card c-config" onclick="showView('configView')"><i>⚙️</i><span>Ajustes</span></div>
+</div>
+
+
+</div>
+
+
+
+    <div id="hombresView" class="view">
+    <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h2 style="color:var(--neon-blue); margin:0; font-size:1.1rem;">Varones</h2>
+        <button class="btn btn-blue" onclick="addRow('hombres')">+ Fila</button>
+    </div>
+    
+    <div class="table-controls">
+        <input type="text" placeholder="🔍 Buscar..." class="search-input" oninput="filterTable('hombres', this.value)">
+        <select class="filter-select" onchange="filterByGroup('hombres', this.value)">
+            <option value="todos">Todos</option>
+            <option value="Joven">Jóvenes</option>
+            <option value="Casado">Casados</option>
+            <option value="Solo">Solos</option>
+        </select>
+        <button class="btn btn-sort" onclick="sortAlphabetically('hombres')">A-Z</button>
+        <button class="btn btn-import" onclick="triggerImport('hombres')" style="padding:8px">📂 TXT</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Nombre</th><th>H/F</th><th>Nacimiento</th><th>Edad</th><th>Grupo</th><th>Estado</th><th>🗑️</th></tr></thead>
+            <tbody id="bodyhombres"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="mujeresView" class="view">
+    <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h2 style="color:var(--neon-purple); margin:0; font-size:1.1rem;">Mujeres</h2>
+        <button class="btn btn-blue" style="background:var(--neon-purple)" onclick="addRow('mujeres')">+ Fila</button>
+    </div>
+    
+    <div class="table-controls">
+        <input type="text" placeholder="🔍 Buscar..." class="search-input" oninput="filterTable('mujeres', this.value)">
+        <select class="filter-select" onchange="filterByGroup('mujeres', this.value)">
+            <option value="todos">Todas</option>
+            <option value="Jovencita">Jovencitas</option>
+            <option value="Casada">Casadas</option>
+            <option value="Sola">Solas</option>
+        </select>
+        <button class="btn btn-sort" onclick="sortAlphabetically('mujeres')">A-Z</button>
+        <button class="btn btn-import" onclick="triggerImport('mujeres')" style="padding:8px">📂 TXT</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Nombre</th><th>H/F</th><th>Nacimiento</th><th>Edad</th><th>Grupo</th><th>Estado</th><th>🗑️</th></tr></thead>
+            <tbody id="bodymujeres"></tbody>
+        </table>
+    </div>
+</div>
+
+<div id="kidsView" class="view">
+    <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h2 style="color:var(--neon-green); margin:0; font-size:1.1rem;">Niñez (0-13)</h2>
+        <button class="btn btn-blue" style="background:var(--neon-green)" onclick="addRow('kids')">+ Fila</button>
+    </div>
+    
+    <div class="table-controls">
+        <input type="text" placeholder="🔍 Buscar niño/a..." class="search-input" oninput="filterTable('kids', this.value)">
+        <button class="btn btn-sort" onclick="sortAlphabetically('kids')">A-Z</button>
+        <button class="btn btn-import" onclick="triggerImport('kids')" style="padding:8px">📂 TXT</button>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Nombre</th><th>H/F</th><th>Nacimiento</th><th>Edad</th><th>🗑️</th></tr></thead>
+            <tbody id="bodykids"></tbody>
+        </table>
+    </div>
+</div>
+
+
+    <div id="statsView" class="view">
+        <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+        <h2 style="text-align:center; color:#000; text-decoration: underline; font-size: 1.1rem;">INFORME ESTADÍSTICO</h2>
+        <div class="table-wrapper" style="border:none;">
+            <table class="stats-table"><tbody id="statsBody"></tbody></table>
+        </div>
+    </div>
+
+    <div id="configView" class="view">
+    <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+    <h2 style="font-size:1.1rem;">Configuración</h2>
+    
+    <button class="btn btn-blue" style="width:100%; margin-bottom:15px; padding:15px;" onclick="triggerImport('general')">📂 Importación Inteligente (Excel/CSV)</button>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <button class="btn btn-blue" style="background:#e74c3c" onclick="clearT('hombres')">Borrar H</button>
+        <button class="btn btn-blue" style="background:#e74c3c" onclick="clearT('mujeres')">Borrar M</button>
+        <button class="btn btn-blue" style="background:#e74c3c" onclick="clearT('kids')">Borrar N</button>
+        
+        <button class="btn btn-blue" style="background:#2c3e50" onclick="document.getElementById('importJsonInput').click()">📥 IMPORTAR JSON</button>
+        
+        <button class="btn btn-blue" style="background:#27ae60" onclick="exportToJson()">💾 EXPORTAR JSON</button>
+        <button class="btn btn-blue" style="background:#000" onclick="fullReset()">🔥 REINICIO</button>
+    </div>
+
+    <input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importarJSON(event)">
+</div>
+        
+    </div>
+</div>
+
+
+<input type="file" id="fileIn" style="display:none" onchange="handleFile(event)">
+
+<script>
+    
+    // Cargar datos desde localStorage al iniciar
+let headerData = JSON.parse(localStorage.getItem('censo_header_v17')) || {
+    church: "",
+    minister: ""
+};
+
+// Función para guardar los datos de los inputs
+function saveHeaderInfo() {
+    headerData.church = document.getElementById('churchName').value;
+    headerData.minister = document.getElementById('ministerName').value;
+    localStorage.setItem('censo_header_v17', JSON.stringify(headerData));
+}
+
+// Función para mostrar los datos guardados al cargar la página
+function loadHeaderData() {
+    document.getElementById('churchName').value = headerData.church;
+    document.getElementById('ministerName').value = headerData.minister;
+}
+
+// Asegúrate de que esto se ejecute al cargar la página
+window.addEventListener('load', () => {
+    loadHeaderData();
+    if (typeof calculate === "function") calculate();
+});
+
+    let db = JSON.parse(localStorage.getItem('censo_v17_db')) || { hombres: [], mujeres: [], kids: [] };
+    let curImp = 'general';
+
+    function getTodaySV() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/El_Salvador' }).format(new Date()); }
+
+    function parseDate(d) {
+        if (!d) return "2000-01-01";
+        if (typeof d === 'number') return new Date((d - 25569) * 86400 * 1000).toISOString().split('T')[0];
+        if (typeof d === 'string' && d.includes('/')) {
+            const p = d.split('/');
+            return `${p[2].length==2?(p[2]>40?'19':'20')+p[2]:p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;
+        }
+        return d;
+    }
+
+    function calcEdad(f) {
+        const hoy = new Date(getTodaySV());
+        const nac = new Date(parseDate(f));
+        let e = hoy.getFullYear() - nac.getFullYear();
+        if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth() === nac.getMonth() && hoy.getDate() < nac.getDate())) e--;
+        return e < 0 ? 0 : e;
+    }
+
+    // Variable para saber si hubo cambios pendientes de guardar
+let hayCambiosSinGuardar = false;
+
+// Función de guardado optimizada
+function save() {
+    hayCambiosSinGuardar = true; // Solo marca que hubo un cambio
+}
+
+// Reloj de autoguardado (Ejecuta cada 5 segundos)
+setInterval(() => {
+    if (hayCambiosSinGuardar) {
+        localStorage.setItem('censo_v17_db', JSON.stringify(db));
+        hayCambiosSinGuardar = false;
+        console.log("Censo autoguardado...");
+    }
+}, 5000);
+
+// Asegurar que se guarde si el usuario cierra la app de golpe
+window.onbeforeunload = () => {
+    if (hayCambiosSinGuardar) {
+        localStorage.setItem('censo_v17_db', JSON.stringify(db));
+    }
+};
+
+    
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        window.scrollTo(0,0);
+        if(id === 'statsView') calculate();
+        if(id.includes('View') && !['mainMenu','statsView','configView'].includes(id)) renderTable(id.replace('View', ''));
+    }
+
+    // --- FUNCIÓN ÚNICA Y CORREGIDA PARA MOSTRAR TABLAS ---
+function renderTable(t, dataToRender = null) {
+    const body = document.getElementById('body' + t);
+    if (!body) return;
+    
+    const list = dataToRender || db[t];
+    let htmlFinal = ''; 
+
+    list.forEach((m, i) => {
+        const originalIndex = db[t].findIndex(item => item === m);
+        const nVal = m.nacimiento || "2000-01-01";
+        const edad = calcEdad(nVal);
+        
+        // --- LÓGICA DE ALERTA ---
+        let estiloFila = "";
+        let avisoSufijo = "";
+        
+        // Si está en la lista de niños pero ya tiene 14 años o más
+        if (t === 'kids' && edad >= 14) {
+            estiloFila = "background-color: #fff3e0; color: #e65100;"; // Naranja suave
+            avisoSufijo = " ⚠️ (PASAR A ADULTOS)";
+        }
+
+        htmlFinal += `
+            <tr style="${estiloFila}">
+                <td class="editable" contenteditable="true" 
+                    onblur="update('${t}',${originalIndex},'nombre',this.innerText)" 
+                    style="text-align: left; padding-left: 10px; font-weight: bold;">
+                    ${i + 1}. ${m.nombre}${avisoSufijo}
+                </td>
+                <td class="editable" contenteditable="true" onblur="update('${t}',${originalIndex},'genero',this.innerText)" style="text-align: center;">${m.genero}</td>
+                <td style="text-align: center;">
+                    <input type="date" value="${parseDate(nVal)}" 
+                    onchange="update('${t}',${originalIndex},'nacimiento',this.value)" 
+                    style="font-weight:bold; border:none; color: inherit; width:105px; background:transparent;">
+                </td>
+                <td style="text-align: center; font-weight: 900;">${edad}</td>`;
+
+        if (t !== 'kids') {
+            htmlFinal += `
+                <td style="text-align: center;">
+                    <select onchange="update('${t}',${originalIndex},'grupo',this.value)" style="border:none; font-weight:bold; color: inherit; background:transparent;">
+                        ${getOpts(t, m.grupo)}
+                    </select>
+                </td>
+                <td style="text-align: center;">
+                    <select onchange="update('${t}',${originalIndex},'estado',this.value)" style="border:none; font-weight:bold; color: inherit; background:transparent;">
+                        <option value="Activo" ${m.estado==='Activo'?'selected':''}>Activo</option>
+                        <option value="Retirado" ${m.estado==='Retirado'?'selected':''}>Retirado Temp.</option>
+                    </select>
+                </td>`;
+        }
+
+        htmlFinal += `<td style="text-align: center;"><button onclick="delRow('${t}',${originalIndex})" style="border:none; background:none;">❌</button></td></tr>`;
+    });
+    
+    body.innerHTML = htmlFinal; 
+}
+
+    function update(t, i, f, v) {
+    let valorFinal = v;
+    
+    if (f === 'nombre') {
+        // 1. Quitamos el número inicial (ej: "1. ")
+        valorFinal = valorFinal.replace(/^\d+\.\s*/, ''); 
+        
+        // 2. Quitamos la alerta visual si existe para que no se guarde en la DB
+        valorFinal = valorFinal.replace(/\s*⚠️\s*\(PASAR A ADULTOS\)/g, '');
+        
+        // 3. Limpiamos espacios extra al final
+        valorFinal = valorFinal.trim();
+    }
+    
+    if (db[t][i][f] === valorFinal) return;
+
+    db[t][i][f] = valorFinal; 
+    save(); 
+
+    if (f === 'nacimiento') {
+        renderTable(t); 
+    }
+}
+
+
+
+    function addRow(t) { 
+    // Si es la tabla 'kids', el estado debe estar vacío o no existir
+    const estadoInicial = (t === 'kids') ? "" : "Activo";
+    db[t].push({
+        nombre: "Nuevo", 
+        nacimiento: "2015-01-01", 
+        genero: (t === 'mujeres' ? 'F' : 'H'), 
+        grupo: (t === 'mujeres' ? 'Sola' : 'Solo'), 
+        estado: estadoInicial 
+    }); 
+    save(); 
+    renderTable(t); 
+}
+
+
+    function delRow(t, i) { if(confirm("¿Eliminar?")) { db[t].splice(i,1); save(); renderTable(t); } }
+    
+    function getOpts(t, s) {
+        const o = t === 'hombres' ? ['Joven', 'Casado', 'Solo'] : ['Jovencita', 'Casada', 'Sola'];
+        return o.map(v => `<option value="${v}" ${s===v?'selected':''}>${v}</option>`).join('');
+    }
+
+    function triggerImport(target) { curImp = target; document.getElementById('fileIn').click(); }
+
+    function handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const ext = file.name.split('.').pop().toLowerCase();
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const content = evt.target.result;
+                if (ext === 'xlsx' || ext === 'xls') {
+                    const wb = XLSX.read(content, { type: 'binary' });
+                    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                    json.forEach(row => {
+                        let nombre = row.Nombre || row.nombre || "Sin Nombre";
+                        let genRaw = String(row.Genero || row.genero || 'H').toUpperCase().charAt(0);
+                        let gen = (genRaw === 'F' || genRaw === 'M') ? 'F' : 'H';
+                        let nac = parseDate(row.Nacimiento || row.nacimiento || "2000-01-01");
+                        let edad = calcEdad(nac);
+let item = { 
+    nombre: nombre, 
+    nacimiento: nac, 
+    genero: gen, 
+    grupo: row.Grupo || "Solo", 
+    estado: (edad < 14) ? "" : "Activo" // <--- CAMBIO AQUÍ
+};
+                        if (curImp === 'kids' || edad < 14) db.kids.push(item);
+                        else if (curImp === 'mujeres' || gen === 'F') db.mujeres.push(item);
+                        else db.hombres.push(item);
+                    });
+                } else {
+                    const lines = content.split(/\r?\n/);
+                    const target = (curImp === 'general') ? 'hombres' : curImp;
+                    lines.forEach(line => {
+                        if (line.trim()) {
+                            db[target].push({ nombre: line.trim(), nacimiento: "2000-01-01", genero: (target === 'mujeres' ? 'F' : 'H'), grupo: (target === 'mujeres' ? 'Sola' : 'Solo'), estado: "Activo" });
+                        }
+                    });
+                }
+                save();
+                alert("✅ Sincronizado");
+                location.reload();
+            } catch (err) { alert("Error: " + err); }
+        };
+        if (ext.includes('xls')) reader.readAsBinaryString(file);
+        else reader.readAsText(file, "UTF-8");
+    }
+
+    function calculate() {
+    const s = { 
+        H: { c30:0, c45:0, cG:0, solo:0, joven:0, nino:0, total:0 }, 
+        F: { c30:0, c45:0, cG:0, solo:0, joven:0, nina:0, total:0 }, 
+        activos: 0, 
+        retirados: 0 
+    };
+    
+    const proc = (list, defG) => {
+        list.forEach(m => {
+            const e = calcEdad(m.nacimiento);
+            const g = String(m.genero || defG).toUpperCase().charAt(0) === 'F' ? 'F' : 'H';
+            const t = g === 'F' ? s.F : s.H;
+
+            // LÓGICA DE ESTADOS (Solo mayores de 14 años)
+            if (e >= 14) {
+                if(m.estado === 'Activo') s.activos++; 
+                else if(m.estado === 'Retirado') s.retirados++;
+            }
+
+            // CLASIFICACIÓN POR CATEGORÍA
+            if(e < 14) { 
+                if(g==='F') s.F.nina++; else s.H.nino++; 
+            }
+            else if(m.grupo && (m.grupo.includes('Joven'))) t.joven++;
+            else if(m.grupo && (m.grupo.includes('Solo') || m.grupo.includes('Sola'))) t.solo++;
+            else { 
+                if(e <= 30) t.c30++; 
+                else if(e <= 45) t.c45++; 
+                else t.cG++; 
+            }
+        });
+    };
+
+    proc(db.hombres, 'H'); 
+    proc(db.mujeres, 'F'); 
+    proc(db.kids, 'H');
+
+    s.H.total = s.H.c30 + s.H.c45 + s.H.cG + s.H.solo + s.H.joven + s.H.nino;
+    s.F.total = s.F.c30 + s.F.c45 + s.F.cG + s.F.solo + s.F.joven + s.F.nina;
+
+    // Nuevo cálculo: Suma solo de adultos (Activos + Retirados)
+    const totalAdultos = s.activos + s.retirados;
+
+    document.getElementById('statsBody').innerHTML = `
+        <tr><th colspan="3" style="background:#2c3e50; color:#fff; border:2px solid #000; padding:10px;">CUADRO RESUMEN</th></tr>
+        <tr style="background:#f2f2f2;"><th>CATEGORÍA</th><th>HOMBRES</th><th>MUJERES</th></tr>
+        <tr><td class="row-cat">Casados Chicos (≤30)</td><td>${s.H.c30}</td><td>${s.F.c30}</td></tr>
+        <tr><td class="row-cat">Casados Medianos (≤45)</td><td>${s.H.c45}</td><td>${s.F.c45}</td></tr>
+        <tr><td class="row-cat">Casados Grandes (45+)</td><td>${s.H.cG}</td><td>${s.F.cG}</td></tr>
+        <tr><td class="row-cat">Solos / Solas</td><td>${s.H.solo}</td><td>${s.F.solo}</td></tr>
+        <tr><td class="row-cat">Jóvenes</td><td>${s.H.joven}</td><td>${s.F.joven}</td></tr>
+        <tr><td class="row-cat">Niñez (0-13)</td><td>${s.H.nino}</td><td>${s.F.nina}</td></tr>
+        <tr class="total-row"><td class="row-cat">TOTAL POR GÉNERO</td><td>${s.H.total}</td><td>${s.F.total}</td></tr>
+        
+        <tr style="background:#e8f5e9"><td class="row-cat">MIEMBROS ACTIVOS (14+)</td><td colspan="2" style="text-align:center;">${s.activos}</td></tr>
+        <tr style="background:#ffebee"><td class="row-cat">RETIRADOS TEMP. (14+)</td><td colspan="2" style="text-align:center;">${s.retirados}</td></tr>
+        <tr style="background:#d1e9ff; font-weight:bold;"><td class="row-cat">TOTAL ADULTOS (Activos + Ret.)</td><td colspan="2" style="text-align:center;">${totalAdultos}</td></tr>
+        
+        <tr class="total-row" style="background:var(--accent-gold); color:#000;"><td class="row-cat">GRAN TOTAL (Censo Completo)</td><td colspan="2" style="text-align:center;">${s.H.total + s.F.total}</td></tr>
+    `;
+}
+
+
+
+    function clearT(t) { if(confirm("¿Borrar?")) { db[t] = []; save(); location.reload(); } }
+    function fullReset() { if(confirm("¿REINICIAR?")) { localStorage.clear(); location.reload(); } }
+    
+    function exportToJson() {
+    try {
+        // Convertimos el objeto db a una cadena de texto JSON con formato
+        const dataStr = JSON.stringify(db, null, 4);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+        // Creamos un nombre de archivo con la fecha actual
+        const fecha = new Intl.DateTimeFormat('en-CA').format(new Date());
+        const exportFileDefaultName = `censo_lldm_${fecha}.json`;
+
+        // Creamos un elemento de enlace temporal para forzar la descarga
+        let linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+        
+        alert("✅ Archivo JSON exportado correctamente");
+    } catch (err) {
+        alert("Error al exportar: " + err);
+    }
+}
+
+// CONFIGURACIÓN OFICIAL CENSO-LLDM
+const firebaseConfigCenso = {
+    apiKey: "AIzaSyBd-vUo0N314q5tP3WMB3bFWbSJZIMDvdI",
+    authDomain: "censo-lldm.firebaseapp.com",
+    databaseURL: "https://censo-lldm-default-rtdb.firebaseio.com",
+    projectId: "censo-lldm",
+    storageBucket: "censo-lldm.firebasestorage.app",
+    messagingSenderId: "875184017322",
+    appId: "1:875184017322:web:2ecdaa1b91620a4b93a5d3"
+};
+
+// Inicialización compatible con APK
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfigCenso); }
+const fbDb = firebase.database();
+
+// REGLA DE 4 SEGUNDOS (TIMEOUT)
+const conTimeout = (promesa) => {
+    return Promise.race([
+        promesa,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000))
+    ]);
+};
+
+// --- FUNCIÓN SUBIR (RUTA UNIFICADA) ---
+window.subirNubeCenso = async function() {
+    const tieneDatos = db.hombres.length > 0 || db.mujeres.length > 0 || db.kids.length > 0;
+    if (!tieneDatos) return alert("❌ El censo local está vacío. No hay nada que subir.");
+
+    if(!confirm("⚠️ ¿Deseas reemplazar la copia de la Nube con los datos de este teléfono?")) return;
+
+    try {
+        // Guardamos en la ruta 'respaldo_censo_oficial'
+        await conTimeout(fbDb.ref('respaldo_censo_oficial').set(db));
+        alert("✅ ÉXITO: Se enviaron los datos correctamente a la nube.");
+    } catch (error) {
+        alert(error.message === 'timeout' ? "⏳ Sin conexión (4s)." : "❌ Error: " + error.message);
+    }
+};
+
+// --- FUNCIÓN BAJAR (CORREGIDA PARA LEER LA RUTA CORRECTA) ---
+window.bajarNubeCenso = async function() {
+    if(!confirm("⚠️ Se borrarán los nombres de este teléfono para poner los de la Nube. ¿Continuar?")) return;
+
+    try {
+        // Buscamos EXACTAMENTE en la misma ruta 'respaldo_censo_oficial'
+        const snapshot = await conTimeout(fbDb.ref('respaldo_censo_oficial').once('value'));
+        
+        if (snapshot.exists()) {
+            const cloudData = snapshot.val();
+            
+            // Verificamos que los datos bajados tengan las listas necesarias
+            db = {
+                hombres: cloudData.hombres || [],
+                mujeres: cloudData.mujeres || [],
+                kids: cloudData.kids || []
+            };
+            
+            save(); // Guardar en el almacenamiento del teléfono
+            calculate(); // Refrescar los totales inmediatamente
+            
+            alert("✅ Descarga completada. Se han recuperado los datos.");
+            location.reload(); 
+        } else {
+            alert("❌ La nube está vacía en la ruta 'respaldo_censo_oficial'. Asegúrate de haber presionado SUBIR en el otro teléfono.");
+        }
+    } catch (error) {
+        alert(error.message === 'timeout' ? "⏳ Tiempo agotado (4s). Revisa tu internet." : "❌ Error: " + error.message);
+    }
+};
+
+// Forzar el dibujo de la tabla de totales en cuanto cargue la página
+window.onload = function() {
+    calculate();
+};
+
+// Variables globales para filtros actuales
+let currentFilters = { search: '', group: 'todos' };
+
+
+
+// Función para buscar por nombre
+function filterTable(t, query) {
+    currentFilters.search = query.toLowerCase();
+    applyAllFilters(t);
+}
+
+// Función para filtrar por grupo (Casados, Jóvenes, etc)
+function filterByGroup(t, group) {
+    currentFilters.group = group;
+    applyAllFilters(t);
+}
+
+// Aplica búsqueda y grupo simultáneamente
+function applyAllFilters(t) {
+    let filtered = db[t].filter(item => {
+        const matchesSearch = item.nombre.toLowerCase().includes(currentFilters.search);
+        const matchesGroup = currentFilters.group === 'todos' || item.grupo === currentFilters.group;
+        return matchesSearch && matchesGroup;
+    });
+    renderTable(t, filtered);
+}
+
+// Ordenar alfabéticamente y GUARDAR el orden
+function sortAlphabetically(t) {
+    db[t].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    save();
+    renderTable(t);
+    alert("✅ Lista ordenada alfabéticamente");
+}
+
+window.importarJSON = function(event) {
+    const archivo = event.target.files[0];
+    if (!archivo) return;
+
+    const lector = new FileReader();
+    lector.onload = function(e) {
+        try {
+            const contenido = JSON.parse(e.target.result);
+
+            // Validamos que el JSON tenga la estructura mínima requerida
+            if (contenido.hombres && contenido.mujeres && contenido.kids) {
+                if (confirm("⚠️ ¿IMPORTAR RESPALDO?\n\nEsto reemplazará todos los datos actuales de este dispositivo por los del archivo JSON. ¿Continuar?")) {
+                    
+                    // Actualizar base de datos local (db)
+                    db = {
+                        hombres: contenido.hombres || [],
+                        mujeres: contenido.mujeres || [],
+                        kids: contenido.kids || []
+                    };
+
+                    // Guardar en LocalStorage
+                    save(); 
+                    
+                    // Recalcular totales y refrescar gráficas
+                    if (typeof calculate === "function") calculate();
+                    
+                    alert("✅ Respaldo importado correctamente.");
+                    
+                    // Recargar para limpiar cualquier caché visual
+                    location.reload();
+                }
+            } else {
+                alert("❌ El archivo no tiene un formato de Censo válido.");
+            }
+        } catch (error) {
+            alert("❌ Error al procesar el archivo: " + error.message);
+        }
+    };
+    lector.readAsText(archivo);
+    // Limpiar el input para permitir importar el mismo archivo dos veces si fuera necesario
+    event.target.value = '';
+};
+
+
+window.exportToJson = function() {
+    // 1. Obtener los nombres actuales de los inputs del Header
+    const churchInput = document.getElementById('churchName');
+    const ministerInput = document.getElementById('ministerName');
+    
+    const churchValue = churchInput ? churchInput.value.trim() : "IGLESIA";
+    const ministerValue = ministerInput ? ministerInput.value.trim() : "MINISTRO";
+
+    // 2. Preparar el objeto de datos unificado (Censo + Info del Header)
+    const dataToExport = {
+        church: churchValue,
+        minister: ministerValue,
+        hombres: db.hombres || [],
+        mujeres: db.mujeres || [],
+        kids: db.kids || [],
+        fechaExportacion: new Date().toLocaleString()
+    };
+
+    // 3. Convertir a String JSON
+    const jsonString = JSON.stringify(dataToExport, null, 2);
+    
+    // 4. Configurar nombre del archivo
+    const fecha = new Date().toISOString().slice(0, 10);
+    const safeChurchName = churchValue.replace(/\s+/g, '_') || "Censo";
+    const fileName = `Respaldo_${safeChurchName}_${fecha}.json`;
+
+    // --- LÓGICA DE EXPORTACIÓN ---
+
+    // MODO APK (Android)
+    if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+        try {
+            // Codificar correctamente para acentos y eñes
+            const utf8Bytes = encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g,
+                function(match, p1) { return String.fromCharCode('0x' + p1); });
+            
+            // Convertir a Base64
+            const base64 = btoa(utf8Bytes);
+
+            // Llamar a la función nativa del APK (la misma que usas para PDF)
+            Android.guardarArchivo(base64, fileName, "application/json");
+            
+        } catch (e) {
+            alert("Error al exportar en Android: " + e.message);
+        }
+    } 
+    // MODO NAVEGADOR / PC
+    else {
+        try {
+            const blob = new Blob([jsonString], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert("Error en navegador: " + e.message);
+        }
+    }
+};
+
+function exportarCensoTXT() {
+    const church = (document.getElementById('churchName').value || "IGLESIA LOCAL").toUpperCase();
+    const minister = (document.getElementById('ministerName').value || "MINISTRO LOCAL").toUpperCase();
+    const fecha = new Date().toLocaleDateString();
+    const anchoPapel = 90;
+
+    let totalActivos = 0;
+    let totalRetirados = 0;
+    let ninosCont = 0;
+    let ninasCont = 0;
+
+    const centrar = (txt) => {
+        const espacios = Math.max(0, Math.floor((anchoPapel - txt.length) / 2));
+        return " ".repeat(espacios) + txt;
+    };
+
+    let texto = "";
+    texto += centrar("LA LUZ DEL MUNDO") + "\n";
+    texto += centrar(church) + "\n";
+    texto += centrar("REPORTE GENERAL DE CENSO") + "\n";
+    texto += "=".repeat(anchoPapel) + "\n";
+    texto += ` FECHA: ${fecha.padEnd(30)} MINISTRO: ${minister}\n`;
+    texto += "=".repeat(anchoPapel) + "\n\n";
+
+    const secciones = [
+        { id: 'hombres', titulo: 'LISTADO DE VARONES' },
+        { id: 'mujeres', titulo: 'LISTADO DE MUJERES' },
+        { id: 'kids', titulo: 'LISTADO DE NIÑEZ (0-13 AÑOS)' }
+    ];
+
+    secciones.forEach(sec => {
+        if (db[sec.id] && db[sec.id].length > 0) {
+            texto += `\n` + centrar(`--- ${sec.titulo} ---`) + "\n\n";
+            texto += " N°   " + "NOMBRE".padEnd(35) + "GRUPO".padEnd(15) + "ESTADO ESPIRITUAL / EDAD\n";
+            texto += "-".repeat(anchoPapel) + "\n";
+            
+            db[sec.id].forEach((m, i) => {
+                const nro = (i + 1).toString().padStart(3, ' ') + ". "; 
+                let nombreFinal = m.nombre.toUpperCase();
+                
+                // Lógica de Grupo: Guion para niños
+                let grupoStr = "";
+                if (sec.id === 'kids') {
+                    grupoStr = "---".padEnd(15, ' ');
+                } else {
+                    grupoStr = (m.grupo || "---").toUpperCase().padEnd(15, ' ');
+                }
+                
+                let infoExtra = "";
+                if (sec.id === 'kids') {
+                    if (m.genero === 'F') ninasCont++; else ninosCont++;
+                    infoExtra = `EDAD: ${calcEdad(m.nacimiento)} AÑOS`;
+                } else {
+                    if (m.estado === 'Retirado') {
+                        totalRetirados++;
+                        infoExtra = 'RETIRADO TEMPORAL';
+                    } else {
+                        totalActivos++;
+                        infoExtra = 'ACTIVO';
+                    }
+                }
+                
+                const nombreCol = nombreFinal.substring(0, 33).padEnd(35, ' ');
+                texto += nro + nombreCol + grupoStr + infoExtra + "\n";
+            });
+            texto += "-".repeat(anchoPapel) + "\n";
+        }
+    });
+
+    // --- RESUMEN FINAL ---
+    texto += "\n" + "=".repeat(anchoPapel) + "\n";
+    texto += centrar("RESUMEN DE ESTADISTICAS") + "\n";
+    texto += "=".repeat(anchoPapel) + "\n";
+    
+    texto += ` TOTAL ACTIVOS:               ${totalActivos.toString().padStart(4, ' ')}\n`;
+    texto += ` TOTAL RETIRADOS TEMPORALES:  ${totalRetirados.toString().padStart(4, ' ')}\n`;
+    texto += ` TOTAL DE MIEMBROS ADULTOS:   ${(totalActivos + totalRetirados).toString().padStart(4, ' ')}\n`;
+    texto += " ".repeat(30) + "-----\n";
+    
+    texto += ` TOTAL DE NIÑOS:              ${ninosCont.toString().padStart(4, ' ')}\n`;
+    texto += ` TOTAL DE NIÑAS:              ${ninasCont.toString().padStart(4, ' ')}\n`;
+    texto += ` TOTAL GENERAL DE NIÑEZ:      ${(ninosCont + ninasCont).toString().padStart(4, ' ')}\n`;
+    
+    texto += "=".repeat(anchoPapel) + "\n";
+    const granTotalFinal = totalActivos + totalRetirados + ninosCont + ninasCont;
+    texto += centrar(`GRAN TOTAL CENSO GENERAL: ${granTotalFinal} ALMAS`) + "\n";
+    texto += "=".repeat(anchoPapel) + "\n\n";
+    
+    texto += `\n\n` + centrar("___________________________") + "\n";
+    texto += centrar(minister) + "\n";
+    texto += centrar("Ministro Local") + "\n\n";
+
+    const nombreArchivo = `Censo_General_${church.replace(/\s+/g, '_')}.txt`;
+    if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+        try {
+            const b64 = btoa(unescape(encodeURIComponent(texto)));
+            Android.guardarArchivo(b64, nombreArchivo, "text/plain");
+        } catch (e) { alert("Error APK: " + e.message); }
+    } else {
+        const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nombreArchivo;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+    }
+}
+
+
+
+
+
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "LLDM Estadística Venecia",
+  "short_name": "VeneciaApp",
+  "description": "Sistema Personalizado de Control y Censo - Venecia",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a2a6c",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "logo-venecia-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo-venecia-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Censo Estadístico",
+      "short_name": "Censo",
+      "url": "./CENSOLLDM.html",
+      "icons": [{ "src": "logo-venecia-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
