@@ -796,6 +796,12 @@ header p {
     </button>
 </div>
 
+<div style="text-align: center; margin: 20px 0;">
+    <button onclick="actualizarApp()" style="background: #34495e; color: white; border: none; padding: 8px 15px; border-radius: 20px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; opacity: 0.8;">
+        <span>🔄</span> Actualizar Versión
+    </button>
+</div>
+
 <script>
 let eventoInstalacion;
 
@@ -818,6 +824,28 @@ async function instalarApp() {
         }
         eventoInstalacion = null;
         document.getElementById('banner-instalar').style.display = 'none';
+    }
+}
+</script>
+
+<script>
+async function actualizarApp() {
+    if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let registration of registrations) {
+            await registration.unregister(); // Elimina el sw viejo
+        }
+        
+        // Limpia el caché de archivos
+        const cacheNames = await caches.keys();
+        await Promise.all(
+            cacheNames.map(name => caches.delete(name))
+        );
+        
+        alert("Actualizando sistema... La página se recargará.");
+        window.location.reload(true); // Recarga forzada
+    } else {
+        window.location.reload(true);
     }
 }
 </script>
