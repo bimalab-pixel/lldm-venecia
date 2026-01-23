@@ -199,7 +199,106 @@ header h1 {
     font-size: 0.7rem;
     padding: 8px;
 }
+.card-asistencia-final {
+    grid-column: 1 / -1; /* Ocupa todo el ancho */
+    background: #0f172a !important; /* Fondo azul casi negro para que el oro resalte */
+    height: 100px !important;
+    margin-top: 80px !important; /* SEPARACIÓN EXTRA PARA EL TELÉFONO */
+    margin-bottom: 30px !important;
+    border: 1px solid #334155 !important;
+    border-radius: 15px !important;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important;
+}
 
+/* EFECTO DE LETRAS DORADAS BRILLANTES */
+.texto-dorado-brillante {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    /* Degradado de Oro Real */
+    background: linear-gradient(
+        to right, 
+        #bf953f 0%, 
+        #fcf6ba 25%, 
+        #b38728 50%, 
+        #fbf5b7 75%, 
+        #aa771c 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% auto;
+    animation: brilloOro 4s linear infinite;
+}
+
+@keyframes brilloOro {
+    to { background-position: 200% center; }
+}
+
+.label-superior {
+    color: #94a3b8;
+    font-size: 10px;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+.asistencia-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0 20px;
+    z-index: 10;
+}
+
+.calendar-icon-box {
+    font-size: 35px; /* Tamaño del icono de calendario */
+    margin-right: 15px;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.1));
+}
+
+.text-container {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.flecha-guia {
+    color: #bf953f;
+    font-size: 20px;
+}
+
+/* Efecto de luz blanca que pasa sobre el botón */
+.destello-pasajero {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    transform: skewX(-20deg);
+    transition: 0.8s;
+}
+
+.card-asistencia-final:hover .destello-pasajero {
+    left: 150%;
+}
+
+/* Ajustes para móviles */
+@media (max-width: 480px) {
+    .card-asistencia-final {
+        height: 90px !important;
+        margin-top: 70px !important; /* Se mantiene alejado en el móvil */
+    }
+    .texto-dorado-brillante {
+        font-size: 15px;
+    }
+}
+		
     </style>
 </head>
 <body>
@@ -234,7 +333,6 @@ header h1 {
     <i style="color: #cbd5e1;">📝</i><span style="color: white;">Exportar TXT</span>
 </div>
 
-    <div class="dash-card c-cloud" onclick="location.href='index.html'"><i>📅</i><span>Ir a Control de  Asistencia</span></div>
     
     <div class="dash-card c-men" onclick="subirNubeCenso()" style="background:#e8f5e9; border:1px solid #27ae60;">
         <i style="color:#27ae60;">☁️</i><span style="color:#1b5e20;">Subir Nube</span>
@@ -246,7 +344,20 @@ header h1 {
     
     <div class="dash-card c-config" onclick="showView('configView')"><i>⚙️</i><span>Ajustes</span></div>
 </div>
-
+<div class="card-asistencia-final" onclick="location.href='index.html'">
+    <div class="asistencia-content">
+        <div class="calendar-icon-box">
+            <i class="fas fa-calendar-alt">📅</i>
+        </div>
+        <div class="text-container">
+            <span class="label-superior">SISTEMA DE GESTIÓN</span>
+            <h2 class="texto-dorado-brillante">IR A CONTROL DE ASISTENCIA</h2>
+        </div>
+        <div class="flecha-guia">➜</div>
+    </div>
+    <div class="destello-pasajero"></div>
+</div>
+		
 
 </div>
 
