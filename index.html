@@ -688,11 +688,37 @@ header p {
         <div class="inst-sub">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
         <div class="inst-dept">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
         <div class="inst-title">C O N T R O L &nbsp; D E &nbsp; A S I S T E N C I A</div>
+
+        <div id="pantalla-bienvenida" style="
+            background: rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(212, 175, 55, 0.4); 
+            border-radius: 15px; 
+            padding: 15px; 
+            margin: 20px 0; 
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            
+            <p style="color: #d4af37; font-weight: bold; margin: 0 0 5px 0; letter-spacing: 1px; font-size: 0.9rem;">
+                La Paz del Señor
+            </p>
+            
+            <p style="font-size: 0.75rem; opacity: 0.9; margin: 0 0 15px 0; line-height: 1.3;">
+                Bienvenido al sistema de Gestión Estadístico y control de Asistencia Diaria.
+            </p>
+
+            <div id="saludo-horario" style="
+                font-size: 1.3rem; 
+                font-weight: 900; 
+                text-transform: uppercase; 
+                color: #ffffff; 
+                text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);">
+                Cargando...
+            </div>
+        </div>
         <button class="btn-access" onclick="enterSystem()">Acceder al Sistema</button>
     </div>
-</div>
-
-    
+	</div>
+	
   
 
 <div id="configModal" class="config-modal" style="display: none;">
@@ -2061,6 +2087,34 @@ function generarReporteSemestral() {
 }
 
 
+	function actualizarBienvenida() {
+    const ahora = new Date();
+    const hora = ahora.getHours();
+    const minutos = ahora.getMinutes();
+    const totalMin = (hora * 60) + minutos; // Lógica para precisión total
+    
+    const visor = document.getElementById('saludo-horario');
+    let textoSaludo = "";
+
+    // Lógica con tus horarios exactos
+    if (totalMin >= 0 && totalMin < 720) { // 12:00 AM a 11:59 AM
+        textoSaludo = "☀️ Muy Buenos Días";
+    } 
+    else if (totalMin >= 720 && totalMin <= 1080) { // 12:00 PM a 6:00 PM
+        textoSaludo = "🌤️ Muy Buenas Tardes";
+    } 
+    else { // 6:01 PM en adelante
+        textoSaludo = "🌙 Muy Buenas Noches";
+    }
+
+    if (visor) {
+        visor.innerText = textoSaludo;
+    }
+}
+
+// Llamamos a la función para que actúe de inmediato
+actualizarBienvenida();
+	
 
 </script>
 </body>
