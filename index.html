@@ -368,6 +368,7 @@ table.sheet-table {
             animation: gradientBG 15s ease infinite;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 5000; text-align: center; color: white; padding: 20px; box-sizing: border-box;
+			overflow-y: auto;
         }
         @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
 
@@ -660,7 +661,31 @@ header p {
     }
 }
 		
+/* AJUSTE PARA MODO HORIZONTAL EN EL LOGIN */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #loginView .login-box {
+        padding: 10px 20px !important; /* Menos espacio arriba y abajo */
+        max-width: 90% !important;   /* Que use más ancho de la pantalla */
+    }
 
+    #loginView .inst-title {
+        margin-bottom: 10px !important; /* Pegamos más el título */
+    }
+
+    #pantalla-bienvenida {
+        margin: 10px 0 !important;   /* Reducimos el margen de la nueva pantalla */
+        padding: 10px !important;    /* La hacemos más delgadita */
+    }
+
+    #pantalla-bienvenida p {
+        margin-bottom: 5px !important; /* Pegamos los textos internos */
+    }
+
+    .btn-access {
+        padding: 10px 30px !important; /* El botón se hace más bajito */
+        font-size: 0.9rem !important;
+    }
+}
     </style>
     
 </head>
