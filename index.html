@@ -724,7 +724,7 @@ header p {
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
             
             <p style="color: #d4af37; font-weight: bold; margin: 0 0 5px 0; letter-spacing: 1px; font-size: 0.9rem;">
-                La Paz del Señor
+                Estimado Hermano/a
             </p>
             
             <p style="font-size: 0.75rem; opacity: 0.9; margin: 0 0 15px 0; line-height: 1.3;">
@@ -820,16 +820,18 @@ header p {
             
             <button class="dash-card c-stats" onclick="showStats()"><i>📊</i><span>Cuadro Mensual</span></button>
             <button class="dash-card c-avg" onclick="showAverages()"><i>📅</i><span>Promedios</span></button>
- 
-            <button class="dash-card c-cloud" onclick="uploadData()"><i>☁️</i><span>SUBIR</span></button>
-            <button class="dash-card c-cloud" onclick="downloadData()"><i>⬇️</i><span>BAJAR</span></button>
-            <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
+
+			 <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
         <i>📋</i><span>Reporte / Supervisión</span>
     </button>
 	<div class="dash-card c-stats" onclick="generarReporteSemestral()">
     <i>📊</i>
     <span>Reporte Semestral</span>
 </div>
+			
+            <button class="dash-card c-cloud" onclick="uploadData()"><i>☁️</i><span>SUBIR</span></button>
+            <button class="dash-card c-cloud" onclick="downloadData()"><i>⬇️</i><span>BAJAR</span></button>
+           
     <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #f1f2f6); border-bottom: 5px solid #7f8c8d;" onclick="toggleConfig()">
     <i>⚙️</i><span>Configuración</span>
 </button>
@@ -2123,13 +2125,13 @@ function generarReporteSemestral() {
 
     // Lógica con tus horarios exactos
     if (totalMin >= 0 && totalMin < 720) { // 12:00 AM a 11:59 AM
-        textoSaludo = "☀️ Estimado Hermano/a ¡Bendiciones en este hermoso Día!";
+        textoSaludo = "☀️ ¡La Paz del Señor en este hermoso Día!";
     } 
     else if (totalMin >= 720 && totalMin <= 1080) { // 12:00 PM a 6:00 PM
-        textoSaludo = "🌤️ Estimado Hermano/a ¡Bendiciones en esta hermosa Tarde!";
+        textoSaludo = "🌤️ ¡La Paz del Señor en esta hermosa Tarde!";
     } 
     else { // 6:01 PM en adelante
-        textoSaludo = "🌙 Estimado Hermano/a ¡Bendiciones en esta hermosa Noche!";
+        textoSaludo = "🌙 ¡La Paz del Señor en esta hermosa Noche!";
     }
 
     if (visor) {
