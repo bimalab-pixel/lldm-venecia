@@ -5,8 +5,7 @@
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1a2a6c",
-  "orientation": "any",
+  "theme_color": "#1a2a6c",
   "icons": [
     {
       "src": "logo-venecia-192.png",
