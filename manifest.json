@@ -1,6 +1,6 @@
 {
   "name": "LLDM Estadística Venecia",
-  "short_name": "VeneciaApp",
+  "short_name": "Lldm Estadística Venecia",
   "description": "Sistema Personalizado de Control y Censo - Venecia",
   "start_url": "./index.html",
   "display": "standalone",
