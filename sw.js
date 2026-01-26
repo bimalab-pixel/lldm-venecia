@@ -1,4 +1,4 @@
-const CACHE_NAME = 'venecia-stats-v1';
+const CACHE_NAME = 'venecia-stats-v2';
 
 // Archivos locales para Venecia
 const ASSETS = [
