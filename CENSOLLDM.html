@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Censo LLDM - Elite Pro V17</title>
+    <title>Censo LLDM - Venecia</title>
 	
 	<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3e50">
@@ -298,6 +298,56 @@ header h1 {
         font-size: 15px;
     }
 }
+		/* --- ESTILOS DE IMPRESIÓN --- */
+@media print {
+    /* Ocultar todo excepto el área de impresión */
+    body * { visibility: hidden; }
+    header, .btn, .btn-back, .dash-grid, .card-asistencia-final, .view button, .table-controls, .header-input, footer { 
+        display: none !important; 
+    }
+
+    #areaImprimirTotales, #areaImprimirTotales * {
+        visibility: visible;
+    }
+
+    #areaImprimirTotales {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white;
+    }
+
+    /* Forzar tablas nítidas y bordes negros */
+    .stats-table {
+        width: 100% !important;
+        border: 2px solid #000 !important;
+        border-collapse: collapse !important;
+        margin-top: 10px;
+    }
+
+    .stats-table td, .stats-table th {
+        border: 1px solid #000 !important;
+        color: #000 !important;
+        padding: 8px !important;
+        background: transparent !important;
+    }
+
+    /* Ajuste de firmas */
+    .seccion-firmas {
+        display: flex !important;
+        justify-content: space-around !important;
+        margin-top: 70px !important;
+        text-align: center;
+    }
+}
+
+/* Ocultar elementos de impresión en la pantalla normal */
+#headerImpresion, #footerFirmas { display: none; }
+
+@media print {
+    #headerImpresion, #footerFirmas { display: block; }
+}
 		
     </style>
 </head>
@@ -439,13 +489,47 @@ header h1 {
 </div>
 
 
-    <div id="statsView" class="view">
-        <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
-        <h2 style="text-align:center; color:#000; text-decoration: underline; font-size: 1.1rem;">INFORME ESTADÍSTICO</h2>
-        <div class="table-wrapper" style="border:none;">
-            <table class="stats-table"><tbody id="statsBody"></tbody></table>
+   <div id="statsView" class="view">
+    <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+    
+    <button class="btn btn-blue" onclick="imprimirSistema()" style="width:100%; margin-bottom:15px; background:#27ae60; color:white; font-size:1rem;">
+        🖨️ IMPRIMIR REPORTE DEL SISTEMA
+    </button>
+
+    <div id="areaImprimirTotales">
+        <div id="headerImpresion" style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+            <h1 style="margin:0; font-size:1.6rem; color:#000;">LA LUZ DEL MUNDO</h1>
+            <h2 id="printIglesia" style="margin:5px 0; font-size:1.2rem; color:#000;"></h2>
+            <p id="printMinistroEncabezado" style="margin:2px 0; font-weight:bold; color:#000;"></p>
+            <p id="printFecha" style="margin:0; font-size:0.85rem; color:#000;"></p>
+        </div>
+
+        <h2 style="text-align:center; color:#000; text-decoration: underline; font-size: 1.2rem; margin-bottom: 15px;">INFORME ESTADÍSTICO</h2>
+        
+        <div class="table-wrapper" style="border:none; overflow:visible;">
+            <table class="stats-table">
+                <tbody id="statsBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="footerFirmas" class="seccion-firmas" style="margin-top: 80px;">
+            <div style="width: 250px;">
+                <br><br>
+                <p style="margin:0; color:#000;">F. ________________________</p>
+                <span id="firmaMinistroNombre" style="font-weight:900; text-transform:uppercase; color:#000; display:block; margin-top:5px;"></span>
+                <span style="font-size:0.8rem; color:#000;">Ministro Local</span>
+            </div>
+
+            <div style="width: 250px;">
+                <br><br>
+                <p style="margin:0; color:#000;">F. ________________________</p>
+                <span style="font-weight:900; text-transform:uppercase; color:#000; display:block; margin-top:5px;">SECRETARÍA LOCAL</span>
+                <span style="font-size:0.8rem; color:#000;">Sello y Fecha</span>
+            </div>
         </div>
     </div>
+</div>
 
     <div id="configView" class="view">
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
@@ -1155,10 +1239,28 @@ function exportarCensoTXT() {
 }
 
 
+function imprimirSistema() {
+    // 1. Asegurar que los totales estén actualizados
+    calculate();
 
+    // 2. Obtener datos de los inputs dorados del Header
+    const iglesiaInput = document.getElementById('churchName').value || "IGLESIA LOCAL";
+    const ministroInput = document.getElementById('ministerName').value || "MINISTRO LOCAL";
+    const fechaOpciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const fechaTexto = new Date().toLocaleDateString('es-SV', fechaOpciones);
 
+    // 3. Sincronizar con el reporte de impresión
+    document.getElementById('printIglesia').innerText = iglesiaInput.toUpperCase();
+    document.getElementById('printMinistroEncabezado').innerText = "MINISTRO: " + ministroInput.toUpperCase();
+    document.getElementById('printFecha').innerText = "REPORTE GENERADO: " + fechaTexto.toUpperCase();
 
+    // 4. EL TRUCO: Poner el nombre del ministro en la firma automáticamente
+    document.getElementById('firmaMinistroNombre').innerText = ministroInput.toUpperCase();
 
+    // 5. Lanzar el cuadro de impresión del sistema
+    // En Android esto abrirá el selector de PDF o impresoras conectadas
+    window.print();
+}
 
 </script>
 </body>
