@@ -2029,7 +2029,7 @@ function generarReporteSemestral() {
     for (let i = 5; i >= 0; i--) {
         const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
         ultimos6Meses.push({
-            id: d.toISOString().substring(0, 7),
+            id: d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0'),
             corto: mesesCortos[d.getMonth()],
             full: mesesNombres[d.getMonth()] + " " + d.getFullYear()
         });
@@ -2067,10 +2067,9 @@ function generarReporteSemestral() {
             
             ultimos6Meses.forEach(mes => {
                 let c5=0, c9=0, c6=0, ced=0;
-                const registros = datos.asistencias.filter(a => a.date.startsWith(mes.id));
-                
+                const registros = (datos.asistencias || []).filter(a => a && a.date && a.date.startsWith(mes.id));
                 registros.forEach(reg => {
-                    if (reg.names.includes(nombre)) {
+                    if (reg.names && Array.isArray(reg.names) && reg.names.includes(nombre)) {
                         const s = reg.service.toLowerCase();
                         if (s.includes("5:00 am")) c5++;
                         else if (s.includes("9:00 am")) c9++;
