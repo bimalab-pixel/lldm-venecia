@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Control LLDM - Cloud V7</title>
-	
-	<link rel="manifest" href="manifest.json">
+
+        <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3e50">
 
 <script>
@@ -27,7 +27,7 @@
             --cloud-btn: #34495e;
         }
         body { font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; margin: 0; padding: 0; background: var(--bg-body); user-select: none; -webkit-tap-highlight-color: transparent; }
-        
+
         /* HEADER */
         header { 
             background: #fff; padding: 20px; text-align: center; 
@@ -37,7 +37,7 @@
         header h1 { margin: 0; color: #154360; font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 
         .container { padding: 15px; max-width: 1000px; margin: 0 auto; }
-        
+
         /* --- DASH GRID: ESTILO PROFESIONAL Y RECTO --- */
 .dash-grid { 
     display: grid; 
@@ -130,11 +130,11 @@
         input, select { width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; background: #fafafa; box-sizing: border-box; }
         .btn-action { width: 100%; padding: 15px; background: var(--secondary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; margin-top: 10px; }
         .btn-back { background: #95a5a6; margin-bottom: 15px; width: auto; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; display: inline-flex; align-items: center; }
-        
+
                 /* LISTAS Y CHECKBOX (MODIFICADO) */
         .member-list { list-style: none; padding: 0; max-height: 50vh; overflow-y: auto; }
         .member-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; align-items: center; }
-        
+
         /* Fila de asistencia: Usa space-between para separar texto del check */
         .attendance-list li { 
             padding: 15px; 
@@ -279,14 +279,14 @@ table.sheet-table {
                 gap: 20px; 
             }
             .c-attend { grid-column: span 2; } /* Botón central más grande */
-            
+
             /* Textos más grandes en tablet */
             .dash-card span { font-size: 1.1rem; }
             .dash-card i { font-size: 3rem; }
             header h1 { font-size: 1.8rem; }
             .member-item, .attendance-list li { font-size: 1.4rem; padding: 20px; }
             input, select, .btn-action { font-size: 1.2rem; padding: 18px; }
-            
+
             /* Tabla más legible */
             table.sheet-table { font-size: 14px; }
             .col-name { width: 250px; min-width: 250px; }
@@ -298,12 +298,12 @@ table.sheet-table {
         .dot-black { color: #2c3e50; font-size: 1.5em; line-height: 0; }
         .txt-red { color: #c0392b !important; }
         .txt-cyan { color: #00acc1 !important; }
-        
+
         /* TOTALES */
         .footer-group td { background-color: #ebf5fb; font-weight: bold; color: #2e86c1; border-top: 2px solid #2e86c1; }
         .footer-grand td { background-color: #fcf3cf; font-weight: 900; color: #d35400; border-top: 3px double #d35400; font-size: 1.1em; }
         .avg-card { background: #fff; border-left: 8px solid; margin-bottom: 15px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
+
         /* LOADING OVERLAY */
         #loading { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index: 999; align-items: center; justify-content: center; flex-direction: column; }
         .spinner { width: 40px; height: 40px; border: 5px solid #f3f3f3; border-top: 5px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -368,7 +368,7 @@ table.sheet-table {
             animation: gradientBG 15s ease infinite;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             z-index: 5000; text-align: center; color: white; padding: 20px; box-sizing: border-box;
-			
+
         }
         @keyframes gradientBG { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
 
@@ -510,17 +510,17 @@ header p {
 @media print {
     /* Ocultar todo */
     body * { visibility: hidden; }
-    
+
     /* Mostrar solo el área de impresión y sus hijos */
     #semestral-print-area, #semestral-print-area * { visibility: visible; }
-    
+
     #semestral-print-area { 
         position: absolute; 
         left: 0; 
         top: 0; 
         width: 100%; 
     }
-    
+
     /* Forzar que los botones no ocupen espacio */
     .no-print { display: none !important; }
 
@@ -660,7 +660,7 @@ header p {
         font-size: 28px;
     }
 }
-		
+
 /* AJUSTE PARA MODO HORIZONTAL EN EL LOGIN */
 @media screen and (orientation: landscape) and (max-height: 500px) {
     #loginView .login-box {
@@ -687,10 +687,10 @@ header p {
     }
 }
     </style>
-    
+
 </head>
 <body>
-    <div id="printHeader" class="only-print">
+   <div id="printHeader" class="only-print">
     <div class="print-title">"LA LUZ DEL MUNDO"</div>
     <div class="print-subtitle">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
     <div class="print-dept">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
@@ -713,50 +713,23 @@ header p {
         <div class="inst-sub">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
         <div class="inst-dept">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
         <div class="inst-title">C O N T R O L &nbsp; D E &nbsp; A S I S T E N C I A</div>
-
-        <div id="pantalla-bienvenida" style="
-            background: rgba(255, 255, 255, 0.1); 
-            border: 1px solid rgba(212, 175, 55, 0.4); 
-            border-radius: 15px; 
-            padding: 15px; 
-            margin: 20px 0; 
-            backdrop-filter: blur(8px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-            
-            <p style="color: #d4af37; font-weight: bold; margin: 0 0 5px 0; letter-spacing: 1px; font-size: 0.9rem;">
-                Estimado Hermano/a
-            </p>
-            
-            <p style="font-size: 0.75rem; opacity: 0.9; margin: 0 0 15px 0; line-height: 1.3;">
-                Bienvenido al sistema de Gestión Estadístico y control de Asistencia Diaria.
-            </p>
-
-            <div id="saludo-horario" style="
-                font-size: 1.3rem; 
-                font-weight: 900; 
-                text-transform: uppercase; 
-                color: #ffffff; 
-                text-shadow: 0 0 10px rgba(212, 175, 55, 0.6);">
-                Cargando...
-            </div>
-        </div>
         <button class="btn-access" onclick="enterSystem()">Acceder al Sistema</button>
     </div>
-	</div>
-	
-  
+</div>
+
+
 
 <div id="configModal" class="config-modal" style="display: none;">
     <div class="config-content">
         <h3 style="margin-top:0; color:#2c3e50;">Configuración</h3>
         <p style="font-size:14px; color:#7f8c8d;">Gestión de almacenamiento local</p>
-        
+
         <button class="btn-action" style="background:#e67e22;" onclick="exportarJSON()">
     📂 Exportar Respaldo (JSON)
 </button>
 
 <div style="margin-top: 10px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
-    
+
     <input type="file" id="inputImportar" style="display: none;" accept=".json" onchange="procesarImportacion(this)">
 
     <button class="btn-action" style="background:#27ae60;" onclick="document.getElementById('inputImportar').click()">
@@ -765,11 +738,11 @@ header p {
 </div>
 
 
-        
+
         <button onclick="borrarDatos()" class="btn-danger">
             🗑️ Borrar Memoria Local
         </button>
-        
+
         <button onclick="toggleConfig()" class="btn-close">
             Cancelar
         </button>
@@ -783,13 +756,13 @@ header p {
 </div>
 
 <header id="mainHeader">
-    
+
     <h1>La Luz del Mundo</h1>
     <p>MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</p>
-    
+
     <label class="header-label">IGLESIA</label>
     <input type="text" id="conf-iglesia" class="header-input" placeholder="Nombre de la Iglesia" onchange="saveHeaderConf()">
-    
+
     <label class="header-label">MINISTRO LOCAL</label>
     <input type="text" id="conf-ministro" class="header-input" placeholder="Nombre del Ministro" onchange="saveHeaderConf()">
 </header>
@@ -799,7 +772,7 @@ header p {
         <input type="text" id="nameSearch" placeholder="🔍 Buscar nombre..." 
                oninput="filterNames()" 
                style="margin-bottom:0; padding-left: 40px; padding-right: 40px; border-radius: 20px; border: 2px solid #2980b9; width: 100%;">
-        
+
         <button id="clearSearchBtn" onclick="clearSearch()" 
                 style="position: absolute; right: 10px; background: blue; border: none; border-radius: 50%; width: 26px; height: 26px; color: white; font-size: 14px; cursor: pointer; display: none; display: flex; align-items: center; justify-content: center; z-index: 10;">
             ✕
@@ -811,27 +784,27 @@ header p {
 
 
 <div class="container">
-    
+
     <div id="menuView" class="view active" style="background:transparent; box-shadow:none; padding:0;">
         <div class="dash-grid">
             <button class="dash-card c-men" onclick="showManage('hombres')"><i>👨</i><span>Lista de Hermanos</span></button>
             <button class="dash-card c-women" onclick="showManage('mujeres')"><i>👩</i><span>Lista de Hermanas</span></button>
             <button class="dash-card c-attend" onclick="showAttendanceSetup()"><i>📝</i><span>TOMAR ASISTENCIA</span></button>
-            
+
             <button class="dash-card c-stats" onclick="showStats()"><i>📊</i><span>Cuadro Mensual</span></button>
             <button class="dash-card c-avg" onclick="showAverages()"><i>📅</i><span>Promedios</span></button>
 
-			 <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
+                         <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
         <i>📋</i><span>Reporte / Supervisión</span>
     </button>
-	<div class="dash-card c-stats" onclick="generarReporteSemestral()">
+        <div class="dash-card c-stats" onclick="generarReporteSemestral()">
     <i>📊</i>
     <span>Reporte Semestral</span>
 </div>
-			
+
             <button class="dash-card c-cloud" onclick="uploadData()"><i>☁️</i><span>SUBIR</span></button>
             <button class="dash-card c-cloud" onclick="downloadData()"><i>⬇️</i><span>BAJAR</span></button>
-           
+
     <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #f1f2f6); border-bottom: 5px solid #7f8c8d;" onclick="toggleConfig()">
     <i>⚙️</i><span>Configuración</span>
 </button>
@@ -853,10 +826,10 @@ header p {
      </div>
 
 </div>
-   
+
 </div> <div id="censusView" class="view">
     <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
-    
+
     <div style="background:#1e293b; color:white; padding:15px; border-radius:15px; margin-bottom:15px; text-align:center;">
         <h3 style="margin:0; font-size:1.1rem;">INFORME DE SUPERVISIÓN</h3>
         <p style="margin:5px 0 0 0; font-size:0.75rem; opacity:0.8;">Censo Manual y Asistencia</p>
@@ -865,13 +838,13 @@ header p {
     <div style="background:white; padding:20px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; box-shadow: var(--card-shadow);">
         <label class="header-label" style="color:#2c3e50; font-size: 0.8rem;">Total Miembros Activos</label>
         <input type="number" id="censo-activos" placeholder="0" style="font-size: 1.5rem; text-align: center; border: 2px solid #2980b9; width:100%; box-sizing:border-box;">
-        
+
         <label class="header-label" style="color:#2c3e50; font-size: 0.8rem; margin-top: 15px;">Total Miembros Temporales</label>
         <input type="number" id="censo-temporales" placeholder="0" style="font-size: 1.5rem; text-align: center; border: 2px solid #7f8c8d; width:100%; box-sizing:border-box;">
-        
+
         <label class="header-label" style="color:#2c3e50; font-size: 0.8rem; margin-top: 15px;">Comisión de Estadística</label>
         <input type="text" id="comision-nombres" placeholder="Nombres del personal..." style="margin-bottom:15px;">
-        
+
         <button class="btn-action" style="background:#27ae60; margin:0; height: 60px; font-size: 1.1rem;" onclick="generarInformeCenso()">GENERAR INFORME PDF 📄</button>
     </div>
 
@@ -919,9 +892,9 @@ header p {
             <select id="sGroup" onchange="renderSheet()" style="margin:0;">
                 <option value="hombres">Hombres</option>
                 <option value="mujeres">Mujeres</option>
-                
+
             </select>
-            
+
         <button onclick="descargarPDF()" style="background:#e74c3c; color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer; font-weight:bold;">
             PDF 📄
         </button>
@@ -953,7 +926,7 @@ header p {
                 CONTROL DE ASISTENCIA SEMESTRAL
             </div>
         </div>
-        
+
         <div id="semestral-content"></div>
     </div>
 </div>
@@ -979,7 +952,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     // Guarda el evento para usarlo luego
     eventoInstalacion = e;
-    
+
     // Aquí puedes mostrar un cartel, un botón o un banner llamativo
     document.getElementById('banner-instalar').style.display = 'block';
 });
@@ -1004,13 +977,13 @@ async function actualizarApp() {
         for (let registration of registrations) {
             await registration.unregister(); // Elimina el sw viejo
         }
-        
+
         // Limpia el caché de archivos
         const cacheNames = await caches.keys();
         await Promise.all(
             cacheNames.map(name => caches.delete(name))
         );
-        
+
         alert("Actualizando sistema... La página se recargará.");
         window.location.reload(true); // Recarga forzada
     } else {
@@ -1080,7 +1053,7 @@ window.uploadData = async function() {
 
         // 4. FUSIÓN DE ASISTENCIAS (La parte crítica)
         if (!cloudData.asistencias) cloudData.asistencias = [];
-        
+
         localData.asistencias.forEach(locRes => {
             // Buscamos si este mismo culto ya existe en la nube
             const index = cloudData.asistencias.findIndex(cldRes => 
@@ -1103,7 +1076,7 @@ window.uploadData = async function() {
 
         // 6. Actualizar el teléfono con la versión final combinada
         localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
-        
+
         alert("✅ Sincronización exitosa. Los datos locales y de la nube han sido combinados.");
         location.reload();
 
@@ -1125,11 +1098,11 @@ window.downloadData = async function() {
     try {
         // Intentar obtener datos con límite de 5 segundos
         const snapshot = await conTimeout(get(child(dbRef, 'churchData')));
-        
+
         if (snapshot.exists()) {
             const cloudData = snapshot.val();
             const localData = JSON.parse(localStorage.getItem('lldm_v6_total_color'));
-            
+
             const cloudStr = JSON.stringify(cloudData);
             const localStr = JSON.stringify(localData);
 
@@ -1144,7 +1117,7 @@ window.downloadData = async function() {
                     return;
                 }
             }
-            
+
             localStorage.setItem('lldm_v6_total_color', cloudStr);
             alert("✅ Datos actualizados con éxito.");
             location.reload();
@@ -1165,7 +1138,7 @@ window.downloadData = async function() {
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    
+
 <script>
     function hideHeader() { document.getElementById('mainHeader').classList.add('header-hidden'); }
 function showHeader() { document.getElementById('mainHeader').classList.remove('header-hidden'); }
@@ -1218,7 +1191,7 @@ function showAttendanceSetup() {
     hideHeader(); 
     hideAll(); 
     document.getElementById('setupView').classList.add('active'); 
-    
+
     // CORRECCIÓN: Evitar que el UTC adelante el día
     if(!document.getElementById('attDate').value) {
         const ahora = new Date();
@@ -1226,10 +1199,10 @@ function showAttendanceSetup() {
         const año = ahora.getFullYear();
         const mes = String(ahora.getMonth() + 1).padStart(2, '0');
         const dia = String(ahora.getDate()).padStart(2, '0');
-        
+
         document.getElementById('attDate').value = `${año}-${mes}-${dia}`;
     }
-    
+
     updateSv(); 
 }
 
@@ -1237,7 +1210,7 @@ function showAttendanceSetup() {
     function updateSv() {
     const d = document.getElementById('attDate').value, 
           sel = document.getElementById('attService'); 
-    
+
     sel.innerHTML = ''; 
     if (!d) return;
 
@@ -1249,7 +1222,7 @@ function showAttendanceSetup() {
     const day = dateLocal.getDay();
 
     let s = ["Oración 5:00 am"];
-    
+
     if (day === 0) { // Domingo
         s.push("Escuela Dominical 10:00 am", "Servicio Especial 5:00 pm");
     } else {
@@ -1266,7 +1239,7 @@ function showAttendanceSetup() {
     });
 }
 
-    
+
         function startAtt(t) {
         if(!appData[t].length) return alert('Lista vacía');
     curAttType=t; curSvStr=document.getElementById('attService').value;
@@ -1279,11 +1252,11 @@ function showAttendanceSetup() {
         const ul=document.getElementById('attList'); ul.innerHTML='';
         const ex=appData.asistencias.find(r=>r.date===document.getElementById('attDate').value && r.service===curSvStr && r.type===t);
         const set=ex?new Set(ex.names):new Set();
-        
+
         // --- CAMBIO AQUÍ: Usamos (n, i) para tener el número ---
         appData[t].forEach((n, i)=>{
             const li=document.createElement('li');
-            
+
             // Nueva estructura HTML:
             // IZQUIERDA: [Número + Nombre] ....... DERECHA: [Checkbox]
             li.innerHTML=`
@@ -1293,7 +1266,7 @@ function showAttendanceSetup() {
                 </div> 
                 <input type="checkbox" class="big-checkbox achk" value="${n}" ${set.has(n)?'checked':''}>
             `;
-            
+
             li.onclick=(e)=>{if(e.target.type!=='checkbox'){const c=li.querySelector('input');c.checked=!c.checked}};
             ul.appendChild(li);
         });
@@ -1302,14 +1275,14 @@ function showAttendanceSetup() {
     function saveAtt() {
     const d = document.getElementById('attDate').value;
     const ns = Array.from(document.querySelectorAll('.achk:checked')).map(c => c.value);
-    
+
     if (!d) return alert("Por favor, seleccione una fecha.");
 
     // 1. GUARDAR LOCALMENTE (Prioridad única)
     // Filtramos para evitar duplicados en la misma fecha/servicio y agregamos el nuevo
     appData.asistencias = appData.asistencias.filter(r => !(r.date === d && r.service === curSvStr && r.type === curAttType));
     appData.asistencias.push({date: d, service: curSvStr, type: curAttType, names: ns}); 
-    
+
     // Ejecuta la grabación en la memoria del dispositivo
     save(); 
 
@@ -1338,13 +1311,13 @@ function showAttendanceSetup() {
     const mIn = document.getElementById('sMonth').value, 
           grp = document.getElementById('sGroup').value, 
           con = document.getElementById('sheetContainer');
-    
+
     if (!mIn) return;
 
     const [y, m] = mIn.split('-'); 
     const dim = new Date(y, m, 0).getDate();
     const names = sortL(appData[grp]);
-    
+
     const grpRecs = appData.asistencias.filter(r => r.date.startsWith(mIn) && r.type === grp);
     const allRecs = appData.asistencias.filter(r => r.date.startsWith(mIn));
 
@@ -1362,7 +1335,7 @@ function showAttendanceSetup() {
             } 
         });
     });
-    
+
     allRecs.forEach(r => {
         const d = parseInt(r.date.split('-')[2]); 
         const [slot] = getSlotColor(r.service);
@@ -1378,10 +1351,10 @@ for (let d = 1; d <= dim; d++) {
     // Forzamos a JS a crear la fecha exacta al mediodía (12:00) 
     // Esto evita que por una diferencia de 6 horas el día "salte" al anterior o posterior
     const dayIdx = new Date(y, m - 1, d, 12, 0, 0).getDay();
-    
+
     // Si el día es Domingo (0), le ponemos un estilo rojo opcional para identificarlo rápido
     const isSunday = dayIdx === 0 ? 'style="color:red"' : '';
-    
+
     headRow1 += `<th ${isSunday}>${initials[dayIdx]}</th>`;
     headRow2 += `<th>${d}</th>`;
 }
@@ -1397,17 +1370,17 @@ for (let d = 1; d <= dim; d++) {
             if (map[n][d][1] !== 0) t9am++;
             if (map[n][d][2] !== 0) t6pm++;
         }
-        
+
         h += `<tr style="border-top:2px solid #000">
                 <td class="col-name" rowspan="3">${i + 1}. ${n}</td>
                 <td class="col-time">5am</td>`;
         for (let d = 1; d <= dim; d++) h += `<td>${dt(map[n][d][0])}</td>`;
         h += `<td class="txt-total-negro">${t5am}</td></tr>`;
-        
+
         h += `<tr><td class="col-time">9/ED</td>`;
         for (let d = 1; d <= dim; d++) h += `<td>${dt(map[n][d][1])}</td>`;
         h += `<td class="txt-red">${t9am}</td></tr>`; // Total individual ED en rojo
-        
+
         h += `<tr><td class="col-time">6/Es</td>`;
         for (let d = 1; d <= dim; d++) h += `<td>${dt(map[n][d][2])}</td>`;
         h += `<td class="txt-special-blue">${t6pm}</td></tr>`; // Total individual Especial en azul
@@ -1416,7 +1389,7 @@ for (let d = 1; d <= dim; d++) {
     h += genFooterRow("TOTAL GRUPO", grpTot, dim, y, m, "footer-group");
     h += `<tr style="height:10px; background:white; border:none;"><td colspan="${dim + 3}"></td></tr>`;
     h += genFooterRow("GRAN TOTAL", grandTot, dim, y, m, "footer-grand");
-    
+
     h += `</tbody></table>`;
     con.innerHTML = h;
 }
@@ -1455,7 +1428,7 @@ function genFooterRow(title, dataObj, dim, y, m, cssClass) {
         h += `<td class="${colorClass}">${dataObj[d][2] || ''}</td>`;
     }
     h += `<td class="txt-special-blue">${sum6pm}</td></tr>`;
-    
+
     return h;
 }
 
@@ -1510,15 +1483,15 @@ function genFooterRow(title, dataObj, dim, y, m, cssClass) {
     // 3. Procesar los grupos fusionados (CORREGIDO GMT-6)
 Object.values(agrupados).forEach(r => {
     const s = r.service.toLowerCase();
-    
+
     // Extraemos año, mes y día como números puros
     const [yC, mC, dC] = r.date.split('-').map(Number);
-    
+
     // Forzamos la creación de la fecha al mediodía (12:00) local
     // Esto garantiza que en El Salvador el día de la semana sea el correcto
     const dateObj = new Date(yC, mC - 1, dC, 12, 0, 0);
     const day = dateObj.getDay(); // 0=Dom, 1=Lun, 4=Jue, etc.
-    
+
     const t = r.total;
 
 
@@ -1563,13 +1536,13 @@ function toggleConfig() {
 function borrarDatos() {
     // Preguntar seguridad doble vez para evitar accidentes
     if(confirm("⚠️ ¿ESTÁS SEGURO?\n\nSe borrarán todos los registros de asistencia, nombres y datos guardados en este dispositivo. Esta acción no se puede deshacer.")) {
-        
+
         // 1. Borrar LocalStorage
         localStorage.clear();
-        
+
         // 2. Mensaje de éxito
         alert("La memoria ha sido limpiada correctamente.");
-        
+
         // 3. Recargar la página para reiniciar la app limpia
         location.reload();
     }
@@ -1581,7 +1554,7 @@ function enterSystem() {
     loginScreen.style.transition = 'opacity 0.6s ease, visibility 0.6s';
     loginScreen.style.opacity = '0';
     loginScreen.style.visibility = 'hidden';
-    
+
     // Opcional: Sonido o vibración ligera si el navegador lo permite
     if (window.navigator.vibrate) window.navigator.vibrate(50);
 }
@@ -1610,7 +1583,7 @@ window.generarInformeCenso = function() {
     const iglesia = document.getElementById('conf-iglesia').value || "Iglesia Local";
     const ministro = document.getElementById('conf-ministro').value || "Ministro Responsable";
     const comision = document.getElementById('comision-nombres').value;
-    
+
     const activos = parseInt(document.getElementById('censo-activos').value) || 0;
     const temporales = parseInt(document.getElementById('censo-temporales').value) || 0;
     const totalCenso = activos + temporales;
@@ -1620,12 +1593,12 @@ window.generarInformeCenso = function() {
     const hoyStr = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
     let filasTabla = "";
-    
+
     // 2. Lógica de cálculo de los últimos 8 días
     for (let i = 7; i >= 0; i--) {
         let fechaCursor = new Date(hoyParaCalculo);
         fechaCursor.setDate(hoyParaCalculo.getDate() - i);
-        
+
         const isoFecha = fechaCursor.toISOString().split('T')[0];
         const fechaFmt = `${String(fechaCursor.getDate()).padStart(2, '0')}/${String(fechaCursor.getMonth() + 1).padStart(2, '0')}/${fechaCursor.getFullYear()}`;
         const diaSemana = fechaCursor.getDay(); 
@@ -1781,7 +1754,7 @@ window.descargarPDF = function() {
     const ministro = document.getElementById('conf-ministro').value || "MINISTRO RESPONSABLE";
     const mesInput = document.getElementById('sMonth').value;
     const grupo = document.getElementById('sGroup').value;
-    
+
     if (!mesInput) return alert("Por favor seleccione un mes");
 
     const [year, month] = mesInput.split('-').map(Number);
@@ -1794,7 +1767,7 @@ window.descargarPDF = function() {
 
     const headerHTML = originalTable.querySelector('thead').outerHTML;
     const filas = Array.from(originalTable.querySelectorAll('tbody tr'));
-    
+
     // AJUSTE FINAL: 14 personas * 3 horarios = 42 filas por página
     const filasPorPagina = 42; 
 
@@ -1803,7 +1776,7 @@ window.descargarPDF = function() {
     for (let i = 0; i < filas.length; i += filasPorPagina) {
         const bloqueFilas = filas.slice(i, i + filasPorPagina).map(f => f.outerHTML).join('');
         const esUltimaPagina = (i + filasPorPagina) >= filas.length;
-        
+
         const pagina = document.createElement('div');
         pagina.style.cssText = "page-break-after: always; background: white; width: 1350px; padding: 12px; box-sizing: border-box; font-family: Arial;";
 
@@ -1887,13 +1860,13 @@ function filterNames() {
     const searchInput = document.getElementById('nameSearch');
     const clearBtn = document.getElementById('clearSearchBtn');
     const term = searchInput.value.toLowerCase();
-    
+
     // Control visual del botón de limpieza: 
     // Si hay texto escrito, aparece la X. Si está vacío, se oculta.
     if (clearBtn) {
         clearBtn.style.display = term.length > 0 ? 'flex' : 'none';
     }
-    
+
     // 1. Filtrar en Listas de Gestión (Hermanos / Hermanas)
     const manageItems = document.querySelectorAll('#manageList .member-item');
     manageItems.forEach(item => {
@@ -1919,7 +1892,7 @@ function filterNames() {
 
 window.clearSearch = function() {
     const searchInput = document.getElementById('nameSearch');
-    
+
     searchInput.value = ''; // Borra el texto del input
     filterNames();          // Llama a la función anterior para mostrar toda la lista
     searchInput.focus();    // Mantiene el cursor listo para volver a escribir
@@ -1942,7 +1915,7 @@ window.procesarImportacion = function(inputElement) {
 
     // 3. Leer el contenido del archivo
     const reader = new FileReader();
-    
+
     reader.onload = function(e) {
         try {
             const contenido = e.target.result;
@@ -1951,13 +1924,13 @@ window.procesarImportacion = function(inputElement) {
             // 4. Validación básica: ¿Es un archivo válido de nuestra App?
             // Verificamos si tiene al menos una de las listas clave
             if (datosImportados.hombres || datosImportados.mujeres || datosImportados.asistencias) {
-                
+
                 // Guardar en memoria local
                 localStorage.setItem('lldm_v6_total_color', JSON.stringify(datosImportados));
-                
+
                 alert("✅ ¡Datos restaurados exitosamente!\nLa aplicación se reiniciará ahora.");
                 location.reload(); // Recargar para mostrar los nuevos datos
-                
+
             } else {
                 throw new Error("El archivo no parece ser un respaldo válido de esta aplicación.");
             }
@@ -1987,14 +1960,14 @@ window.exportarJSON = function() {
             // 1. Codificar UTF-8 correctamente para acentos/ñ
             const utf8Bytes = encodeURIComponent(rawData).replace(/%([0-9A-F]{2})/g,
                 function(match, p1) { return String.fromCharCode('0x' + p1); });
-            
+
             // 2. Convertir a Base64
             const base64 = btoa(utf8Bytes);
 
             // 3. ¡Usamos la misma función que usas para el PDF!
             // Le pasamos el base64, el nombre .json y el tipo correcto
             Android.guardarArchivo(base64, fileName, "application/json");
-            
+
         } catch (e) {
             alert("Error al preparar archivo para Android: " + e.message);
         }
@@ -2017,15 +1990,15 @@ function generarReporteSemestral() {
     const container = document.getElementById('semestral-content');
     const tituloDinamico = document.getElementById('semestral-titulo-dinamico');
     container.innerHTML = ''; 
-    
+
     const datos = JSON.parse(localStorage.getItem('lldm_v6_total_color')) || { hombres: [], mujeres: [], asistencias: [] };
-    
+
     // 2. Calcular los últimos 6 meses y el Periodo
     const mesesNombres = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
     const mesesCortos = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
     const hoy = new Date();
     const ultimos6Meses = [];
-    
+
     for (let i = 5; i >= 0; i--) {
         const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
         ultimos6Meses.push({
@@ -2064,7 +2037,7 @@ function generarReporteSemestral() {
             html += `<tr>
                 <td>${index + 1}</td>
                 <td style="text-align:left; padding-left:5px; font-weight:bold;">${nombre}</td>`;
-            
+
             ultimos6Meses.forEach(mes => {
                 let c5=0, c9=0, c6=0, ced=0;
                 const registros = (datos.asistencias || []).filter(a => a && a.date && a.date.startsWith(mes.id));
@@ -2091,10 +2064,10 @@ function generarReporteSemestral() {
 
     // Construir contenido final
     let contenidoFinal = crearTabla(datos.hombres, "Lista de Hermanos");
-    
+
     // Salto de página manual para las Hermanas
     contenidoFinal += `<div style="page-break-after: always; height:1px;"></div>`;
-    
+
     contenidoFinal += crearTabla(datos.mujeres, "Lista de Hermanas");
 
     // Firmas al final
@@ -2105,7 +2078,7 @@ function generarReporteSemestral() {
         </div>`;
 
     container.innerHTML = contenidoFinal;
-    
+
     // Cambiar a la vista del reporte
     hideHeader();
     hideAll();
@@ -2113,34 +2086,7 @@ function generarReporteSemestral() {
 }
 
 
-	function actualizarBienvenida() {
-    const ahora = new Date();
-    const hora = ahora.getHours();
-    const minutos = ahora.getMinutes();
-    const totalMin = (hora * 60) + minutos; // Lógica para precisión total
-    
-    const visor = document.getElementById('saludo-horario');
-    let textoSaludo = "";
-
-    // Lógica con tus horarios exactos
-    if (totalMin >= 0 && totalMin < 720) { // 12:00 AM a 11:59 AM
-        textoSaludo = "☀️ ¡La Paz del Señor en esta Hermosa Mañana, Mañana de Bendición!";
-    } 
-    else if (totalMin >= 720 && totalMin <= 1080) { // 12:00 PM a 6:00 PM
-        textoSaludo = "🌤️ ¡La Paz del Señor en esta hermosa Tarde!";
-    } 
-    else { // 6:01 PM en adelante
-        textoSaludo = "🌙 ¡La Paz del Señor en esta hermosa Noche!";
-    }
-
-    if (visor) {
-        visor.innerText = textoSaludo;
-    }
-}
-
-// Llamamos a la función para que actúe de inmediato
-actualizarBienvenida();
-	
+        
 
 </script>
 </body>
