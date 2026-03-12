@@ -20,6 +20,7 @@
 </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
@@ -387,6 +388,10 @@ table td:not(.row-cat) {
     
     <div class="dash-card" onclick="exportarCensoTXT()" style="background: #334155; border-bottom: 6px solid #94a3b8;">
     <i style="color: #cbd5e1;">📝</i><span style="color: white;">Exportar Lista General TXT</span>
+</div>
+
+    <div class="dash-card" onclick="exportarCensoPDF()" style="background: linear-gradient(to bottom, #1a0533, #3b0764); border-bottom: 6px solid #d4af37 !important;">
+    <i>📄</i><span style="color: #d4af37;">Exportar Lista PDF</span>
 </div>
 
     
@@ -1267,6 +1272,421 @@ function imprimirSistema() {
     // En Android esto abrirá el selector de PDF o impresoras conectadas
     window.print();
 }
+
+// =====================================================
+//   EXPORTAR CENSO A PDF — FORMATO OFICIAL LLDM
+//   (jsPDF directo — control total de páginas)
+// =====================================================
+window.exportarCensoPDF = function() {
+
+    // ── Verificar que jsPDF esté disponible ──
+    if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+        // Cargar jsPDF dinámicamente si no está disponible
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s.onload = () => window.exportarCensoPDF();
+        document.head.appendChild(s);
+        return;
+    }
+
+    const { jsPDF } = window.jspdf || window;
+    const church   = (document.getElementById('churchName').value   || 'IGLESIA LOCAL').toUpperCase();
+    const minister = (document.getElementById('ministerName').value || 'MINISTRO LOCAL').toUpperCase();
+    const fechaOpts = { day: 'numeric', month: 'long', year: 'numeric' };
+    const fecha = new Date().toLocaleDateString('es-SV', fechaOpts);
+
+    // ── Página A4 en mm ──
+    const doc    = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const PW     = 210;   // ancho página
+    const PH     = 297;   // alto página
+    const ML     = 14;    // margen izquierdo
+    const MR     = 14;    // margen derecho
+    const MT     = 14;    // margen superior
+    const MB     = 14;    // margen inferior
+    const CW     = PW - ML - MR;   // ancho contenido = 182 mm
+    const BOTTOM = PH - MB;        // límite inferior = 283 mm
+
+    let y = MT;  // cursor vertical
+
+    // ── Colores ──
+    const BLACK  = [0, 0, 0];
+    const WHITE  = [255, 255, 255];
+    const LGRAY  = [224, 224, 224];  // gris claro cabecera tabla
+    const MGRAY  = [245, 245, 245];  // gris filas alternas
+    const DGRAY  = [208, 208, 208];  // gris fila TOTAL MIEMBROS
+    const TOTBG  = [232, 232, 232];  // gris fila totales sección
+
+    // ────────────────────────────────────────────────
+    // HELPERS
+    // ────────────────────────────────────────────────
+
+    // Comprueba si cabe `h` mm en la página actual; si no, nueva página + encabezado
+    const checkPage = (h) => {
+        if (y + h > BOTTOM) {
+            doc.addPage();
+            y = MT;
+        }
+    };
+
+    // Línea horizontal
+    const hline = (x1, x2, yy, lw = 0.3, color = BLACK) => {
+        doc.setDrawColor(...color);
+        doc.setLineWidth(lw);
+        doc.line(x1, yy, x2, yy);
+    };
+
+    // Rectángulo relleno
+    const fillRect = (x, yy, w, h, color) => {
+        doc.setFillColor(...color);
+        doc.rect(x, yy, w, h, 'F');
+    };
+
+    // Rectángulo con borde
+    const strokeRect = (x, yy, w, h, lw = 0.3, color = BLACK) => {
+        doc.setDrawColor(...color);
+        doc.setLineWidth(lw);
+        doc.rect(x, yy, w, h, 'S');
+    };
+
+    // Texto con fuente
+    const txt = (text, x, yy, size, style = 'normal', align = 'left', color = BLACK) => {
+        doc.setFontSize(size);
+        doc.setFont('helvetica', style);
+        doc.setTextColor(...color);
+        doc.text(String(text), x, yy, { align });
+    };
+
+    // Celda con borde y relleno opcional
+    const cell = (text, x, yy, w, h, size = 8, fontStyle = 'normal', halign = 'left', bgColor = null, textColor = BLACK) => {
+        if (bgColor) fillRect(x, yy, w, h, bgColor);
+        doc.setDrawColor(...BLACK);
+        doc.setLineWidth(0.25);
+        doc.rect(x, yy, w, h, 'S');
+        doc.setFontSize(size);
+        doc.setFont('helvetica', fontStyle);
+        doc.setTextColor(...textColor);
+        const px = halign === 'center' ? x + w / 2 : halign === 'right' ? x + w - 1.5 : x + 1.8;
+        doc.text(String(text), px, yy + h * 0.65, { align: halign });
+    };
+
+    // ────────────────────────────────────────────────
+    // BLOQUE ENCABEZADO (idéntico al PDF de referencia)
+    // ────────────────────────────────────────────────
+    const drawHeader = () => {
+        const bh = 28;  // altura total del bloque
+        strokeRect(ML, y, CW, bh, 0.5);
+
+        // Fondo blanco interior
+        fillRect(ML, y, CW, bh, WHITE);
+
+        // Línea separadora inferior del bloque (fecha/ministro)
+        const sepY = y + bh - 7;
+        hline(ML, ML + CW, sepY, 0.3);
+
+        // Textos centrados
+        txt('IGLESIA LA LUZ DEL MUNDO', ML + CW / 2, y + 7,  13, 'bold',   'center');
+        txt(church,                     ML + CW / 2, y + 13,  11, 'bold',   'center');
+        txt('REPORTE GENERAL DE CENSO', ML + CW / 2, y + 19,  9,  'normal', 'center');
+
+        // Fecha y ministro
+        txt(`FECHA: ${fecha}`,         ML + 3,      y + 25, 8, 'bold', 'left');
+        txt(`MINISTRO: ${minister}`,   ML + CW - 3, y + 25, 8, 'bold', 'right');
+
+        y += bh + 4;
+    };
+
+    // ────────────────────────────────────────────────
+    // TÍTULO DE SECCIÓN (fondo negro, texto blanco)
+    // ────────────────────────────────────────────────
+    const drawSectionTitle = (titulo) => {
+        checkPage(10);
+        fillRect(ML, y, CW, 7, BLACK);
+        txt(titulo, ML + CW / 2, y + 5, 9, 'bold', 'center', WHITE);
+        y += 7;
+    };
+
+    // ────────────────────────────────────────────────
+    // CABECERA DE TABLA (fondo gris claro)
+    // ────────────────────────────────────────────────
+    // cols = [{label, x, w, align}]
+    const drawTableHeader = (cols, rowH = 6) => {
+        checkPage(rowH + 2);
+        cols.forEach(c => {
+            cell(c.label, c.x, y, c.w, rowH, 8, 'bold', c.align || 'left', LGRAY);
+        });
+        y += rowH;
+    };
+
+    // ────────────────────────────────────────────────
+    // FILA DE DATOS
+    // ────────────────────────────────────────────────
+    const drawRow = (cols, values, rowH, isAlt, extraLines = {}) => {
+        checkPage(rowH + 2);
+        const bg = isAlt ? MGRAY : WHITE;
+        cols.forEach((c, ci) => {
+            const val = values[ci] !== undefined ? values[ci] : '';
+            const lines = extraLines[ci];
+            if (bgColor => bg) fillRect(c.x, y, c.w, rowH, bg);
+            doc.setDrawColor(...BLACK);
+            doc.setLineWidth(0.25);
+            doc.rect(c.x, y, c.w, rowH, 'S');
+            if (lines && lines.length > 1) {
+                // texto en dos líneas (RETIRADO / TEMPORAL)
+                doc.setFontSize(7.5);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(...BLACK);
+                const px = c.align === 'center' ? c.x + c.w / 2 : c.x + 1.8;
+                doc.text(lines[0], px, y + rowH * 0.38, { align: c.align || 'left' });
+                doc.text(lines[1], px, y + rowH * 0.75, { align: c.align || 'left' });
+            } else {
+                doc.setFontSize(8);
+                doc.setFont('helvetica', ci === 1 ? 'bold' : 'normal');
+                doc.setTextColor(...BLACK);
+                const px = c.align === 'center' ? c.x + c.w / 2 : c.x + 1.8;
+                doc.text(String(val), px, y + rowH * 0.65, { align: c.align || 'left' });
+            }
+        });
+        y += rowH;
+    };
+
+    // ────────────────────────────────────────────────
+    // FILA DE TOTALES DE SECCIÓN
+    // ────────────────────────────────────────────────
+    const drawTotalsRow = (text) => {
+        checkPage(7);
+        fillRect(ML, y, CW, 6, TOTBG);
+        strokeRect(ML, y, CW, 6, 0.25);
+        txt(text, ML + 2, y + 4.2, 8, 'bold', 'left');
+        y += 6;
+    };
+
+    // ────────────────────────────────────────────────
+    // TABLA ADULTOS (varones o mujeres)
+    // ────────────────────────────────────────────────
+    const drawAdultos = (secId, titulo) => {
+        const datos = db[secId];
+        if (!datos || datos.length === 0) return { act: 0, ret: 0 };
+
+        let actSec = 0, retSec = 0;
+
+        // Anchos de columna
+        const wN   = 12;
+        const wGrp = 32;
+        const wEst = 30;
+        const wNom = CW - wN - wGrp - wEst;
+
+        const cols = [
+            { label: 'N°',             x: ML,                    w: wN,   align: 'center' },
+            { label: 'NOMBRE COMPLETO',x: ML + wN,               w: wNom, align: 'left'   },
+            { label: 'GRUPO',          x: ML + wN + wNom,        w: wGrp, align: 'center' },
+            { label: 'ESTADO',         x: ML + wN + wNom + wGrp, w: wEst, align: 'center' },
+        ];
+
+        drawSectionTitle(titulo);
+        drawTableHeader(cols, 6);
+
+        datos.forEach((m, i) => {
+            const esRet = m.estado === 'Retirado';
+            if (esRet) { retSec++; } else { actSec++; }
+
+            const nombre = (m.nombre || '').toUpperCase();
+            const grupo  = (m.grupo  || '---').toUpperCase();
+
+            const rowH = esRet ? 9 : 6;
+            const extraLines = esRet ? { 3: ['RETIRADO', 'TEMPORAL'] } : {};
+            const values = [String(i + 1), nombre, grupo, esRet ? '' : 'ACTIVO'];
+
+            checkPage(rowH + 1);
+            const bg = esRet ? [255, 235, 235] : (i % 2 === 0 ? WHITE : MGRAY);
+            const RED = [180, 0, 0];
+            // dibujar cada celda manualmente para control total
+            [cols[0], cols[1], cols[2], cols[3]].forEach((c, ci) => {
+                fillRect(c.x, y, c.w, rowH, bg);
+                doc.setDrawColor(...BLACK);
+                doc.setLineWidth(0.25);
+                doc.rect(c.x, y, c.w, rowH, 'S');
+
+                if (ci === 3 && esRet) {
+                    // RETIRADO TEMPORAL en dos líneas — rojo
+                    doc.setFontSize(7.5);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(...RED);
+                    doc.text('RETIRADO', c.x + c.w / 2, y + rowH * 0.38, { align: 'center' });
+                    doc.text('TEMPORAL', c.x + c.w / 2, y + rowH * 0.75, { align: 'center' });
+                } else {
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', ci === 1 ? 'bold' : 'normal');
+                    doc.setTextColor(...(esRet ? RED : BLACK));
+                    const val = values[ci];
+                    const px = c.align === 'center' ? c.x + c.w / 2 : c.x + 1.8;
+                    doc.text(val, px, y + rowH * 0.65, { align: c.align });
+                }
+            });
+            y += rowH;
+        });
+
+        const cat = secId === 'hombres' ? 'varones' : 'mujeres';
+        drawTotalsRow(`Total ${cat} registrados: ${datos.length}  |  Activos: ${actSec}  |  Retirados temporales: ${retSec}`);
+        return { act: actSec, ret: retSec };
+    };
+
+    // ────────────────────────────────────────────────
+    // TABLA NIÑEZ
+    // ────────────────────────────────────────────────
+    const drawNinez = () => {
+        const datos = db['kids'];
+        if (!datos || datos.length === 0) return { ninos: 0, ninas: 0 };
+
+        let ninos = 0, ninas = 0;
+
+        const wN   = 12;
+        const wEd  = 25;
+        const wNom = CW - wN - wEd;
+
+        const cols = [
+            { label: 'N°',              x: ML,           w: wN,   align: 'center' },
+            { label: 'NOMBRE COMPLETO', x: ML + wN,      w: wNom, align: 'left'   },
+            { label: 'EDAD',            x: ML + wN + wNom, w: wEd, align: 'center' },
+        ];
+
+        drawSectionTitle('LISTADO DE NIÑEZ (0 – 13 AÑOS)');
+        drawTableHeader(cols, 6);
+
+        datos.forEach((m, i) => {
+            if (m.genero === 'F') ninas++; else ninos++;
+            const nombre = (m.nombre || '').toUpperCase();
+            const edad   = calcEdad(m.nacimiento);
+            const edadTxt = edad === 1 ? '1 año' : `${edad} años`;
+            const rowH = 6;
+
+            checkPage(rowH + 1);
+            const bg = i % 2 === 0 ? WHITE : MGRAY;
+
+            cols.forEach((c, ci) => {
+                fillRect(c.x, y, c.w, rowH, bg);
+                doc.setDrawColor(...BLACK);
+                doc.setLineWidth(0.25);
+                doc.rect(c.x, y, c.w, rowH, 'S');
+                doc.setFontSize(8);
+                doc.setFont('helvetica', ci === 1 ? 'bold' : 'normal');
+                doc.setTextColor(...BLACK);
+                const val = ci === 0 ? String(i+1) : ci === 1 ? nombre : edadTxt;
+                const px = c.align === 'center' ? c.x + c.w / 2 : c.x + 1.8;
+                doc.text(val, px, y + rowH * 0.65, { align: c.align });
+            });
+            y += rowH;
+        });
+
+        drawTotalsRow(`Total niñez registrada: ${datos.length}  |  Niños: ${ninos}  |  Niñas: ${ninas}`);
+        return { ninos, ninas };
+    };
+
+    // ────────────────────────────────────────────────
+    // RESUMEN DE ESTADÍSTICAS
+    // ────────────────────────────────────────────────
+    const drawResumen = (totalActivos, totalRetirados, ninosCont, ninasCont) => {
+        const totalMiembros = totalActivos + totalRetirados;
+        const granTotal     = totalMiembros + ninosCont + ninasCont;
+
+        checkPage(60);
+        y += 4;
+
+        drawSectionTitle('RESUMEN DE ESTADÍSTICAS');
+
+        const wCat = CW - 30;
+        const wVal = 30;
+        const xVal = ML + wCat;
+        const rH   = 7;
+
+        // Cabecera
+        checkPage(rH + 1);
+        cell('CATEGORÍA', ML, y, wCat, rH, 8, 'bold', 'left',   LGRAY);
+        cell('CANTIDAD',  xVal, y, wVal, rH, 8, 'bold', 'center', LGRAY);
+        y += rH;
+
+        const rows = [
+            ['Total Miembros Activos',       String(totalActivos),    WHITE,  'normal'],
+            ['Total Retirados Temporales',   String(totalRetirados),  MGRAY,  'normal'],
+            ['TOTAL MIEMBROS REGISTRADOS',   String(totalMiembros),   DGRAY,  'bold'  ],
+            ['Total Niños (varones)',         String(ninosCont),       WHITE,  'normal'],
+            ['Total Niñas (mujeres)',         String(ninasCont),       MGRAY,  'normal'],
+            ['TOTAL GENERAL DE NIÑEZ',       String(ninosCont+ninasCont), [232,232,232], 'bold'],
+        ];
+
+        rows.forEach(([label, val, bg, style]) => {
+            checkPage(rH + 1);
+            cell(label, ML,   y, wCat, rH, 8, style,  'left',   bg);
+            cell(val,   xVal, y, wVal, rH, 8, 'bold',  'center', bg);
+            y += rH;
+        });
+
+        // Gran total — fondo negro
+        checkPage(10);
+        fillRect(ML, y, CW, 9, BLACK);
+        strokeRect(ML, y, CW, 9, 0.5);
+        txt(`GRAN TOTAL — CENSO GENERAL   ${granTotal} ALMAS`, ML + CW / 2, y + 6, 11, 'bold', 'center', WHITE);
+        y += 9;
+    };
+
+    // ────────────────────────────────────────────────
+    // FIRMAS
+    // ────────────────────────────────────────────────
+    const drawFirmas = () => {
+        checkPage(30);
+        y += 18;
+
+        const xL = ML + 10;
+        const xR = ML + CW / 2 + 10;
+        const lineW = 65;
+
+        // Líneas de firma
+        hline(xL,       xL + lineW, y, 0.5);
+        hline(xR,       xR + lineW, y, 0.5);
+        y += 1;
+
+        txt(`Firma: ___________________________`, xL, y + 5, 8, 'normal', 'left');
+        txt(`Firma: ___________________________`, xR, y + 5, 8, 'normal', 'left');
+        y += 10;
+
+        txt(minister,        xL + lineW / 2, y, 8, 'bold',   'center');
+        txt('COMISIÓN LOCAL', xR + lineW / 2, y, 8, 'bold',   'center');
+        y += 5;
+
+        txt('Ministro Local', xL + lineW / 2, y, 7.5, 'normal', 'center');
+        txt('Sello y Fecha',  xR + lineW / 2, y, 7.5, 'normal', 'center');
+        y += 10;
+
+        // Pie de página
+        hline(ML, ML + CW, y, 0.3);
+        y += 4;
+        txt(`Iglesia La Luz del Mundo — ${church}`, ML + CW / 2, y, 7.5, 'normal', 'center', [120, 120, 120]);
+    };
+
+    // ────────────────────────────────────────────────
+    // CONSTRUIR EL DOCUMENTO
+    // ────────────────────────────────────────────────
+
+    // Página 1: Encabezado + Varones
+    drawHeader();
+    const { act: vAct, ret: vRet } = drawAdultos('hombres', 'LISTADO DE VARONES');
+
+    // Página 2: Mujeres (nueva página)
+    doc.addPage();
+    y = MT;
+    const { act: mAct, ret: mRet } = drawAdultos('mujeres', 'LISTADO DE MUJERES');
+
+    // Página 3: Niñez + Resumen (nueva página)
+    doc.addPage();
+    y = MT;
+    const { ninos, ninas } = drawNinez();
+
+    drawResumen(vAct + mAct, vRet + mRet, ninos, ninas);
+    drawFirmas();
+
+    // ── Guardar ──
+    const nombreArchivo = `Censo_${church.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(nombreArchivo);
+};
 
 </script>
 </body>
