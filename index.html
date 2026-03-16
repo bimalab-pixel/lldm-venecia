@@ -506,28 +506,159 @@ header p {
 /* Ocultar en pantalla */
 .only-print { display: none; }
 
-/* --- ESTILO PARA CHROME EN WINDOWS --- */
+/* --- ESTILO PARA IMPRESIÓN --- */
 @media print {
-    /* Ocultar todo */
     body * { visibility: hidden; }
 
-    /* Mostrar solo el área de impresión y sus hijos */
+    /* Semestral (landscape vía class en body) */
     #semestral-print-area, #semestral-print-area * { visibility: visible; }
+    #semestral-print-area { position: absolute; left: 0; top: 0; width: 100%; }
 
-    #semestral-print-area { 
-        position: absolute; 
-        left: 0; 
-        top: 0; 
-        width: 100%; 
-    }
+    /* Reporte diario */
+    #daily-print-area, #daily-print-area * { visibility: visible; }
+    #daily-print-area { position: absolute; left: 0; top: 0; width: 100%; }
 
-    /* Forzar que los botones no ocupen espacio */
+    /* Oyentes / Restauración */
+    #special-print-area, #special-print-area * { visibility: visible; }
+    #special-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+
     .no-print { display: none !important; }
 
-    @page { 
-        size: letter landscape; 
-        margin: 0.5cm; 
-    }
+    /* Colores forzados */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+    /* Tarjetas oyentes en impresión */
+    .special-member-card { box-shadow: none !important; border: 1px solid #ccc !important;
+        break-inside: avoid; margin-bottom: 6px !important; padding: 8px 12px !important; }
+    .stat-pill { border: 1px solid #ddd !important; }
+    .special-group-title { background: #000 !important; color: #fff !important; }
+
+    /* Portrait por defecto */
+    @page { size: letter portrait; margin: 0.8cm; }
+}
+
+/* Semestral fuerza landscape */
+body.print-landscape @page { size: letter landscape; margin: 0.5cm; }
+
+
+
+/* ══ BADGES DE ESTADO ════════════════════════════════════════ */
+.status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.st-activo       { background: #d4edda; color: #155724; }
+.st-retirado     { background: #ffecd1; color: #7d4500; }
+.st-oyente       { background: #d1ecf1; color: #0c5460; }
+.st-restauracion { background: #e2d9f3; color: #4a235a; }
+
+/* ══ TARJETAS CONTEO ESTADO ══════════════════════════════════ */
+.status-summary { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; margin-bottom: 14px; }
+.status-card    { padding: 12px; border-radius: 10px; text-align: center; }
+.status-card .num { font-size: 1.9rem; font-weight: 900; }
+.status-card .lbl { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+.sc-activo       { background: #d4edda; color: #155724; }
+.sc-retirado     { background: #ffecd1; color: #7d4500; }
+.sc-oyente       { background: #d1ecf1; color: #0c5460; }
+.sc-restauracion { background: #e2d9f3; color: #4a235a; }
+
+/* ══ BANNER CENSO EN MANAGE ══════════════════════════════════ */
+.censo-banner {
+    background: #0f172a; color: white; border-radius: 12px;
+    padding: 12px 16px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+}
+.censo-banner-info { font-size: 0.78rem; line-height: 1.5; }
+.censo-banner-title { font-size: 0.65rem; color: #d4af37; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; }
+.censo-banner-btn {
+    background: #d4af37; color: #000; border: none; border-radius: 8px;
+    padding: 8px 14px; font-weight: 800; font-size: 0.8rem; cursor: pointer;
+    white-space: nowrap; flex-shrink: 0;
+}
+
+/* ══ MODAL CAMBIO DE ESTADO ══════════════════════════════════ */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 3000;
+    display: flex; justify-content: center; align-items: center;
+    backdrop-filter: blur(3px);
+}
+.modal-box { background: white; border-radius: 16px; padding: 22px;
+    width: 88%; max-width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+.modal-box h3 { margin: 0 0 6px; color: #0f172a; font-size: 1.1rem; }
+.modal-box p  { margin: 0 0 16px; font-size: 0.82rem; color: #666; }
+.status-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.status-opt-btn {
+    padding: 12px 8px; border: 2px solid #e0e0e0; border-radius: 10px;
+    background: #fafafa; cursor: pointer; font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; transition: all 0.2s; text-align: center;
+}
+.status-opt-btn.sel-activo       { background: #27ae60; border-color: #27ae60; color: white; }
+.status-opt-btn.sel-retirado     { background: #e67e22; border-color: #e67e22; color: white; }
+.status-opt-btn.sel-oyente       { background: #2980b9; border-color: #2980b9; color: white; }
+.status-opt-btn.sel-restauracion { background: #8e44ad; border-color: #8e44ad; color: white; }
+
+/* ══ TARJETAS ESTADÍSTICA OYENTES/RESTAURACIÓN ═══════════════ */
+.special-member-card {
+    background: #fff;
+    border: 1px solid #e0e6ed;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+.special-member-card .member-num {
+    font-size: .75rem; font-weight: 700; color: #94a3b8;
+    min-width: 26px;
+}
+.special-member-card .member-name {
+    flex: 1; font-weight: 700; font-size: .98rem; color: #1e293b;
+}
+.special-member-card .member-stats {
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+}
+.stat-pill {
+    display: inline-flex; flex-direction: column; align-items: center;
+    background: #f1f5f9; border-radius: 8px; padding: 5px 9px;
+    min-width: 42px;
+}
+.stat-pill .sp-num { font-size: 1.1rem; font-weight: 900; line-height: 1; }
+.stat-pill .sp-lbl { font-size: .55rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .4px; color: #64748b; margin-top: 2px; }
+.stat-pill.sp-5am  { background: #f0fdf4; }
+.stat-pill.sp-5am  .sp-num { color: #166534; }
+.stat-pill.sp-9am  { background: #fefce8; }
+.stat-pill.sp-9am  .sp-num { color: #854d0e; }
+.stat-pill.sp-6pm  { background: #eff6ff; }
+.stat-pill.sp-6pm  .sp-num { color: #1d4ed8; }
+.stat-pill.sp-ed   { background: #fdf4ff; }
+.stat-pill.sp-ed   .sp-num { color: #7e22ce; }
+.stat-pill.sp-tot  { background: #0f172a; }
+.stat-pill.sp-tot  .sp-num { color: #d4af37; }
+.stat-pill.sp-tot  .sp-lbl { color: #94a3b8; }
+.special-group-title {
+    background: #0f172a; color: white; border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 12px; margin-top: 6px;
+    font-weight: 800; font-size: .9rem; letter-spacing: .5px;
+}
+.special-totals-row {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 12px 16px; margin-top: 6px; margin-bottom: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .82rem; font-weight: 700; color: #475569;
+}
+
+/* Impresión de la vista especial — ya incluida en el bloque principal arriba */
+
+.att-group-sep {
+    background: #f0f0f0; padding: 7px 14px; font-size: 0.72rem;
+    font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #ddd; cursor: default; list-style: none;
 }
 
 /* Estilo de la tabla tipo Excel con líneas negras */
@@ -765,6 +896,17 @@ header p {
 
     <label class="header-label">MINISTRO LOCAL</label>
     <input type="text" id="conf-ministro" class="header-input" placeholder="Nombre del Ministro" onchange="saveHeaderConf()">
+
+    <!-- Switcher ASISTENCIA / CENSO -->
+    <div style="display:flex;gap:0;margin:10px auto 0;max-width:320px;border-radius:30px;overflow:hidden;border:2px solid #d4af37;box-shadow:0 2px 8px rgba(0,0,0,.2);">
+        <button style="flex:1;padding:10px 5px;border:none;cursor:pointer;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;background:#d4af37;color:#000;">
+            📝 ASISTENCIA
+        </button>
+        <button onclick="location.href='CENSOLLDM.html'" style="flex:1;padding:10px 5px;border:none;cursor:pointer;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);">
+            👥 CENSO
+        </button>
+    </div>
+
 </header>
 
 <div id="searchContainer" style="display:none; padding: 10px 15px; background: #fff; border-bottom: 1px solid #ddd;">
@@ -792,15 +934,28 @@ header p {
             <button class="dash-card c-attend" onclick="showAttendanceSetup()"><i>📝</i><span>TOMAR ASISTENCIA</span></button>
 
             <button class="dash-card c-stats" onclick="showStats()"><i>📊</i><span>Cuadro Mensual</span></button>
+            <button class="dash-card" style="background:linear-gradient(to bottom,#fff,#e8f4fd);border-bottom:5px solid #2980b9;" onclick="showSpecialSheet()">
+                <i>👥</i><span>Oyentes / Restauración</span>
+            </button>
             <button class="dash-card c-avg" onclick="showAverages()"><i>📅</i><span>Promedios</span></button>
 
-                         <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
-        <i>📋</i><span>Reporte / Supervisión</span>
-    </button>
-        <div class="dash-card c-stats" onclick="generarReporteSemestral()">
-    <i>📊</i>
-    <span>Reporte Semestral</span>
-</div>
+            <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fff0f0); border-bottom: 5px solid #c0392b;" onclick="showCensus()">
+                <i>📋</i><span>Reporte / Supervisión</span>
+            </button>
+            <div class="dash-card c-stats" onclick="generarReporteSemestral()">
+                <i>📊</i>
+                <span>Reporte Semestral</span>
+            </div>
+
+            <!-- NUEVO: Reporte Diario -->
+            <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #fefce8); border-bottom: 5px solid #ca8a04;" onclick="showReporteDiario()">
+                <i>📅</i><span>Reporte Diario</span>
+            </button>
+
+            <!-- NUEVO: Sincronizar desde Censo -->
+            <button class="dash-card" style="background: linear-gradient(to bottom, #ffffff, #f0fdf4); border-bottom: 5px solid #16a34a;" onclick="sincronizarDesdeCenso()">
+                <i>🔄</i><span>Sincronizar Censo</span>
+            </button>
 
             <button class="dash-card c-cloud" onclick="uploadData()"><i>☁️</i><span>SUBIR</span></button>
             <button class="dash-card c-cloud" onclick="downloadData()"><i>⬇️</i><span>BAJAR</span></button>
@@ -832,40 +987,102 @@ header p {
 
     <div style="background:#1e293b; color:white; padding:15px; border-radius:15px; margin-bottom:15px; text-align:center;">
         <h3 style="margin:0; font-size:1.1rem;">INFORME DE SUPERVISIÓN</h3>
-        <p style="margin:5px 0 0 0; font-size:0.75rem; opacity:0.8;">Censo Manual y Asistencia</p>
+        <p style="margin:5px 0 0 0; font-size:0.75rem; opacity:0.8;">Datos automáticos de membresía</p>
     </div>
 
-    <div style="background:white; padding:20px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; box-shadow: var(--card-shadow);">
-        <label class="header-label" style="color:#2c3e50; font-size: 0.8rem;">Total Miembros Activos</label>
-        <input type="number" id="censo-activos" placeholder="0" style="font-size: 1.5rem; text-align: center; border: 2px solid #2980b9; width:100%; box-sizing:border-box;">
+    <!-- Resumen automático desde censo_v17_db -->
+    <div id="censusAutoSummary" style="margin-bottom:14px;"></div>
 
-        <label class="header-label" style="color:#2c3e50; font-size: 0.8rem; margin-top: 15px;">Total Miembros Temporales</label>
-        <input type="number" id="censo-temporales" placeholder="0" style="font-size: 1.5rem; text-align: center; border: 2px solid #7f8c8d; width:100%; box-sizing:border-box;">
-
-        <label class="header-label" style="color:#2c3e50; font-size: 0.8rem; margin-top: 15px;">Comisión de Estadística</label>
-        <input type="text" id="comision-nombres" placeholder="Nombres del personal..." style="margin-bottom:15px;">
-
-        <button class="btn-action" style="background:#27ae60; margin:0; height: 60px; font-size: 1.1rem;" onclick="generarInformeCenso()">GENERAR INFORME PDF 📄</button>
+    <div style="background:white; padding:15px; border-radius:12px; border:1px solid #ddd; margin-bottom:15px; box-shadow:var(--card-shadow);">
+        <label class="header-label" style="color:#2c3e50; font-size:0.8rem;">Comisión de Estadística</label>
+        <input type="text" id="comision-nombres" placeholder="Nombres del personal..."
+            style="margin-bottom:5px;"
+            onchange="saveComision()" oninput="saveComision()">
+        <p style="font-size:0.7rem;color:#888;margin:0;">Se guarda automáticamente.</p>
     </div>
+
+    <button class="btn-action" style="background:#27ae60; margin:0; height:60px; font-size:1.1rem;" onclick="generarInformeCenso()">
+        🖨️ IMPRIMIR / GUARDAR PDF
+    </button>
 
     <div id="censusPrintArea" class="only-print">
         <div id="censusContent"></div>
     </div>
 </div>
 
-
+<!-- ══ MANAGE VIEW con banner + estados ══════════════════════ -->
     <div id="manageView" class="view">
         <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
-        <h2 id="manageTitle" style="margin-top:0;">Gestionar</h2>
+        <h2 id="manageTitle" style="margin-top:0;">Lista</h2>
+
+        <!-- Tarjetas de conteo -->
+        <div id="statusSummary" class="status-summary"></div>
+
+        <!-- Banner Censo -->
+        <div id="censoBanner" class="censo-banner" style="display:none;"></div>
+
         <input type="file" id="txtInput" accept=".txt" style="display:none" onchange="handleFile(event)">
-        <button class="btn-action" style="background:#2980b9; margin-bottom:15px;" onclick="document.getElementById('txtInput').click()">📂 Importar .TXT</button>
-        <div style="display:flex; gap:5px;">
-            <input type="text" id="newName" placeholder="Nombre completo..." onkeypress="if(event.key==='Enter') addMem()">
-            <button class="btn-action" onclick="addMem()" style="width:auto; margin:0; background:#27ae60;">➕</button>
+        <button class="btn-action" style="background:#2980b9; margin-bottom:15px;" onclick="document.getElementById('txtInput').click()">📂 Importar desde archivo .TXT</button>
+
+        <input type="text" id="newName" placeholder="Nombre completo..." style="margin-bottom:8px;"
+            onkeypress="if(event.key==='Enter') addMem()">
+
+        <!-- Botones de estado para nuevo miembro -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+            <button id="newStBtn-activo" class="status-opt-btn sel-activo" onclick="selectNewSt('activo')">✅ ACTIVO</button>
+            <button id="newStBtn-retirado" class="status-opt-btn" onclick="selectNewSt('retirado')" style="color:#e67e22;">⏸ RETIRADO TEMP.</button>
+            <button id="newStBtn-oyente" class="status-opt-btn" onclick="selectNewSt('oyente')" style="color:#2980b9;">👂 OYENTE</button>
+            <button id="newStBtn-restauracion" class="status-opt-btn" onclick="selectNewSt('restauracion')" style="color:#8e44ad;">🔄 EN RESTAURACIÓN</button>
         </div>
+        <button class="btn-action" onclick="addMem()" style="background:#27ae60;margin-bottom:8px;">➕ AGREGAR MIEMBRO</button>
+
         <p>Total: <strong id="memCount">0</strong></p>
         <ul id="manageList" class="member-list"></ul>
     </div>
+
+<!-- ══ MODAL CAMBIO DE ESTADO ════════════════════════════════ -->
+<div id="statusModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeStatusModal()">
+    <div class="modal-box">
+        <h3>Cambiar Estado</h3>
+        <p id="modalMemberName" style="font-weight:600;margin-bottom:14px;color:#0f172a;"></p>
+        <div class="status-options">
+            <button id="stBtn-activo"       class="status-opt-btn" onclick="applyStatus('activo')">✅ Activo</button>
+            <button id="stBtn-retirado"     class="status-opt-btn" onclick="applyStatus('retirado')">⏸ Retirado</button>
+            <button id="stBtn-oyente"       class="status-opt-btn" onclick="applyStatus('oyente')">👂 Oyente</button>
+            <button id="stBtn-restauracion" class="status-opt-btn" onclick="applyStatus('restauracion')">🔄 Restauración</button>
+        </div>
+        <button onclick="closeStatusModal()" style="width:100%;padding:10px;background:#ecf0f1;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Cancelar</button>
+    </div>
+</div>
+
+<!-- ══ VISTA: OYENTES / RESTAURACIÓN ═════════════════════════ -->
+<div id="specialView" class="view">
+    <div class="no-print" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+        <button class="btn-action btn-back" onclick="goHome()" style="margin:0;">⬅ Volver</button>
+        <button onclick="window.print()" style="margin:0;background:#8e44ad;color:white;border:none;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer;">📄 IMPRIMIR / PDF</button>
+    </div>
+
+    <!-- Controles -->
+    <div class="no-print" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <input type="month" id="spMonth" onchange="renderSpecialList()" style="margin:0;flex:1;">
+        <select id="spGroup" onchange="renderSpecialList()" style="margin:0;flex:1;">
+            <option value="oyente_h">Oyentes – Hombres</option>
+            <option value="oyente_m">Oyentes – Mujeres</option>
+            <option value="restauracion_h">Restauración – Hombres</option>
+            <option value="restauracion_m">Restauración – Mujeres</option>
+        </select>
+    </div>
+
+    <!-- Área imprimible -->
+    <div id="special-print-area">
+        <div id="special-print-header" style="display:none;text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px;">
+            <div style="font-size:14pt;font-weight:900;">"LA LUZ DEL MUNDO"</div>
+            <div id="special-header-subtitle" style="font-size:10pt;font-weight:bold;background:#000;color:#fff;padding:4px;margin-top:4px;"></div>
+            <div id="special-header-info" style="font-size:8.5pt;margin-top:4px;"></div>
+        </div>
+        <div id="specialContainer"></div>
+    </div>
+</div>
 
     <div id="setupView" class="view">
         <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
@@ -926,8 +1143,20 @@ header p {
                 CONTROL DE ASISTENCIA SEMESTRAL
             </div>
         </div>
-
         <div id="semestral-content"></div>
+    </div>
+</div>
+
+<!-- ══ VISTA: REPORTE DIARIO ══════════════════════════════════ -->
+<div id="view-reporte-diario" class="view" style="background:white;">
+    <div class="no-print" style="padding:14px; background:#eee; margin-bottom:16px; border-radius:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button class="btn-back" onclick="goHome()" style="margin:0;">⬅ Volver</button>
+        <input type="date" id="dailyReportDate" style="margin:0; flex:1; min-width:140px;" onchange="renderReporteDiario()">
+        <button onclick="window.print()" style="margin:0; background:#ca8a04; color:white; border:none; border-radius:8px; padding:10px 16px; font-weight:bold; cursor:pointer;">📄 IMPRIMIR / PDF</button>
+    </div>
+    <div id="daily-preview" class="no-print" style="margin-bottom:10px;"></div>
+    <div id="daily-print-area">
+        <div id="daily-print-content"></div>
     </div>
 </div>
 
@@ -1144,12 +1373,23 @@ window.downloadData = async function() {
 function showHeader() { document.getElementById('mainHeader').classList.remove('header-hidden'); }
 
     const DB_KEY = 'lldm_v6_total_color';
-    // Inicializar si está vacío
-    let appData = JSON.parse(localStorage.getItem(DB_KEY)) || { hombres: [], mujeres: [], asistencias: [] };
+    let appData = JSON.parse(localStorage.getItem(DB_KEY)) || { hombres: [], mujeres: [], asistencias: [], miembrosInfo: {} };
+    if (!appData.miembrosInfo) appData.miembrosInfo = {};
     let curType='', curAttType='', curSvStr='';
 
     function save() { localStorage.setItem(DB_KEY, JSON.stringify(appData)); }
     function sortL(l) { return l.sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'})); }
+
+    // ── Sistema de estados ──────────────────────────────────────
+    const ST_LABELS = { activo:'Activo', retirado:'Retirado Temp.', oyente:'Oyente', restauracion:'En Restauración' };
+    const ST_BADGE  = { activo:'st-activo', retirado:'st-retirado', oyente:'st-oyente', restauracion:'st-restauracion' };
+    const ST_CARD   = { activo:'sc-activo', retirado:'sc-retirado', oyente:'sc-oyente', restauracion:'sc-restauracion' };
+    function getStatus(n) { return (appData.miembrosInfo[n] && appData.miembrosInfo[n].status) || 'activo'; }
+    function setStatus(n, st) {
+        if (!appData.miembrosInfo[n]) appData.miembrosInfo[n] = {};
+        appData.miembrosInfo[n].status = st;
+        save();
+    }
     function hideAll() { document.querySelectorAll('.view').forEach(e=>e.classList.remove('active')); }
     function goHome() { 
     document.getElementById('searchContainer').style.display = 'none';
@@ -1158,24 +1398,115 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
     document.getElementById('menuView').classList.add('active'); 
 }
     // --- GESTION ---
-   function showManage(t) { 
-    hideHeader();
-    hideAll(); 
-    curType=t; 
-    document.getElementById('manageView').classList.add('active'); 
-    document.getElementById('manageTitle').innerText=`Gestionar ${t}`; 
-    document.getElementById('searchContainer').style.display = 'block'; // MOSTRAR
-    document.getElementById('nameSearch').value = ''; // Limpiar
-    renderList(); 
-}
-    function renderList() {
-        const l=document.getElementById('manageList'); l.innerHTML=''; 
-        appData[curType].forEach((n,i)=>{
-            l.innerHTML+=`<li class="member-item"><span>${i+1}. ${n}</span> <button style="background:red;border:none;border-radius:4px;cursor:pointer;padding:5px 10px;" onclick="delMem(${i})">🗑</button></li>`;
-        });
-        document.getElementById('memCount').innerText=appData[curType].length;
+    function showManage(t) { 
+        hideHeader();
+        hideAll(); 
+        curType = t; 
+        document.getElementById('manageView').classList.add('active'); 
+        document.getElementById('manageTitle').innerText = t === 'hombres' ? 'Lista de Hermanos' : 'Lista de Hermanas';
+        document.getElementById('searchContainer').style.display = 'block';
+        document.getElementById('nameSearch').value = '';
+        renderList(); 
     }
-    function addMem() { const i=document.getElementById('newName'), n=i.value.trim(); if(!n)return; if(appData[curType].includes(n))return alert('Existe'); appData[curType].push(n); appData[curType]=sortL(appData[curType]); save(); i.value=''; renderList(); }
+
+    function renderList() {
+        // ── Tarjetas de conteo por estado ──
+        const counts = { activo:0, retirado:0, oyente:0, restauracion:0 };
+        appData[curType].forEach(n => { const s = getStatus(n); if (counts[s] !== undefined) counts[s]++; });
+        document.getElementById('statusSummary').innerHTML = `
+            <div class="status-card sc-activo"><div class="num">${counts.activo}</div><div class="lbl">Activos</div></div>
+            <div class="status-card sc-retirado"><div class="num">${counts.retirado}</div><div class="lbl">Retirados</div></div>
+            <div class="status-card sc-oyente"><div class="num">${counts.oyente}</div><div class="lbl">Oyentes</div></div>
+            <div class="status-card sc-restauracion"><div class="num">${counts.restauracion}</div><div class="lbl">Restauración</div></div>`;
+
+        // ── Banner del Censo ──
+        const censoDB = JSON.parse(localStorage.getItem('censo_v17_db'));
+        const bannerEl = document.getElementById('censoBanner');
+        if (censoDB) {
+            const censoList = curType === 'hombres' ? (censoDB.hombres||[]) : (censoDB.mujeres||[]);
+            const hoy = new Date();
+            const adultos = censoList.filter(m => {
+                if (!m.nombre || m.nombre === 'Nuevo') return false;
+                const nac = new Date(m.nacimiento || '2000-01-01');
+                let e = hoy.getFullYear() - nac.getFullYear();
+                if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth()===nac.getMonth() && hoy.getDate()<nac.getDate())) e--;
+                return e >= 14;
+            });
+            const actC = adultos.filter(m => m.estado !== 'Retirado').length;
+            const retC = adultos.filter(m => m.estado === 'Retirado').length;
+            bannerEl.style.display = 'flex';
+            bannerEl.innerHTML = `
+                <div class="censo-banner-info">
+                    <span class="censo-banner-title">CENSO LOCAL</span><br>
+                    <span style="color:#86efac">${actC} activos</span> · 
+                    <span style="color:#fdba74">${retC} retirados</span>
+                    <span style="color:#64748b;font-size:.72rem;"> (${adultos.length} adultos disponibles)</span>
+                </div>
+                <button class="censo-banner-btn" onclick="sincronizarDesdeCenso()">🔄 Sincronizar</button>`;
+        } else {
+            bannerEl.style.display = 'none';
+        }
+
+        // ── Lista de miembros con badge de estado ──
+        const l = document.getElementById('manageList');
+        let listHtml = '';
+        appData[curType].forEach((n, i) => {
+            const st = getStatus(n);
+            const badgeClass = ST_BADGE[st] || 'st-activo';
+            const badgeLabel = ST_LABELS[st] || 'Activo';
+            const escapedName = n.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            listHtml += `
+                <li class="member-item">
+                    <div style="display:flex;flex-direction:column;flex:1;gap:3px;">
+                        <span style="font-weight:600">${i+1}. ${n}</span>
+                        <span class="status-badge ${badgeClass}" onclick="openStatusModal('${escapedName}',${i})" style="cursor:pointer;width:fit-content;">${badgeLabel}</span>
+                    </div>
+                    <button style="background:red;border:none;border-radius:4px;cursor:pointer;padding:5px 10px;" onclick="delMem(${i})">🗑</button>
+                </li>`;
+        });
+        l.innerHTML = listHtml;
+        document.getElementById('memCount').innerText = appData[curType].length;
+    }
+
+    // ── Modal de cambio de estado ──
+    let _modalName = '';
+    function openStatusModal(nombre, idx) {
+        _modalName = nombre;
+        const st = getStatus(nombre);
+        document.getElementById('modalMemberName').innerText = nombre;
+        ['activo','retirado','oyente','restauracion'].forEach(s => {
+            const btn = document.getElementById('stBtn-' + s);
+            btn.className = 'status-opt-btn' + (s === st ? ' sel-' + s : '');
+        });
+        document.getElementById('statusModal').style.display = 'flex';
+    }
+    function closeStatusModal() { document.getElementById('statusModal').style.display = 'none'; }
+    function applyStatus(st) {
+        setStatus(_modalName, st);
+        closeStatusModal();
+        renderList();
+    }
+    let _newSt = 'activo';
+    function selectNewSt(st) {
+        _newSt = st;
+        ['activo','retirado','oyente','restauracion'].forEach(s => {
+            const b = document.getElementById('newStBtn-' + s);
+            if (!b) return;
+            b.className = 'status-opt-btn' + (s === st ? ' sel-' + s : '');
+            if (s !== st) b.style.color = {retirado:'#e67e22',oyente:'#2980b9',restauracion:'#8e44ad',activo:'#27ae60'}[s];
+            else b.style.color = '';
+        });
+    }
+    function addMem() {
+        const i = document.getElementById('newName'), n = i.value.trim();
+        if (!n) return;
+        if (appData[curType].includes(n)) return alert('Este nombre ya existe.');
+        appData[curType].push(n);
+        appData[curType] = sortL(appData[curType]);
+        setStatus(n, _newSt);
+        i.value = '';
+        renderList();
+    }
     function delMem(i) { if(confirm('¿Borrar?')) { appData[curType].splice(i,1); save(); renderList(); } }
     function handleFile(e) {
         const f=e.target.files[0]; if(!f)return; const r=new FileReader();
@@ -1242,33 +1573,40 @@ function showAttendanceSetup() {
 
         function startAtt(t) {
         if(!appData[t].length) return alert('Lista vacía');
-    curAttType=t; curSvStr=document.getElementById('attService').value;
-    appData[t]=sortL(appData[t]);
-    hideAll(); 
-    document.getElementById('takingView').classList.add('active');
-    document.getElementById('takingTitle').innerText=`${document.getElementById('attDate').value} - ${curSvStr}`;
-    document.getElementById('searchContainer').style.display = 'block'; // MOSTRAR
-    document.getElementById('nameSearch').value = '';
+        curAttType=t; curSvStr=document.getElementById('attService').value;
+        appData[t]=sortL(appData[t]);
+        hideAll(); 
+        document.getElementById('takingView').classList.add('active');
+        document.getElementById('takingTitle').innerText=`${document.getElementById('attDate').value} - ${curSvStr}`;
+        document.getElementById('searchContainer').style.display = 'block';
+        document.getElementById('nameSearch').value = '';
         const ul=document.getElementById('attList'); ul.innerHTML='';
         const ex=appData.asistencias.find(r=>r.date===document.getElementById('attDate').value && r.service===curSvStr && r.type===t);
         const set=ex?new Set(ex.names):new Set();
 
-        // --- CAMBIO AQUÍ: Usamos (n, i) para tener el número ---
-        appData[t].forEach((n, i)=>{
-            const li=document.createElement('li');
+        // Agrupar por estado
+        const grupos = { activo:[], retirado:[], oyente:[], restauracion:[] };
+        appData[t].forEach(n => { const s = getStatus(n); if (grupos[s]) grupos[s].push(n); else grupos.activo.push(n); });
 
-            // Nueva estructura HTML:
-            // IZQUIERDA: [Número + Nombre] ....... DERECHA: [Checkbox]
-            li.innerHTML=`
-                <div class="name-container">
-                    <span class="list-number">${i+1}.</span>
-                    <span>${n}</span>
-                </div> 
-                <input type="checkbox" class="big-checkbox achk" value="${n}" ${set.has(n)?'checked':''}>
-            `;
-
-            li.onclick=(e)=>{if(e.target.type!=='checkbox'){const c=li.querySelector('input');c.checked=!c.checked}};
-            ul.appendChild(li);
+        let idx = 0;
+        [['activo','✅ Activos'],['retirado','⏸ Retirados Temporales'],['oyente','👂 Oyentes'],['restauracion','🔄 En Restauración']].forEach(([st, lbl]) => {
+            if (!grupos[st].length) return;
+            const sep = document.createElement('li');
+            sep.className = 'att-group-sep';
+            sep.innerText = lbl;
+            ul.appendChild(sep);
+            grupos[st].forEach(n => {
+                idx++;
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="name-container">
+                        <span class="list-number">${idx}.</span>
+                        <span>${n}</span>
+                    </div>
+                    <input type="checkbox" class="big-checkbox achk" value="${n}" ${set.has(n)?'checked':''}>`;
+                li.onclick=(e)=>{if(e.target.type!=='checkbox'){const c=li.querySelector('input');c.checked=!c.checked}};
+                ul.appendChild(li);
+            });
         });
     }
 
@@ -1316,7 +1654,7 @@ function showAttendanceSetup() {
 
     const [y, m] = mIn.split('-'); 
     const dim = new Date(y, m, 0).getDate();
-    const names = sortL(appData[grp]);
+    const names = sortL([...appData[grp]]);
 
     const grpRecs = appData.asistencias.filter(r => r.date.startsWith(mIn) && r.type === grp);
     const allRecs = appData.asistencias.filter(r => r.date.startsWith(mIn));
@@ -1579,13 +1917,22 @@ window.saveHeaderConf = function() {
 };
 
 window.generarInformeCenso = function() {
-    // 1. Obtención de datos
-    const iglesia = document.getElementById('conf-iglesia').value || "Iglesia Local";
+    const iglesia  = document.getElementById('conf-iglesia').value || "Iglesia Local";
     const ministro = document.getElementById('conf-ministro').value || "Ministro Responsable";
-    const comision = document.getElementById('comision-nombres').value;
+    const comision = document.getElementById('comision-nombres').value || '________________________________';
 
-    const activos = parseInt(document.getElementById('censo-activos').value) || 0;
-    const temporales = parseInt(document.getElementById('censo-temporales').value) || 0;
+    // ── Leer totales automáticamente del Censo ──
+    const censoDB  = JSON.parse(localStorage.getItem('censo_v17_db'));
+    let activos = 0, temporales = 0;
+    if (censoDB) {
+        const todos = [...(censoDB.hombres||[]), ...(censoDB.mujeres||[])];
+        activos    = todos.filter(m => m.estado !== 'Retirado').length;
+        temporales = todos.filter(m => m.estado === 'Retirado').length;
+    } else {
+        // Fallback: contar desde appData
+        activos    = [...appData.hombres, ...appData.mujeres].filter(n => getStatus(n) === 'activo').length;
+        temporales = [...appData.hombres, ...appData.mujeres].filter(n => getStatus(n) === 'retirado').length;
+    }
     const totalCenso = activos + temporales;
 
     const ahora = new Date();
@@ -1593,147 +1940,101 @@ window.generarInformeCenso = function() {
     const hoyStr = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
 
     let filasTabla = "";
-
-    // 2. Lógica de cálculo de los últimos 8 días
     for (let i = 7; i >= 0; i--) {
         let fechaCursor = new Date(hoyParaCalculo);
         fechaCursor.setDate(hoyParaCalculo.getDate() - i);
-
-        const isoFecha = fechaCursor.toISOString().split('T')[0];
-        const fechaFmt = `${String(fechaCursor.getDate()).padStart(2, '0')}/${String(fechaCursor.getMonth() + 1).padStart(2, '0')}/${fechaCursor.getFullYear()}`;
-        const diaSemana = fechaCursor.getDay(); 
-
+        const isoFecha  = fechaCursor.toISOString().split('T')[0];
+        const fechaFmt  = `${String(fechaCursor.getDate()).padStart(2,'0')}/${String(fechaCursor.getMonth()+1).padStart(2,'0')}/${fechaCursor.getFullYear()}`;
+        const diaSemana = fechaCursor.getDay();
         const registros = appData.asistencias.filter(r => r.date === isoFecha);
-
-        const crearFila = (nombre, total, estilo, tag) => {
-            return `<tr style="${estilo}" class="bg-print-fix">
-                <td style="padding:6px 8px; border:1px solid #000;">${fechaFmt}</td>
-                <td style="padding:6px 8px; border:1px solid #000;">${nombre}${tag}</td>
-                <td style="padding:6px 8px; border:1px solid #000; text-align:center; font-weight:bold;">${total}</td>
+        const bgCls = i % 2 === 0 ? '' : 'style="background:#f9f9f9"';
+        const crearFila = (nombre, total, estilo, tag) =>
+            `<tr style="${estilo}" class="bg-print-fix">
+                <td style="padding:6px 8px;border:1px solid #000;">${fechaFmt}</td>
+                <td style="padding:6px 8px;border:1px solid #000;">${nombre}${tag}</td>
+                <td style="padding:6px 8px;border:1px solid #000;text-align:center;font-weight:bold;">${total}</td>
             </tr>`;
-        };
-
-        const estiloDom = "background-color: #fce4ec !important; color: #c2185b;"; // Rosa
-        const estiloEsp = "background-color: #e3f2fd !important; color: #1976d2;"; // Azul
-        const estiloNormal = "background-color: #ffffff !important;";
-
+        const estiloDom    = "background-color:#fce4ec!important;color:#c2185b;";
+        const estiloEsp    = "background-color:#e3f2fd!important;color:#1976d2;";
+        const estiloNormal = "background-color:#ffffff!important;";
         if (diaSemana === 0) {
-            let sumaDom = 0, sumaTarde = 0;
-            let hayDom = false, hayTarde = false;
-
+            let sumaDom=0, sumaTarde=0, hayDom=false, hayTarde=false;
             registros.forEach(r => {
                 const s = r.service.toLowerCase();
                 if (s.includes("5:00 am") || s.includes("9:00 am")) return;
-                if (s.includes("dominical") || s.includes("10")) {
-                    sumaDom += r.names.length;
-                    hayDom = true;
-                } else {
-                    sumaTarde += r.names.length;
-                    hayTarde = true;
-                }
+                if (s.includes("dominical") || s.includes("10")) { sumaDom += r.names.length; hayDom = true; }
+                else { sumaTarde += r.names.length; hayTarde = true; }
             });
             filasTabla += crearFila("ESCUELA DOMINICAL 10 AM", hayDom ? sumaDom : "-", estiloDom, " <b>(ED)</b>");
             filasTabla += crearFila("SERVICIO ESPECIAL DOMINGO", hayTarde ? sumaTarde : "-", estiloEsp, " <b>(ESP)</b>");
-
         } else if (diaSemana === 4) {
-            let sumaJue = 0; let hayJue = false;
-            registros.forEach(r => {
-                const s = r.service.toLowerCase();
-                if (s.includes("5 am") || s.includes("9 am") || (s.includes("5") && !s.includes("pm"))) return;
-                if (s.includes("6") || s.includes("especial")) {
-                    sumaJue += r.names.length; hayJue = true;
-                }
-            });
-            filasTabla += crearFila("SERVICIO ESPECIAL JUEVES", hayJue ? sumaJue : "-", estiloEsp, " <b>(ESP)</b>");
-
-        } else {
-            let sumaNormal = 0; let hayNormal = false;
+            let sumaJue=0, hayJue=false;
             registros.forEach(r => {
                 const s = r.service.toLowerCase();
                 if (s.includes("5") || s.includes("9")) return;
-                if (s.includes("6") || s.includes("especial")) {
-                    sumaNormal += r.names.length; hayNormal = true;
-                }
+                if (s.includes("6") || s.includes("especial")) { sumaJue += r.names.length; hayJue = true; }
+            });
+            filasTabla += crearFila("SERVICIO ESPECIAL JUEVES", hayJue ? sumaJue : "-", estiloEsp, " <b>(ESP)</b>");
+        } else {
+            let sumaNormal=0, hayNormal=false;
+            registros.forEach(r => {
+                const s = r.service.toLowerCase();
+                if (s.includes("5") || s.includes("9")) return;
+                if (s.includes("6") || s.includes("especial")) { sumaNormal += r.names.length; hayNormal = true; }
             });
             filasTabla += crearFila("ORACIÓN DE 6 PM", hayNormal ? sumaNormal : "-", estiloNormal, "");
         }
     }
 
-    // 3. Creación del elemento para renderizado (Clon optimizado)
     const element = document.createElement('div');
-    element.style.width = "800px"; // Ancho fijo para Chrome PC
-    element.style.padding = "20px";
-    element.style.background = "white";
-    element.style.color = "black";
-    element.style.fontFamily = "Arial, sans-serif";
-
+    element.style.cssText = "width:800px;padding:20px;background:white;color:black;font-family:Arial,sans-serif;";
     element.innerHTML = `
-        <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px;">
-            <div style="font-size:20pt; font-weight:bold;">"LA LUZ DEL MUNDO"</div>
-            <div style="font-size:9pt; letter-spacing:1px; margin-bottom:10px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
-            <div style="font-size:14pt; font-weight:bold; background:#000; color:#fff; padding:6px; display:inline-block; width:100%;">REPORTE SEMANAL PARA SUPERVISIÓN</div>
+        <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px;">
+            <div style="font-size:20pt;font-weight:bold;">"LA LUZ DEL MUNDO"</div>
+            <div style="font-size:9pt;letter-spacing:1px;margin-bottom:10px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+            <div style="font-size:14pt;font-weight:bold;background:#000;color:#fff;padding:6px;display:inline-block;width:100%;">REPORTE SEMANAL PARA SUPERVISIÓN</div>
         </div>
-
-        <div style="margin-bottom:20px; font-size:11pt; line-height:1.6;">
+        <div style="margin-bottom:20px;font-size:11pt;line-height:1.6;">
             <b>IGLESIA:</b> ${iglesia.toUpperCase()}<br>
             <b>MINISTRO:</b> ${ministro.toUpperCase()}<br>
             <b>FECHA DE REPORTE:</b> ${hoyStr}
         </div>
-
-        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; border:1.5px solid #000; font-size:11pt;">
-            <tr style="background:#f2f3f4 !important; text-align:center;" class="bg-print-fix">
-                <th style="padding:8px; border:1px solid #000; width:70%;">CONCEPTO DE CENSO</th>
-                <th style="padding:8px; border:1px solid #000; width:30%;">CANTIDAD</th>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;border:1.5px solid #000;font-size:11pt;">
+            <tr style="background:#f2f3f4!important;text-align:center;" class="bg-print-fix">
+                <th style="padding:8px;border:1px solid #000;width:70%;">CONCEPTO DE CENSO</th>
+                <th style="padding:8px;border:1px solid #000;width:30%;">CANTIDAD</th>
             </tr>
-            <tr><td style="padding:7px 12px; border:1px solid #000;">Miembros Activos</td><td style="padding:7px; border:1px solid #000; text-align:center;">${activos}</td></tr>
-            <tr><td style="padding:7px 12px; border:1px solid #000;">Miembros Temporales</td><td style="padding:7px; border:1px solid #000; text-align:center;">${temporales}</td></tr>
-            <tr style="background:#eeeeee !important; font-weight:bold; font-size:12pt;" class="bg-print-fix">
-                <td style="padding:8px 12px; border:1px solid #000; text-align:right;">TOTAL GENERAL DE MIEMBROS:</td>
-                <td style="padding:8px; border:1px solid #000; text-align:center; border-left:2.5px solid #000;">${totalCenso}</td>
+            <tr><td style="padding:7px 12px;border:1px solid #000;">Miembros Activos</td><td style="padding:7px;border:1px solid #000;text-align:center;">${activos}</td></tr>
+            <tr><td style="padding:7px 12px;border:1px solid #000;">Miembros Temporales</td><td style="padding:7px;border:1px solid #000;text-align:center;">${temporales}</td></tr>
+            <tr style="background:#eeeeee!important;font-weight:bold;font-size:12pt;" class="bg-print-fix">
+                <td style="padding:8px 12px;border:1px solid #000;text-align:right;">TOTAL GENERAL DE MIEMBROS:</td>
+                <td style="padding:8px;border:1px solid #000;text-align:center;border-left:2.5px solid #000;">${totalCenso}</td>
             </tr>
         </table>
-
-        <div style="font-weight:bold; font-size:11pt; margin-bottom:8px; border-left:5px solid #000; padding-left:10px;">ASISTENCIA ÚLTIMOS 8 DÍAS</div>
-        
-        <table style="width:100%; border-collapse:collapse; border:1.5px solid #000; font-size:10pt;">
-            <tr style="background:#34495e !important; color:white !important; text-align:center;" class="bg-print-fix">
-                <th style="padding:8px; border:1px solid #000; width:25%;">FECHA</th>
-                <th style="padding:8px; border:1px solid #000; width:55%;">ORACIÓN / SERVICIO</th>
-                <th style="padding:8px; border:1px solid #000; width:20%;">TOTAL</th>
+        <div style="font-weight:bold;font-size:11pt;margin-bottom:8px;border-left:5px solid #000;padding-left:10px;">ASISTENCIA ÚLTIMOS 8 DÍAS</div>
+        <table style="width:100%;border-collapse:collapse;border:1.5px solid #000;font-size:10pt;">
+            <tr style="background:#34495e!important;color:white!important;text-align:center;" class="bg-print-fix">
+                <th style="padding:8px;border:1px solid #000;width:25%;">FECHA</th>
+                <th style="padding:8px;border:1px solid #000;width:55%;">ORACIÓN / SERVICIO</th>
+                <th style="padding:8px;border:1px solid #000;width:20%;">TOTAL</th>
             </tr>
             ${filasTabla}
         </table>
-        
-        <div style="margin-top:30px; font-size:10pt;">
-            <p><b>COMISIÓN DE ESTADÍSTICA PRESENTE:</b> ${comision.toUpperCase() || '________________________________'}</p>
-            <div style="margin-top:60px; display:flex; justify-content:space-around; text-align:center;">
-                <div>
-                    <div style="border-top:1.5px solid #000; width:220px; margin-bottom:5px;"></div>
-                    <p style="font-weight:bold; margin:0;">Firma del Ministro</p>
-                </div>
-                <div>
-                    <div style="border-top:1.5px solid #000; width:220px; margin-bottom:5px;"></div>
-                    <p style="font-weight:bold; margin:0;">Sello de la Iglesia</p>
-                </div>
+        <div style="margin-top:30px;font-size:10pt;">
+            <p><b>COMISIÓN DE ESTADÍSTICA PRESENTE:</b> ${comision.toUpperCase()}</p>
+            <div style="margin-top:60px;display:flex;justify-content:space-around;text-align:center;">
+                <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div><p style="font-weight:bold;margin:0;">Firma del Ministro</p></div>
+                <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div><p style="font-weight:bold;margin:0;">Sello de la Iglesia</p></div>
             </div>
-        </div>
-    `; 
+        </div>`;
 
-    // 4. Configuración de descarga
     const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [10,10,10,10],
         filename: `Informe_Supervision_${iglesia}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            width: 800,
-            letterRendering: true 
-        },
+        html2canvas: { scale: 2, useCORS: true, width: 800, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
     };
-
-    // 5. Generación del archivo
     html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
         if (typeof Android !== 'undefined' && Android.guardarArchivo) {
             Android.guardarArchivo(pdfBase64, "Informe_Supervision.pdf", "application/pdf");
@@ -1744,9 +2045,80 @@ window.generarInformeCenso = function() {
 }
 
 function showCensus() {
-    hideHeader(); // Oculta el header para ganar espacio
-    document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+    hideHeader();
+    hideAll();
     document.getElementById('censusView').classList.add('active');
+
+    // Leer datos automáticamente del Censo
+    const censoDB = JSON.parse(localStorage.getItem('censo_v17_db'));
+    const summaryEl = document.getElementById('censusAutoSummary');
+
+    // También leer comisión guardada
+    const conf = JSON.parse(localStorage.getItem('lldm_header_conf')) || {};
+    if (conf.comision) document.getElementById('comision-nombres').value = conf.comision;
+
+    if (!censoDB) {
+        summaryEl.innerHTML = `
+            <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:14px;color:#856404;font-size:.88rem;">
+                ⚠️ No se encontraron datos del Censo. Registra miembros en la app <b>Censo LLDM</b> primero.
+            </div>`;
+        return;
+    }
+
+    const todos = [...(censoDB.hombres||[]), ...(censoDB.mujeres||[])];
+    const activos   = todos.filter(m => m.estado !== 'Retirado').length;
+    const retirados = todos.filter(m => m.estado === 'Retirado').length;
+    const total     = todos.length;
+
+    // Oyentes y restauración desde appData (asistencia)
+    const oyentes      = [...appData.hombres, ...appData.mujeres].filter(n => getStatus(n) === 'oyente').length;
+    const restauracion = [...appData.hombres, ...appData.mujeres].filter(n => getStatus(n) === 'restauracion').length;
+
+    summaryEl.innerHTML = `
+        <div style="background:#0f172a;color:white;padding:14px;border-radius:14px;margin-bottom:10px;">
+            <div style="font-size:.7rem;color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">
+                📊 CENSO ACTUAL DE MEMBRESÍA
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px;text-align:center;">
+                    <div style="font-size:.65rem;color:#86efac;text-transform:uppercase;letter-spacing:.5px;">MIEMBROS ACTIVOS</div>
+                    <div style="font-size:2.2rem;font-weight:900;color:#86efac;">${activos}</div>
+                </div>
+                <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px;text-align:center;">
+                    <div style="font-size:.65rem;color:#fdba74;text-transform:uppercase;letter-spacing:.5px;">RETIRADOS TEMPORALES</div>
+                    <div style="font-size:2.2rem;font-weight:900;color:#fdba74;">${retirados}</div>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:700;">TOTAL GENERAL DE MIEMBROS</span>
+                <span style="font-size:1.5rem;font-weight:900;color:#d4af37;">${total}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:10px;text-align:center;">
+                    <div style="font-size:.65rem;color:#7dd3fc;text-transform:uppercase;">OYENTES</div>
+                    <div style="font-size:1.6rem;font-weight:900;color:#7dd3fc;">${oyentes}</div>
+                </div>
+                <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:10px;text-align:center;">
+                    <div style="font-size:.65rem;color:#d8b4fe;text-transform:uppercase;">EN RESTAURACIÓN</div>
+                    <div style="font-size:1.6rem;font-weight:900;color:#d8b4fe;">${restauracion}</div>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:700;">TOTAL OYENTES + RESTAURACIÓN</span>
+                <span style="font-size:1.5rem;font-weight:900;color:#c4b5fd;">${oyentes + restauracion}</span>
+            </div>
+            <div style="background:#d4af37;border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:900;color:#000;font-size:1rem;">GRAN TOTAL GENERAL</span>
+                <span style="font-size:2rem;font-weight:900;color:#000;">${total + oyentes + restauracion}</span>
+            </div>
+        </div>`;
+}
+
+function saveComision() {
+    const val = document.getElementById('comision-nombres').value;
+    const conf = JSON.parse(localStorage.getItem('lldm_header_conf')) || {};
+    conf.comision = val;
+    localStorage.setItem('lldm_header_conf', JSON.stringify(conf));
 }
 
 window.descargarPDF = function() {
@@ -1762,8 +2134,8 @@ window.descargarPDF = function() {
     const nombreMes = fechaUltimo.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
     const periodoStr = `DEL 1 AL ${fechaUltimo.getDate()} DE ${nombreMes} DE ${year}`;
 
-    const originalTable = document.querySelector('.sheet-table');
-    if (!originalTable) return alert("No hay datos en la tabla");
+    const originalTable = document.querySelector('#sheetContainer .sheet-table');
+    if (!originalTable) return alert("No hay datos en la tabla. Seleccione un mes con registros.");
 
     const headerHTML = originalTable.querySelector('thead').outerHTML;
     const filas = Array.from(originalTable.querySelectorAll('tbody tr'));
@@ -2062,13 +2434,14 @@ function generarReporteSemestral() {
         return html;
     };
 
-    // Construir contenido final
-    let contenidoFinal = crearTabla(datos.hombres, "Lista de Hermanos");
+    // Construir contenido final — solo activos y retirados (oyentes/restauración tienen su propia vista)
+    const soloMiembros = n => { const s = getStatus(n); return s === 'activo' || s === 'retirado'; };
+    let contenidoFinal = crearTabla(datos.hombres.filter(soloMiembros), "Lista de Hermanos");
 
     // Salto de página manual para las Hermanas
     contenidoFinal += `<div style="page-break-after: always; height:1px;"></div>`;
 
-    contenidoFinal += crearTabla(datos.mujeres, "Lista de Hermanas");
+    contenidoFinal += crearTabla(datos.mujeres.filter(soloMiembros), "Lista de Hermanas");
 
     // Firmas al final
     contenidoFinal += `
@@ -2085,8 +2458,365 @@ function generarReporteSemestral() {
     document.getElementById('view-semestral').classList.add('active');
 }
 
+// ── OYENTES / RESTAURACIÓN — lista con estadística ───────────
+function showSpecialSheet() {
+    hideHeader();
+    hideAll();
+    document.getElementById('specialView').classList.add('active');
+    const el = document.getElementById('spMonth');
+    if (!el.value) {
+        const n = new Date();
+        el.value = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+    }
+    renderSpecialList();
+}
 
-        
+function renderSpecialList() {
+    const mIn  = document.getElementById('spMonth').value;
+    const grp  = document.getElementById('spGroup').value;
+    const cont = document.getElementById('specialContainer');
+    if (!mIn) { cont.innerHTML = '<p style="padding:18px;color:#888;">Seleccione un mes.</p>'; return; }
+
+    const CFG = {
+        oyente_h:       { tipo: 'hombres', status: 'oyente',       label: 'OYENTES — HERMANOS' },
+        oyente_m:       { tipo: 'mujeres', status: 'oyente',       label: 'OYENTES — HERMANAS' },
+        restauracion_h: { tipo: 'hombres', status: 'restauracion', label: 'EN RESTAURACIÓN — HERMANOS' },
+        restauracion_m: { tipo: 'mujeres', status: 'restauracion', label: 'EN RESTAURACIÓN — HERMANAS' }
+    };
+    const cfg   = CFG[grp];
+    const lista = appData[cfg.tipo].filter(n => getStatus(n) === cfg.status);
+
+    if (!lista.length) {
+        cont.innerHTML = `<p style="padding:18px;color:#888;text-align:center;">
+            No hay miembros con estado <b>${cfg.label}</b> este mes.</p>`;
+        return;
+    }
+
+    // Registros del mes
+    const recs = appData.asistencias.filter(r =>
+        r.date.startsWith(mIn) && r.type === cfg.tipo
+    );
+
+    // Calcular estadística por nombre
+    const stats = {};
+    lista.forEach(n => { stats[n] = { c5:0, c9:0, c6:0, ced:0 }; });
+    recs.forEach(r => {
+        const sv = r.service.toLowerCase();
+        let key = '';
+        if (sv.includes('5:00 am'))                                   key = 'c5';
+        else if (sv.includes('dominical') || sv.includes('10:00'))    key = 'ced';
+        else if (sv.includes('9:00 am'))                              key = 'c9';
+        else if (sv.includes('6:00 pm') || sv.includes('especial'))  key = 'c6';
+        if (!key) return;
+        r.names.forEach(n => { if (stats[n]) stats[n][key]++; });
+    });
+
+    // Nombre del mes para mostrar
+    const [yr, mo] = mIn.split('-').map(Number);
+    const nombreMes = new Date(yr, mo-1, 1)
+        .toLocaleString('es-ES', {month:'long', year:'numeric'}).toUpperCase();
+
+    // Totales globales
+    let tot5=0, tot9=0, tot6=0, totEd=0;
+    lista.forEach(n => {
+        tot5  += stats[n].c5;
+        tot9  += stats[n].c9;
+        tot6  += stats[n].c6;
+        totEd += stats[n].ced;
+    });
+
+    // Construir HTML
+    const iglesia  = document.getElementById('conf-iglesia').value  || 'Iglesia Local';
+    const ministro = document.getElementById('conf-ministro').value || 'Ministro Responsable';
+
+    let html = `
+        <div class="special-group-title">
+            ${cfg.label} — ${nombreMes}
+            <span style="float:right;font-size:.75rem;opacity:.7;">${lista.length} personas</span>
+        </div>`;
+
+    lista.forEach((n, i) => {
+        const s   = stats[n];
+        const tot = s.c5 + s.c9 + s.c6 + s.ced;
+        html += `
+        <div class="special-member-card">
+            <span class="member-num">${i+1}</span>
+            <span class="member-name">${n}</span>
+            <div class="member-stats">
+                <div class="stat-pill sp-5am"><span class="sp-num">${s.c5}</span><span class="sp-lbl">5am</span></div>
+                <div class="stat-pill sp-9am"><span class="sp-num">${s.c9}</span><span class="sp-lbl">9am</span></div>
+                <div class="stat-pill sp-6pm"><span class="sp-num">${s.c6}</span><span class="sp-lbl">6pm</span></div>
+                <div class="stat-pill sp-ed" ><span class="sp-num">${s.ced}</span><span class="sp-lbl">ED</span></div>
+                <div class="stat-pill sp-tot"><span class="sp-num">${tot}</span><span class="sp-lbl">TOT</span></div>
+            </div>
+        </div>`;
+    });
+
+    const totGen = tot5+tot9+tot6+totEd;
+    html += `
+        <div class="special-totals-row">
+            <span>TOTALES DEL MES</span>
+            <div style="display:flex;gap:10px;">
+                <span>5am: <b>${tot5}</b></span>
+                <span>9am: <b>${tot9}</b></span>
+                <span>6pm: <b>${tot6}</b></span>
+                <span>ED: <b>${totEd}</b></span>
+                <span style="color:#0f172a;">Total: <b>${totGen}</b></span>
+            </div>
+        </div>`;
+
+    cont.innerHTML = html;
+
+    // Actualizar encabezado para impresión
+    document.getElementById('special-header-subtitle').innerText = cfg.label;
+    document.getElementById('special-header-info').innerHTML =
+        `<b>IGLESIA:</b> ${iglesia.toUpperCase()} &nbsp;|&nbsp; <b>MINISTRO:</b> ${ministro.toUpperCase()} &nbsp;|&nbsp; <b>MES:</b> ${nombreMes}`;
+}
+
+
+// ── SINCRONIZAR DESDE CENSO (actualizado con estados) ─────────
+function sincronizarDesdeCenso() {
+    const censoDB = JSON.parse(localStorage.getItem('censo_v17_db'));
+    if (!censoDB) {
+        alert('❌ No se encontraron datos del Censo.\n\nAsegúrate de que la app "Censo LLDM" tiene miembros registrados en este mismo dispositivo.');
+        return;
+    }
+    const hoy = new Date();
+    const calcEdad = f => {
+        const nac = new Date(f || '2000-01-01');
+        let e = hoy.getFullYear() - nac.getFullYear();
+        if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth()===nac.getMonth() && hoy.getDate()<nac.getDate())) e--;
+        return e < 0 ? 0 : e;
+    };
+    let agregados=0, actualizados=0, sinCambio=0;
+    ['hombres','mujeres'].forEach(tipo => {
+        const adultos = (censoDB[tipo]||[]).filter(m =>
+            m.nombre && m.nombre.trim() !== '' && m.nombre !== 'Nuevo' && calcEdad(m.nacimiento) >= 14
+        );
+        adultos.forEach(m => {
+            const nombre  = m.nombre.trim();
+            // Mapear estado del censo → estado de asistencia
+            const stAsist = m.estado === 'Retirado' ? 'retirado' : 'activo';
+            if (!appData[tipo].includes(nombre)) {
+                appData[tipo].push(nombre);
+                setStatus(nombre, stAsist);
+                agregados++;
+            } else {
+                const stActual = getStatus(nombre);
+                if ((stActual==='activo'||stActual==='retirado') && stActual!==stAsist) {
+                    setStatus(nombre, stAsist);
+                    actualizados++;
+                } else { sinCambio++; }
+            }
+        });
+        appData[tipo] = sortL(appData[tipo]);
+    });
+    save();
+    const partes = [];
+    if (agregados > 0)   partes.push(`✅ ${agregados} miembros nuevos agregados`);
+    if (actualizados > 0) partes.push(`🔄 ${actualizados} estados actualizados`);
+    if (sinCambio > 0)   partes.push(`ℹ️ ${sinCambio} sin cambios`);
+    alert('SINCRONIZACIÓN COMPLETA\n\n' + (partes.join('\n') || 'No hubo cambios.') +
+        '\n\nHermanos: ' + appData.hombres.length + ' | Hermanas: ' + appData.mujeres.length);
+    // Si está en la vista de gestión, refrescar
+    if (document.getElementById('manageView').classList.contains('active')) renderList();
+}
+
+
+// Detecta qué vista está activa y ajusta orientación antes de imprimir
+window.addEventListener('beforeprint', function() {
+    const semestral = document.getElementById('view-semestral');
+    const diario    = document.getElementById('view-reporte-diario');
+    const especial  = document.getElementById('specialView');
+
+    if (semestral && semestral.classList.contains('active')) {
+        document.body.classList.add('print-landscape');
+    } else {
+        document.body.classList.remove('print-landscape');
+    }
+
+    // Mostrar encabezado de impresión en especial si está activo
+    if (especial && especial.classList.contains('active')) {
+        document.getElementById('special-print-header').style.display = 'block';
+    }
+});
+window.addEventListener('afterprint', function() {
+    document.body.classList.remove('print-landscape');
+    const h = document.getElementById('special-print-header');
+    if (h) h.style.display = 'none';
+});
+
+
+function showReporteDiario() {
+    hideHeader();
+    hideAll();
+    document.getElementById('view-reporte-diario').classList.add('active');
+    // Poner fecha de hoy por defecto
+    const hoy = new Date();
+    const iso = hoy.getFullYear() + '-' +
+        String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+        String(hoy.getDate()).padStart(2, '0');
+    document.getElementById('dailyReportDate').value = iso;
+    renderReporteDiario();
+}
+
+function renderReporteDiario() {
+    const date        = document.getElementById('dailyReportDate').value;
+    const preview     = document.getElementById('daily-preview');
+    const printContent= document.getElementById('daily-print-content');
+
+    if (!date) { preview.innerHTML = ''; printContent.innerHTML = ''; return; }
+
+    const iglesia  = document.getElementById('conf-iglesia').value  || 'Iglesia Local';
+    const ministro = document.getElementById('conf-ministro').value || 'Ministro Responsable';
+    const recs     = appData.asistencias.filter(r => r.date === date);
+
+    if (!recs.length) {
+        preview.innerHTML = '<div style="text-align:center;padding:28px;color:#888;"><div style="font-size:2.5rem;">📭</div><p>No hay asistencia registrada para esta fecha.</p></div>';
+        printContent.innerHTML = '';
+        return;
+    }
+
+    const [y, m, d] = date.split('-').map(Number);
+    const dateStr   = new Date(y, m-1, d, 12).toLocaleDateString('es-ES', {
+        weekday:'long', day:'2-digit', month:'long', year:'numeric'
+    }).toUpperCase();
+
+    // Contar por estado para un conjunto de nombres
+    const contarEstados = (nombres) => {
+        const c = { activo:0, retirado:0, oyente:0, restauracion:0 };
+        nombres.forEach(n => {
+            const s = getStatus(n);
+            if (c[s] !== undefined) c[s]++;
+        });
+        return c;
+    };
+
+    // Agrupar registros por servicio (unión de hombres+mujeres)
+    const bySv = {};
+    recs.forEach(r => {
+        if (!bySv[r.service]) bySv[r.service] = new Set();
+        r.names.forEach(n => bySv[r.service].add(n));
+    });
+
+    // Total general = suma de todos los cultos (no unique)
+    const totalDia = recs.reduce((sum, r) => sum + r.names.length, 0);
+
+    // Para los contadores del encabezado: suma de estados por culto
+    const totGen = { activo:0, retirado:0, oyente:0, restauracion:0 };
+    recs.forEach(r => {
+        r.names.forEach(n => {
+            const s = getStatus(n);
+            if (totGen[s] !== undefined) totGen[s]++;
+        });
+    });
+
+    // ── PREVIEW EN PANTALLA ──────────────────────────────────
+    const colores = {
+        activo:       { bg:'#d4edda', color:'#155724', label:'Activos' },
+        retirado:     { bg:'#ffecd1', color:'#7d4500', label:'Retirados' },
+        oyente:       { bg:'#d1ecf1', color:'#0c5460', label:'Oyentes' },
+        restauracion: { bg:'#e2d9f3', color:'#4a235a', label:'Restauración' }
+    };
+
+    const tarjetaEstados = (c) => Object.entries(colores).map(([k, v]) =>
+        `<div style="background:${v.bg};border-radius:8px;padding:8px;text-align:center;flex:1;">
+            <div style="font-size:1.4rem;font-weight:900;color:${v.color};">${c[k]}</div>
+            <div style="font-size:.6rem;font-weight:700;color:${v.color};text-transform:uppercase;">${v.label}</div>
+        </div>`
+    ).join('');
+
+    let previewHtml = `
+        <div style="background:linear-gradient(135deg,#0f172a,#1e293b);color:white;border-radius:12px;padding:16px;margin-bottom:14px;text-align:center;">
+            <div style="font-size:.68rem;opacity:.6;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total General del Día</div>
+            <div style="font-size:3rem;font-weight:900;line-height:1;">${totalDia}</div>
+            <div style="font-size:.75rem;opacity:.7;margin-top:4px;">${dateStr}</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">${tarjetaEstados(totGen)}</div>
+        </div>`;
+
+    Object.entries(bySv).forEach(([sv, names]) => {
+        const lista = [...names];
+        const c     = contarEstados(lista);
+        previewHtml += `
+        <div style="background:#fff;border:1px solid #e0e6ed;border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);">
+            <div style="background:#0f172a;color:white;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:800;font-size:.95rem;">🕐 ${sv}</span>
+                <span style="font-size:1.4rem;font-weight:900;color:#d4af37;">${lista.length}</span>
+            </div>
+            <div style="display:flex;gap:6px;padding:10px;flex-wrap:wrap;">
+                ${Object.entries(colores).map(([k,v]) =>
+                    `<div style="background:${v.bg};border-radius:8px;padding:8px 12px;flex:1;min-width:60px;text-align:center;">
+                        <div style="font-size:1.3rem;font-weight:900;color:${v.color};">${c[k]}</div>
+                        <div style="font-size:.6rem;font-weight:700;color:${v.color};text-transform:uppercase;">${v.label}</div>
+                    </div>`
+                ).join('')}
+            </div>
+        </div>`;
+    });
+
+    preview.innerHTML = previewHtml;
+
+    // ── CONTENIDO PARA IMPRIMIR ──────────────────────────────
+    const filaPrint = (sv, lista) => {
+        const c   = contarEstados(lista);
+        const tot = lista.length;
+        return `
+        <tr style="background:#f8fafc;">
+            <td style="padding:8px 10px;border:1px solid #000;font-weight:700;font-size:10pt;">${sv}</td>
+            <td style="padding:8px;border:1px solid #000;text-align:center;font-weight:900;font-size:12pt;">${tot}</td>
+            <td style="padding:8px;border:1px solid #000;text-align:center;font-weight:bold;background:#d4edda;color:#155724;">${c.activo}</td>
+            <td style="padding:8px;border:1px solid #000;text-align:center;font-weight:bold;background:#ffecd1;color:#7d4500;">${c.retirado}</td>
+            <td style="padding:8px;border:1px solid #000;text-align:center;font-weight:bold;background:#d1ecf1;color:#0c5460;">${c.oyente}</td>
+            <td style="padding:8px;border:1px solid #000;text-align:center;font-weight:bold;background:#e2d9f3;color:#4a235a;">${c.restauracion}</td>
+        </tr>`;
+    };
+
+    let filasImpresion = '';
+    Object.entries(bySv).forEach(([sv, names]) => {
+        filasImpresion += filaPrint(sv, [...names]);
+    });
+
+    printContent.innerHTML = `
+        <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px;">
+            <div style="font-size:16pt;font-weight:900;">"LA LUZ DEL MUNDO"</div>
+            <div style="font-size:8pt;letter-spacing:1px;margin:3px 0;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+            <div style="background:#000;color:#fff;font-size:12pt;font-weight:900;padding:5px;margin-top:4px;">REPORTE DIARIO DE ASISTENCIA</div>
+        </div>
+        <div style="margin-bottom:16px;font-size:10.5pt;line-height:1.9;">
+            <b>IGLESIA:</b> ${iglesia.toUpperCase()}<br>
+            <b>MINISTRO:</b> ${ministro.toUpperCase()}<br>
+            <b>FECHA:</b> ${dateStr}
+        </div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10pt;">
+            <thead>
+                <tr style="background:#0f172a;color:white;">
+                    <th style="padding:8px 10px;border:1px solid #000;text-align:left;width:35%;">CULTO / ORACIÓN</th>
+                    <th style="padding:8px;border:1px solid #000;width:10%;">TOTAL</th>
+                    <th style="padding:8px;border:1px solid #000;width:13.75%;background:#d4edda;color:#155724;">ACTIVOS</th>
+                    <th style="padding:8px;border:1px solid #000;width:13.75%;background:#ffecd1;color:#7d4500;">RETIRADOS</th>
+                    <th style="padding:8px;border:1px solid #000;width:13.75%;background:#d1ecf1;color:#0c5460;">OYENTES</th>
+                    <th style="padding:8px;border:1px solid #000;width:13.75%;background:#e2d9f3;color:#4a235a;">RESTAURACIÓN</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filasImpresion}
+                <tr style="background:#1e293b;color:white;font-weight:900;font-size:11pt;">
+                    <td style="padding:9px 10px;border:1px solid #000;">TOTAL GENERAL DEL DÍA</td>
+                    <td style="padding:9px;border:1px solid #000;text-align:center;font-size:13pt;color:#d4af37;">${totalDia}</td>
+                    <td style="padding:9px;border:1px solid #000;text-align:center;color:#86efac;">${totGen.activo}</td>
+                    <td style="padding:9px;border:1px solid #000;text-align:center;color:#fdba74;">${totGen.retirado}</td>
+                    <td style="padding:9px;border:1px solid #000;text-align:center;color:#7dd3fc;">${totGen.oyente}</td>
+                    <td style="padding:9px;border:1px solid #000;text-align:center;color:#d8b4fe;">${totGen.restauracion}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top:50px;display:flex;justify-content:space-around;text-align:center;font-size:9pt;">
+            <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div>MINISTRO LOCAL</div>
+            <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div>SECRETARIO DE ESTADÍSTICA</div>
+        </div>`;
+}
+
+
 
 </script>
 </body>
