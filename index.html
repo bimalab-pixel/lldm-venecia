@@ -1258,7 +1258,6 @@ const conTimeout = (promesa, ms = 5000) => {
 
 // --- FUNCIÓN SUBIR Y FUSIONAR (CON TIMEOUT) ---
 window.uploadData = async function() {
-    // 1. Obtener datos locales actuales
     const localData = JSON.parse(localStorage.getItem('lldm_v6_total_color'));
     if (!localData) return alert("No hay datos en este dispositivo.");
 
@@ -1266,12 +1265,13 @@ window.uploadData = async function() {
     document.getElementById('loading').style.display = 'flex';
 
     try {
-        // 2. Obtener lo que hay en la nube con un tiempo de espera (Timeout)
         const snapshot = await conTimeout(get(child(dbRef, 'churchData')), 6000);
-        let cloudData = snapshot.exists() ? snapshot.val() : { hombres: [], mujeres: [], asistencias: [] };
+        let cloudData = snapshot.exists() ? snapshot.val() : { hombres: [], mujeres: [], asistencias: [], miembrosInfo: {} };
+
+        // Asegurar que miembrosInfo existe en nube
+        if (!cloudData.miembrosInfo) cloudData.miembrosInfo = {};
 
         // 3. FUSIÓN DE MIEMBROS (Hombres y Mujeres)
-        // Usamos un Set para eliminar duplicados y asegurar que los nombres nuevos se queden
         const fusionarListas = (loc, cld) => {
             const unidos = [...(cld || []), ...(loc || [])];
             return [...new Set(unidos)].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
@@ -1280,30 +1280,27 @@ window.uploadData = async function() {
         cloudData.hombres = fusionarListas(localData.hombres, cloudData.hombres);
         cloudData.mujeres = fusionarListas(localData.mujeres, cloudData.mujeres);
 
-        // 4. FUSIÓN DE ASISTENCIAS (La parte crítica)
+        // 4. FUSIÓN DE ESTADOS (miembrosInfo — local prevalece)
+        cloudData.miembrosInfo = Object.assign({}, cloudData.miembrosInfo, localData.miembrosInfo || {});
+
+        // 5. FUSIÓN DE ASISTENCIAS (local prevalece en colisión)
         if (!cloudData.asistencias) cloudData.asistencias = [];
 
-        localData.asistencias.forEach(locRes => {
-            // Buscamos si este mismo culto ya existe en la nube
+        (localData.asistencias || []).forEach(locRes => {
             const index = cloudData.asistencias.findIndex(cldRes => 
                 cldRes.date === locRes.date && 
                 cldRes.service === locRes.service && 
                 cldRes.type === locRes.type
             );
-
             if (index !== -1) {
-                // SI EXISTE: Lo reemplazamos con el local (porque el local es el más nuevo/corregido)
                 cloudData.asistencias[index] = locRes;
             } else {
-                // NO EXISTE: Lo añadimos como nuevo
                 cloudData.asistencias.push(locRes);
             }
         });
 
-        // 5. Guardar el resultado final en la nube
+        // 6. Guardar en nube y actualizar local
         await conTimeout(set(ref(db, 'churchData'), cloudData), 6000);
-
-        // 6. Actualizar el teléfono con la versión final combinada
         localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
 
         alert("✅ Sincronización exitosa. Los datos locales y de la nube han sido combinados.");
@@ -1325,7 +1322,6 @@ window.uploadData = async function() {
 window.downloadData = async function() {
     document.getElementById('loading').style.display = 'flex';
     try {
-        // Intentar obtener datos con límite de 5 segundos
         const snapshot = await conTimeout(get(child(dbRef, 'churchData')));
 
         if (snapshot.exists()) {
@@ -1347,7 +1343,16 @@ window.downloadData = async function() {
                 }
             }
 
-            localStorage.setItem('lldm_v6_total_color', cloudStr);
+            // ── Compatibilidad con versión antigua ──────────────────
+            // La nube puede venir sin miembrosInfo si fue subida por versión antigua.
+            // Fusionamos: nube prevalece sobre local cuando ambos tienen el mismo miembro,
+            // pero conservamos cualquier estado local que la nube no tenga.
+            const localInfo  = (localData  && localData.miembrosInfo)  || {};
+            const cloudInfo  = cloudData.miembrosInfo || {};
+            // Primero ponemos lo local como base, luego la nube lo sobreescribe donde tenga datos
+            cloudData.miembrosInfo = Object.assign({}, localInfo, cloudInfo);
+
+            localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
             alert("✅ Datos actualizados con éxito.");
             location.reload();
         } else {
