@@ -522,6 +522,10 @@ header p {
     #special-print-area, #special-print-area * { visibility: visible; }
     #special-print-area { position: absolute; left: 0; top: 0; width: 100%; }
 
+    /* Informe Censo / Supervisión */
+    #censusPrintArea, #censusPrintArea * { visibility: visible; }
+    #censusPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+
     .no-print { display: none !important; }
 
     /* Colores forzados */
@@ -533,11 +537,12 @@ header p {
     .stat-pill { border: 1px solid #ddd !important; }
     .special-group-title { background: #000 !important; color: #fff !important; }
 
-    /* Landscape por defecto */
-    @page { size: letter landscape; margin: 0.8cm; }
+    /* Portrait por defecto */
+    @page { size: letter portrait; margin: 0.8cm; }
+
+    /* Semestral fuerza landscape */
+    body.print-landscape @page { size: letter landscape; margin: 0.5cm; }
 }
-
-
 
 
 
@@ -1004,7 +1009,7 @@ header p {
         🖨️ IMPRIMIR / GUARDAR PDF
     </button>
 
-    <div id="censusPrintArea" class="only-print">
+    <div id="censusPrintArea">
         <div id="censusContent"></div>
     </div>
 </div>
@@ -1933,7 +1938,6 @@ window.generarInformeCenso = function() {
         activos    = todos.filter(m => m.estado !== 'Retirado').length;
         temporales = todos.filter(m => m.estado === 'Retirado').length;
     } else {
-        // Fallback: contar desde appData
         activos    = [...appData.hombres, ...appData.mujeres].filter(n => getStatus(n) === 'activo').length;
         temporales = [...appData.hombres, ...appData.mujeres].filter(n => getStatus(n) === 'retirado').length;
     }
@@ -1951,16 +1955,15 @@ window.generarInformeCenso = function() {
         const fechaFmt  = `${String(fechaCursor.getDate()).padStart(2,'0')}/${String(fechaCursor.getMonth()+1).padStart(2,'0')}/${fechaCursor.getFullYear()}`;
         const diaSemana = fechaCursor.getDay();
         const registros = appData.asistencias.filter(r => r.date === isoFecha);
-        const bgCls = i % 2 === 0 ? '' : 'style="background:#f9f9f9"';
         const crearFila = (nombre, total, estilo, tag) =>
-            `<tr style="${estilo}" class="bg-print-fix">
+            `<tr style="${estilo}">
                 <td style="padding:6px 8px;border:1px solid #000;">${fechaFmt}</td>
                 <td style="padding:6px 8px;border:1px solid #000;">${nombre}${tag}</td>
                 <td style="padding:6px 8px;border:1px solid #000;text-align:center;font-weight:bold;">${total}</td>
             </tr>`;
-        const estiloDom    = "background-color:#fce4ec!important;color:#c2185b;";
-        const estiloEsp    = "background-color:#e3f2fd!important;color:#1976d2;";
-        const estiloNormal = "background-color:#ffffff!important;";
+        const estiloDom    = "background-color:#fce4ec;color:#c2185b;";
+        const estiloEsp    = "background-color:#e3f2fd;color:#1976d2;";
+        const estiloNormal = "background-color:#ffffff;";
         if (diaSemana === 0) {
             let sumaDom=0, sumaTarde=0, hayDom=false, hayTarde=false;
             registros.forEach(r => {
@@ -1990,13 +1993,12 @@ window.generarInformeCenso = function() {
         }
     }
 
-    const element = document.createElement('div');
-    element.style.cssText = "width:800px;padding:20px;background:white;color:black;font-family:Arial,sans-serif;";
-    element.innerHTML = `
+    // ── HTML del informe (compartido para ambas plataformas) ──
+    const reporteHTML = `
         <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px;">
             <div style="font-size:20pt;font-weight:bold;">"LA LUZ DEL MUNDO"</div>
             <div style="font-size:9pt;letter-spacing:1px;margin-bottom:10px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
-            <div style="font-size:14pt;font-weight:bold;background:#000;color:#fff;padding:6px;display:inline-block;width:100%;">REPORTE SEMANAL PARA SUPERVISIÓN</div>
+            <div style="font-size:14pt;font-weight:bold;background:#000;color:#fff;padding:6px;display:block;width:100%;box-sizing:border-box;">REPORTE SEMANAL PARA SUPERVISIÓN</div>
         </div>
         <div style="margin-bottom:20px;font-size:11pt;line-height:1.6;">
             <b>IGLESIA:</b> ${iglesia.toUpperCase()}<br>
@@ -2004,20 +2006,20 @@ window.generarInformeCenso = function() {
             <b>FECHA DE REPORTE:</b> ${hoyStr}
         </div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;border:1.5px solid #000;font-size:11pt;">
-            <tr style="background:#f2f3f4!important;text-align:center;" class="bg-print-fix">
+            <tr style="background:#f2f3f4;text-align:center;">
                 <th style="padding:8px;border:1px solid #000;width:70%;">CONCEPTO DE CENSO</th>
                 <th style="padding:8px;border:1px solid #000;width:30%;">CANTIDAD</th>
             </tr>
             <tr><td style="padding:7px 12px;border:1px solid #000;">Miembros Activos</td><td style="padding:7px;border:1px solid #000;text-align:center;">${activos}</td></tr>
             <tr><td style="padding:7px 12px;border:1px solid #000;">Miembros Temporales</td><td style="padding:7px;border:1px solid #000;text-align:center;">${temporales}</td></tr>
-            <tr style="background:#eeeeee!important;font-weight:bold;font-size:12pt;" class="bg-print-fix">
+            <tr style="background:#eeeeee;font-weight:bold;font-size:12pt;">
                 <td style="padding:8px 12px;border:1px solid #000;text-align:right;">TOTAL GENERAL DE MIEMBROS:</td>
                 <td style="padding:8px;border:1px solid #000;text-align:center;border-left:2.5px solid #000;">${totalCenso}</td>
             </tr>
         </table>
         <div style="font-weight:bold;font-size:11pt;margin-bottom:8px;border-left:5px solid #000;padding-left:10px;">ASISTENCIA ÚLTIMOS 8 DÍAS</div>
         <table style="width:100%;border-collapse:collapse;border:1.5px solid #000;font-size:10pt;">
-            <tr style="background:#34495e!important;color:white!important;text-align:center;" class="bg-print-fix">
+            <tr style="background:#34495e;color:white;text-align:center;">
                 <th style="padding:8px;border:1px solid #000;width:25%;">FECHA</th>
                 <th style="padding:8px;border:1px solid #000;width:55%;">ORACIÓN / SERVICIO</th>
                 <th style="padding:8px;border:1px solid #000;width:20%;">TOTAL</th>
@@ -2032,20 +2034,25 @@ window.generarInformeCenso = function() {
             </div>
         </div>`;
 
-    const opt = {
-        margin: [10,10,10,10],
-        filename: `Informe_Supervision_${iglesia}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, width: 800, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
-        if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+    // ── APK Android: html2pdf SIN image/html2canvas ──
+    if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+        const element = document.createElement('div');
+        element.style.cssText = "width:800px;padding:20px;background:white;color:black;font-family:Arial,sans-serif;";
+        element.innerHTML = reporteHTML;
+        const opt = {
+            margin: [10,10,10,10],
+            filename: `Informe_Supervision_${iglesia}.pdf`,
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
             Android.guardarArchivo(pdfBase64, "Informe_Supervision.pdf", "application/pdf");
-        } else {
-            html2pdf().set(opt).from(element).save();
-        }
-    });
+        });
+        return;
+    }
+
+    // ── PWA / Navegador: window.print() ──
+    document.getElementById('censusContent').innerHTML = reporteHTML;
+    window.print();
 }
 
 function showCensus() {
@@ -2633,8 +2640,17 @@ window.addEventListener('beforeprint', function() {
     const diario    = document.getElementById('view-reporte-diario');
     const especial  = document.getElementById('specialView');
 
+    // Eliminar style dinámico previo si existe
+    const prevStyle = document.getElementById('dynamic-print-style');
+    if (prevStyle) prevStyle.remove();
+
     if (semestral && semestral.classList.contains('active')) {
         document.body.classList.add('print-landscape');
+        // Inyectar @page landscape dinámicamente para Chrome Android
+        const s = document.createElement('style');
+        s.id = 'dynamic-print-style';
+        s.textContent = '@media print { @page { size: letter landscape; margin: 0.5cm; } }';
+        document.head.appendChild(s);
     } else {
         document.body.classList.remove('print-landscape');
     }
@@ -2646,6 +2662,8 @@ window.addEventListener('beforeprint', function() {
 });
 window.addEventListener('afterprint', function() {
     document.body.classList.remove('print-landscape');
+    const s = document.getElementById('dynamic-print-style');
+    if (s) s.remove();
     const h = document.getElementById('special-print-header');
     if (h) h.style.display = 'none';
 });
