@@ -1274,11 +1274,17 @@ window.uploadData = async function() {
 
         // Asegurar que miembrosInfo existe en nube
         if (!cloudData.miembrosInfo) cloudData.miembrosInfo = {};
+        if (!cloudData.deletedMembers) cloudData.deletedMembers = [];
 
-        // 3. FUSIÓN DE MIEMBROS (Hombres y Mujeres)
+        // 3. FUSIÓN DE MIEMBROS — respetar eliminaciones de ambos lados
+        const deletedUnion = [...new Set([...(cloudData.deletedMembers||[]), ...(localData.deletedMembers||[])])];
+        cloudData.deletedMembers = deletedUnion;
+
         const fusionarListas = (loc, cld) => {
             const unidos = [...(cld || []), ...(loc || [])];
-            return [...new Set(unidos)].sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+            return [...new Set(unidos)]
+                .filter(n => !deletedUnion.includes(n))
+                .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
         };
 
         cloudData.hombres = fusionarListas(localData.hombres, cloudData.hombres);
@@ -1353,8 +1359,15 @@ window.downloadData = async function() {
             // pero conservamos cualquier estado local que la nube no tenga.
             const localInfo  = (localData  && localData.miembrosInfo)  || {};
             const cloudInfo  = cloudData.miembrosInfo || {};
-            // Primero ponemos lo local como base, luego la nube lo sobreescribe donde tenga datos
             cloudData.miembrosInfo = Object.assign({}, localInfo, cloudInfo);
+
+            // Fusionar listas negras y limpiar nombres borrados
+            const deletedUnion = [...new Set([...(cloudData.deletedMembers||[]), ...((localData&&localData.deletedMembers)||[])])];
+            cloudData.deletedMembers = deletedUnion;
+            if (deletedUnion.length > 0) {
+                cloudData.hombres = (cloudData.hombres||[]).filter(n => !deletedUnion.includes(n));
+                cloudData.mujeres = (cloudData.mujeres||[]).filter(n => !deletedUnion.includes(n));
+            }
 
             localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
             alert("✅ Datos actualizados con éxito.");
@@ -1382,8 +1395,9 @@ window.downloadData = async function() {
 function showHeader() { document.getElementById('mainHeader').classList.remove('header-hidden'); }
 
     const DB_KEY = 'lldm_v6_total_color';
-    let appData = JSON.parse(localStorage.getItem(DB_KEY)) || { hombres: [], mujeres: [], asistencias: [], miembrosInfo: {} };
+    let appData = JSON.parse(localStorage.getItem(DB_KEY)) || { hombres: [], mujeres: [], asistencias: [], miembrosInfo: {}, deletedMembers: [] };
     if (!appData.miembrosInfo) appData.miembrosInfo = {};
+    if (!appData.deletedMembers) appData.deletedMembers = [];
     let curType='', curAttType='', curSvStr='';
 
     function save() { localStorage.setItem(DB_KEY, JSON.stringify(appData)); }
@@ -1516,7 +1530,16 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
         i.value = '';
         renderList();
     }
-    function delMem(i) { if(confirm('¿Borrar?')) { appData[curType].splice(i,1); save(); renderList(); } }
+    function delMem(i) {
+        if(confirm('¿Borrar?')) {
+            const nombre = appData[curType][i];
+            appData[curType].splice(i, 1);
+            if (!appData.deletedMembers.includes(nombre)) {
+                appData.deletedMembers.push(nombre);
+            }
+            save(); renderList();
+        }
+    }
     function handleFile(e) {
         const f=e.target.files[0]; if(!f)return; const r=new FileReader();
         r.onload=function(ev){
