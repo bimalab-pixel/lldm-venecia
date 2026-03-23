@@ -156,6 +156,98 @@ header h1 {
         .btn-back { background: #000; color: white; margin-bottom: 15px; border-radius: 30px; width: 100%; }
         .btn-import { background: #fff; border: 2px solid #000; color: #000; }
 
+        /* MODAL NUEVO MIEMBRO */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            background: #fff;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 20px 20px 0 0;
+            padding: 24px 20px 32px;
+            box-shadow: 0 -8px 30px rgba(0,0,0,0.25);
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .modal-title {
+            font-size: 1rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .modal-grid .full { grid-column: span 2; }
+        .modal-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0f172a;
+            background: #f8fafc;
+            box-sizing: border-box;
+            transition: border-color 0.15s;
+        }
+        .modal-input:focus {
+            outline: none;
+            border-color: #0f172a;
+            background: #fff;
+        }
+        .modal-btn-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+        }
+        .modal-btn-cancel {
+            padding: 12px;
+            border: 2px solid #000;
+            border-radius: 10px;
+            background: #fff;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .modal-btn-save {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         /* Ajustes de controles en tabla para móvil */
         input[type="date"], select {
             font-size: 0.8rem;
@@ -390,7 +482,7 @@ table td:not(.row-cat) {
     <i style="color: #cbd5e1;">📝</i><span style="color: white;">Exportar Lista General TXT</span>
 </div>
 
-    <div class="dash-card" onclick="exportarCensoPDF()" style="background: linear-gradient(to bottom, #1a0533, #3b0764); border-bottom: 6px solid #d4af37 !important;">
+    <div class="dash-card" onclick="abrirModalPDF()" style="background: linear-gradient(to bottom, #1a0533, #3b0764); border-bottom: 6px solid #d4af37 !important;">
     <i>📄</i><span style="color: #d4af37;">Exportar Lista PDF</span>
 </div>
 
@@ -428,7 +520,7 @@ table td:not(.row-cat) {
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="color:var(--neon-blue); margin:0; font-size:1.1rem;">Varones</h2>
-        <button class="btn btn-blue" onclick="addRow('hombres')">+ Fila</button>
+        <button class="btn btn-blue" onclick="abrirModal('hombres')">+ Nuevo</button>
     </div>
     
     <div class="table-controls">
@@ -455,7 +547,7 @@ table td:not(.row-cat) {
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="color:var(--neon-purple); margin:0; font-size:1.1rem;">Mujeres</h2>
-        <button class="btn btn-blue" style="background:var(--neon-purple)" onclick="addRow('mujeres')">+ Fila</button>
+        <button class="btn btn-blue" style="background:var(--neon-purple)" onclick="abrirModal('mujeres')">+ Nueva</button>
     </div>
     
     <div class="table-controls">
@@ -482,7 +574,7 @@ table td:not(.row-cat) {
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <h2 style="color:var(--neon-green); margin:0; font-size:1.1rem;">Niñez (0-13)</h2>
-        <button class="btn btn-blue" style="background:var(--neon-green)" onclick="addRow('kids')">+ Fila</button>
+        <button class="btn btn-blue" style="background:var(--neon-green)" onclick="abrirModal('kids')">+ Nuevo</button>
     </div>
     
     <div class="table-controls">
@@ -546,17 +638,15 @@ table td:not(.row-cat) {
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     <h2 style="font-size:1.1rem;">Configuración</h2>
     
-    <button class="btn btn-blue" style="width:100%; margin-bottom:15px; padding:15px;" onclick="triggerImport('general')">📂 Importación Inteligente (Excel/CSV)</button>
-    
+    <button class="btn btn-blue" style="width:100%; margin-bottom:8px; padding:15px;" onclick="triggerImport('general')">📂 Importación Inteligente (Excel/CSV)</button>
+    <button class="btn btn-blue" style="width:100%; margin-bottom:15px; padding:12px; background:#d4af37; color:#0f172a; font-weight:bold;" onclick="descargarPlantilla()">📥 Descargar Plantilla Excel</button>
+
+    <button class="btn btn-blue" style="width:100%; margin-bottom:10px; padding:12px; background:#e74c3c; font-weight:bold;" onclick="clearTodos()">🗑️ Borrar Todo el Censo</button>
+
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <button class="btn btn-blue" style="background:#e74c3c" onclick="clearT('hombres')">Borrar H</button>
-        <button class="btn btn-blue" style="background:#e74c3c" onclick="clearT('mujeres')">Borrar M</button>
-        <button class="btn btn-blue" style="background:#e74c3c" onclick="clearT('kids')">Borrar N</button>
-        
         <button class="btn btn-blue" style="background:#2c3e50" onclick="document.getElementById('importJsonInput').click()">📥 IMPORTAR JSON</button>
-        
         <button class="btn btn-blue" style="background:#27ae60" onclick="exportToJson()">💾 EXPORTAR JSON</button>
-        <button class="btn btn-blue" style="background:#000" onclick="fullReset()">🔥 REINICIO</button>
+        <button class="btn btn-blue" style="background:#000; grid-column: span 2;" onclick="fullReset()">🔥 REINICIO TOTAL</button>
     </div>
 
     <input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importarJSON(event)">
@@ -593,6 +683,55 @@ async function actualizarApp() {
 }
 </script>
 
+
+<!-- MODAL NUEVO MIEMBRO -->
+<div id="modalNuevo" class="modal-overlay" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal-card">
+    <p class="modal-title"><span id="modalIcono">👤</span> <span id="modalTitulo">Nuevo Miembro</span></p>
+    <div class="modal-grid">
+      <!-- Selector de sección: solo visible cuando se abre desde el menú -->
+      <div class="full" id="mSeccionWrap" style="display:none">
+        <div class="modal-label">¿A qué sección pertenece?</div>
+        <select id="mSeccion" class="modal-input" onchange="cambiarSeccionModal(this.value)">
+          <option value="hombres">👨 Varón (Hombre)</option>
+          <option value="mujeres">👩 Hermana (Mujer)</option>
+          <option value="kids">🧒 Niño / Niña</option>
+        </select>
+      </div>
+      <div class="full">
+        <div class="modal-label">Nombre completo</div>
+        <input id="mNombre" class="modal-input" type="text" placeholder="Ej: Juan Pérez López" autocomplete="off">
+      </div>
+      <div>
+        <div class="modal-label">Fecha de nacimiento</div>
+        <input id="mNacimiento" class="modal-input" type="date">
+      </div>
+      <!-- Género: solo visible para niños/niñas -->
+      <div id="mGeneroWrap" style="display:none">
+        <div class="modal-label">Género</div>
+        <select id="mGenero" class="modal-input">
+          <option value="H">👦 Niño</option>
+          <option value="F">👧 Niña</option>
+        </select>
+      </div>
+      <div id="mGrupoWrap">
+        <div class="modal-label">Grupo</div>
+        <select id="mGrupo" class="modal-input"></select>
+      </div>
+      <div id="mEstadoWrap">
+        <div class="modal-label">Estado</div>
+        <select id="mEstado" class="modal-input">
+          <option value="Activo">Activo</option>
+          <option value="Retirado">Retirado Temp.</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-btn-row">
+      <button class="modal-btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button id="modalBtnGuardar" class="modal-btn-save" onclick="guardarNuevoMiembro()">✅ Agregar Miembro</button>
+    </div>
+  </div>
+</div>
 
 <input type="file" id="fileIn" style="display:none" onchange="handleFile(event)">
 
@@ -764,19 +903,137 @@ function renderTable(t, dataToRender = null) {
 
 
 
+    // addRow se mantiene para compatibilidad interna (importación)
     function addRow(t) { 
-    // Si es la tabla 'kids', el estado debe estar vacío o no existir
-    const estadoInicial = (t === 'kids') ? "" : "Activo";
-    db[t].push({
-        nombre: "Nuevo", 
-        nacimiento: "2015-01-01", 
-        genero: (t === 'mujeres' ? 'F' : 'H'), 
-        grupo: (t === 'mujeres' ? 'Sola' : 'Solo'), 
-        estado: estadoInicial 
-    }); 
-    save(); 
-    renderTable(t); 
-}
+        const estadoInicial = (t === 'kids') ? "" : "Activo";
+        db[t].unshift({
+            nombre: "Nuevo", 
+            nacimiento: "2015-01-01", 
+            genero: (t === 'mujeres' ? 'F' : 'H'), 
+            grupo: (t === 'mujeres' ? 'Sola' : 'Solo'), 
+            estado: estadoInicial 
+        }); 
+        save(); 
+        renderTable(t); 
+    }
+
+    // ── MODAL NUEVO MIEMBRO ────────────────────────────────────────
+    let _modalTarget = 'hombres';
+
+    const COLORES_MODAL = {
+        hombres: { bg: '#2980b9', icono: '👨', titulo: 'Nuevo Varón' },
+        mujeres: { bg: '#8e44ad', icono: '👩', titulo: 'Nueva Hermana' },
+        kids:    { bg: '#27ae60', icono: '🧒', titulo: 'Nuevo Niño/a' }
+    };
+
+    const GRUPOS = {
+        hombres: ['Casado', 'Solo', 'Joven'],
+        mujeres: ['Casada', 'Sola', 'Jovencita'],
+        kids:    []
+    };
+
+    function _configurarModal(t) {
+        _modalTarget = t;
+        const cfg = COLORES_MODAL[t];
+
+        document.getElementById('modalIcono').textContent = cfg.icono;
+        document.getElementById('modalTitulo').textContent = cfg.titulo;
+        document.getElementById('modalBtnGuardar').style.background = cfg.bg;
+
+        // Fecha por defecto según sección
+        const hoy = new Date();
+        hoy.setFullYear(hoy.getFullYear() - (t === 'kids' ? 8 : 30));
+        document.getElementById('mNacimiento').value = hoy.toISOString().split('T')[0];
+
+        // Género: se asigna automáticamente por sección
+        // Solo para kids se muestra el selector (niño/niña)
+        // Para hombres/mujeres el género queda implícito y oculto
+        const generoWrap = document.getElementById('mGeneroWrap');
+        const generoSel  = document.getElementById('mGenero');
+        if (t === 'kids') {
+            generoWrap.style.display = 'block';
+            generoSel.value = 'H'; // default niño, usuario puede cambiar
+        } else {
+            generoWrap.style.display = 'none';
+            generoSel.value = (t === 'mujeres') ? 'F' : 'H'; // asignado automáticamente
+        }
+
+        // Grupo y Estado: ocultar para kids
+        const grupoWrap  = document.getElementById('mGrupoWrap');
+        const estadoWrap = document.getElementById('mEstadoWrap');
+        const grupoSel   = document.getElementById('mGrupo');
+
+        if (t === 'kids') {
+            grupoWrap.style.display  = 'none';
+            estadoWrap.style.display = 'none';
+        } else {
+            grupoWrap.style.display  = 'block';
+            estadoWrap.style.display = 'block';
+            grupoSel.innerHTML = GRUPOS[t].map(g => `<option value="${g}">${g}</option>`).join('');
+        }
+
+        document.getElementById('mNombre').value = '';
+        document.getElementById('mEstado').value = 'Activo';
+    }
+
+    // Abre desde sección específica (hombres / mujeres / kids)
+    function abrirModal(t) {
+        document.getElementById('mSeccionWrap').style.display = 'none';
+        _configurarModal(t);
+        document.getElementById('modalNuevo').classList.add('open');
+        setTimeout(() => document.getElementById('mNombre').focus(), 300);
+    }
+
+    // Abre desde el menú principal — muestra selector de sección
+    function abrirModalMenu() {
+        document.getElementById('mSeccionWrap').style.display = 'block';
+        document.getElementById('mSeccion').value = 'hombres';
+        _configurarModal('hombres');
+        document.getElementById('modalNuevo').classList.add('open');
+        setTimeout(() => document.getElementById('mNombre').focus(), 300);
+    }
+
+    // Cuando el usuario cambia la sección desde el selector del menú
+    function cambiarSeccionModal(t) {
+        _configurarModal(t);
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalNuevo').classList.remove('open');
+    }
+
+    function guardarNuevoMiembro() {
+        const nombre = document.getElementById('mNombre').value.trim();
+        if (!nombre) {
+            document.getElementById('mNombre').focus();
+            document.getElementById('mNombre').style.borderColor = '#e74c3c';
+            return;
+        }
+        document.getElementById('mNombre').style.borderColor = '';
+
+        const t      = _modalTarget;
+        const nac    = document.getElementById('mNacimiento').value || '2000-01-01';
+        const gen    = document.getElementById('mGenero').value;
+        const grupo  = t === 'kids' ? '' : document.getElementById('mGrupo').value;
+        const estado = t === 'kids' ? '' : document.getElementById('mEstado').value;
+
+        db[t].unshift({ nombre, nacimiento: nac, genero: gen, grupo, estado });
+        save();
+        cerrarModal();
+        // Si estamos en el menú principal, ir directo a la sección donde se agregó
+        const vista = t + 'View';
+        if (document.getElementById(vista)) showView(vista);
+        else renderTable(t);
+    }
+
+    // Permitir guardar con Enter desde el campo nombre
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && document.getElementById('modalNuevo').classList.contains('open')) {
+            guardarNuevoMiembro();
+        }
+        if (e.key === 'Escape') cerrarModal();
+    });
+    // ── FIN MODAL ─────────────────────────────────────────────────
 
 
     function delRow(t, i) { if(confirm("¿Eliminar?")) { db[t].splice(i,1); save(); renderTable(t); } }
@@ -900,7 +1157,59 @@ let item = {
 
 
     function clearT(t) { if(confirm("¿Borrar?")) { db[t] = []; save(); location.reload(); } }
+    function clearTodos() { if(confirm("¿Borrar TODOS los miembros del censo (hombres, mujeres y niños)?\nEsta acción no se puede deshacer.")) { db.hombres = []; db.mujeres = []; db.kids = []; save(); location.reload(); } }
     function fullReset() { if(confirm("¿REINICIAR?")) { localStorage.clear(); location.reload(); } }
+
+    function descargarPlantilla() {
+        const wb = XLSX.utils.book_new();
+        const filas = [
+            ["CENSO LLDM VENECIA — PLANTILLA DE IMPORTACIÓN", "", "", "", "", ""],
+            ["Complete los datos y guarde el archivo. Luego impórtelo desde ⚙️ Configuración → 📂 Importación Inteligente", "", "", "", "", ""],
+            ["Nombre", "Nacimiento", "Genero", "Grupo", "Estado", "Sección"],
+            ["Juan Carlos Pérez López",  "15/03/1985", "H", "Casado",    "Activo",   "hombres"],
+            ["Carlos Martínez Ramos",    "22/07/1990", "H", "Solo",      "Activo",   "hombres"],
+            ["Diego Hernández Méndez",   "03/05/2001", "H", "Joven",     "Activo",   "hombres"],
+            ["Roberto Jiménez Castro",   "08/11/1978", "H", "Casado",    "Retirado", "hombres"],
+            ["María Elena García López", "10/06/1988", "F", "Casada",    "Activo",   "mujeres"],
+            ["Ana Lucía Flores Vásquez", "27/09/1995", "F", "Sola",      "Activo",   "mujeres"],
+            ["Sofía Morales Gutiérrez",  "19/08/2003", "F", "Jovencita", "Activo",   "mujeres"],
+            ["Rosa Torres Díaz",         "14/02/1972", "F", "Casada",    "Retirado", "mujeres"],
+            ["Emilio Pérez García",      "05/01/2012", "H", "",          "",         "kids"],
+            ["Valentina Martínez López", "18/04/2015", "F", "",          "",         "kids"],
+        ];
+        for (let i = 0; i < 20; i++) filas.push(["", "", "", "", "", ""]);
+        const ws = XLSX.utils.aoa_to_sheet(filas);
+        ws['!cols'] = [{ wch: 34 }, { wch: 14 }, { wch: 9 }, { wch: 13 }, { wch: 12 }, { wch: 11 }];
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+        ];
+        XLSX.utils.book_append_sheet(wb, ws, "Miembros");
+        const inst = [
+            ["INSTRUCCIONES DE USO", ""],
+            ["", ""],
+            ["COLUMNAS OBLIGATORIAS", ""],
+            ["Nombre",     "Nombre completo. Ej: Juan Pérez López"],
+            ["Nacimiento", "Formato DD/MM/AAAA  ó  AAAA-MM-DD. Ej: 15/03/1985"],
+            ["Genero",     "H = Hombre     F = Femenino"],
+            ["", ""],
+            ["COLUMNAS OPCIONALES", ""],
+            ["Grupo",    "Hombres: Casado / Solo / Joven   |   Mujeres: Casada / Sola / Jovencita   |   Niños: dejar vacío"],
+            ["Estado",   "Activo (por defecto)  ó  Retirado   |   Niños: dejar vacío"],
+            ["Sección",  "hombres / mujeres / kids  →  Si se omite, la app asigna automáticamente por Género y edad"],
+            ["", ""],
+            ["CÓMO IMPORTAR", ""],
+            ["Paso 1", "Complete los datos en la hoja «Miembros»"],
+            ["Paso 2", "Guarde el archivo como .xlsx"],
+            ["Paso 3", "Abra la app CENSO LLDM Venecia"],
+            ["Paso 4", "Vaya a ⚙️ Configuración → 📂 Importación Inteligente"],
+            ["Paso 5", "Seleccione este archivo y confirme ✅"],
+        ];
+        const wi = XLSX.utils.aoa_to_sheet(inst);
+        wi['!cols'] = [{ wch: 16 }, { wch: 70 }];
+        XLSX.utils.book_append_sheet(wb, wi, "📋 Instrucciones");
+        XLSX.writeFile(wb, "Plantilla_Censo_LLDM.xlsx");
+    }
     
     function exportToJson() {
     try {
@@ -1277,7 +1586,8 @@ function imprimirSistema() {
 //   EXPORTAR CENSO A PDF — FORMATO OFICIAL LLDM
 //   (jsPDF directo — control total de páginas)
 // =====================================================
-window.exportarCensoPDF = function() {
+window.exportarCensoPDF = function(modo = 'completo') {
+    cerrarModalPDF();
 
     // ── Verificar que jsPDF esté disponible ──
     if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
@@ -1587,6 +1897,7 @@ window.exportarCensoPDF = function() {
     const drawResumen = (totalActivos, totalRetirados, ninosCont, ninasCont) => {
         const totalMiembros = totalActivos + totalRetirados;
         const granTotal     = totalMiembros + ninosCont + ninasCont;
+        const incluyeNinez  = modo === 'completo';
 
         checkPage(60);
         y += 4;
@@ -1608,9 +1919,11 @@ window.exportarCensoPDF = function() {
             ['Total Miembros Activos',       String(totalActivos),    WHITE,  'normal'],
             ['Total Retirados Temporales',   String(totalRetirados),  MGRAY,  'normal'],
             ['TOTAL MIEMBROS REGISTRADOS',   String(totalMiembros),   DGRAY,  'bold'  ],
-            ['Total Niños (varones)',         String(ninosCont),       WHITE,  'normal'],
-            ['Total Niñas (mujeres)',         String(ninasCont),       MGRAY,  'normal'],
-            ['TOTAL GENERAL DE NIÑEZ',       String(ninosCont+ninasCont), [232,232,232], 'bold'],
+            ...(incluyeNinez ? [
+                ['Total Niños (varones)',     String(ninosCont),       WHITE,  'normal'],
+                ['Total Niñas (mujeres)',     String(ninasCont),       MGRAY,  'normal'],
+                ['TOTAL GENERAL DE NIÑEZ',   String(ninosCont+ninasCont), [232,232,232], 'bold'],
+            ] : []),
         ];
 
         rows.forEach(([label, val, bg, style]) => {
@@ -1624,7 +1937,10 @@ window.exportarCensoPDF = function() {
         checkPage(10);
         fillRect(ML, y, CW, 9, BLACK);
         strokeRect(ML, y, CW, 9, 0.5);
-        txt(`GRAN TOTAL — CENSO GENERAL   ${granTotal} (NIÑES Y REGISTRADOS)`, ML + CW / 2, y + 6, 11, 'bold', 'center', WHITE);
+        const labelGranTotal = incluyeNinez
+            ? `GRAN TOTAL — CENSO GENERAL   ${granTotal} (NIÑEZ Y REGISTRADOS)`
+            : `TOTAL GENERAL — ADULTOS REGISTRADOS   ${totalMiembros}`;
+        txt(labelGranTotal, ML + CW / 2, y + 6, 11, 'bold', 'center', WHITE);
         y += 9;
     };
 
@@ -1675,19 +1991,101 @@ window.exportarCensoPDF = function() {
     y = MT;
     const { act: mAct, ret: mRet } = drawAdultos('mujeres', 'LISTADO DE MUJERES');
 
-    // Página 3: Niñez + Resumen (nueva página)
-    doc.addPage();
-    y = MT;
-    const { ninos, ninas } = drawNinez();
+    let ninos = 0, ninas = 0;
+
+    if (modo === 'completo') {
+        // Página 3: Niñez
+        doc.addPage();
+        y = MT;
+        ({ ninos, ninas } = drawNinez());
+    }
 
     drawResumen(vAct + mAct, vRet + mRet, ninos, ninas);
     drawFirmas();
 
     // ── Guardar ──
-    const nombreArchivo = `Censo_${church.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    const sufijo  = modo === 'adultos' ? '_SoloAdultos' : '_Completo';
+    const nombreArchivo = `Censo_${church.replace(/\s+/g, '_')}${sufijo}_${new Date().toISOString().slice(0, 10)}.pdf`;
     doc.save(nombreArchivo);
 };
 
 </script>
+<!-- MODAL SELECCIÓN PDF -->
+<div id="modalPDF" class="modal-overlay" onclick="if(event.target===this)cerrarModalPDF()">
+  <div class="modal-card" style="padding-bottom:28px;">
+    <p class="modal-title" style="color:#0f172a;">📄 Exportar Lista PDF</p>
+    <p style="font-size:0.82rem; color:#64748b; margin:-8px 0 18px;">Elige qué deseas incluir en el PDF:</p>
+
+    <div style="display:grid; gap:12px;">
+
+      <button onclick="exportarCensoPDF('adultos')" style="
+        display:flex; align-items:center; gap:14px;
+        background:#f8fafc; border:2px solid #0f172a;
+        border-radius:12px; padding:14px 16px; cursor:pointer; text-align:left;">
+        <span style="font-size:1.8rem;">👨👩</span>
+        <div>
+          <div style="font-weight:900; font-size:0.9rem; color:#0f172a;">SOLO ADULTOS</div>
+          <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">Varones y mujeres — activos y retirados temporales</div>
+        </div>
+      </button>
+
+      <button onclick="exportarCensoPDF('completo')" style="
+        display:flex; align-items:center; gap:14px;
+        background:#0f172a; border:2px solid #d4af37;
+        border-radius:12px; padding:14px 16px; cursor:pointer; text-align:left;">
+        <span style="font-size:1.8rem;">👨👩🧒</span>
+        <div>
+          <div style="font-weight:900; font-size:0.9rem; color:#d4af37;">LISTA COMPLETA</div>
+          <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">Varones, mujeres y niñez completa</div>
+        </div>
+      </button>
+
+    </div>
+
+    <button onclick="cerrarModalPDF()" class="modal-btn-cancel" style="width:100%; margin-top:14px;">Cancelar</button>
+  </div>
+</div>
+
+<style>
+#modalPDF .modal-card button:active { opacity: 0.8; transform: scale(0.98); }
+</style>
+
+<script>
+function abrirModalPDF()  { document.getElementById('modalPDF').classList.add('open'); }
+function cerrarModalPDF() { document.getElementById('modalPDF').classList.remove('open'); }
+</script>
+
+<!-- FAB AGREGAR MIEMBRO -->
+<button id="fabNuevo" onclick="abrirModalMenu()" title="Agregar miembro" aria-label="Agregar miembro">
+  <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+</button>
+
+<style>
+#fabNuevo {
+    position: fixed;
+    bottom: 24px;
+    right: 22px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #d4af37;
+    border: 2px solid #d4af37;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 900;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+#fabNuevo:active {
+    transform: scale(0.91);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+</style>
+
 </body>
 </html>
