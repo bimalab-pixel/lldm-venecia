@@ -360,6 +360,58 @@ table.sheet-table {
     to { transform: scale(1); opacity: 1; }
 }
 
+        /* --- MODAL VISTA PREVIA SUPERVISIÓN --- */
+#previewModal {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 3000;
+    overflow-y: auto;
+    padding: 15px;
+    box-sizing: border-box;
+}
+#previewModal.open { display: flex; flex-direction: column; align-items: center; }
+.preview-modal-box {
+    background: white;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 650px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    overflow: hidden;
+    animation: popIn 0.3s ease;
+    margin: auto;
+}
+.preview-modal-header {
+    background: #1e293b;
+    color: white;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.preview-modal-header h4 { margin: 0; font-size: 1rem; }
+.preview-modal-body {
+    padding: 18px;
+    overflow-x: auto;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.preview-modal-footer {
+    padding: 14px 18px;
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid #eee;
+    background: #f8fafc;
+}
+.btn-preview-close {
+    flex: 1; padding: 13px; background: #95a5a6; color: white;
+    border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer;
+}
+.btn-preview-pdf {
+    flex: 2; padding: 13px; background: #27ae60; color: white;
+    border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer;
+}
+
         /* --- PANTALLA DE ACCESO VISTOSA --- */
         #loginView {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -986,6 +1038,23 @@ header p {
 
 </div>
 
+<!-- ===== MODAL VISTA PREVIA SUPERVISIÓN ===== -->
+<div id="previewModal">
+    <div class="preview-modal-box">
+        <div class="preview-modal-header">
+            <h4>👁 Vista Previa — Informe de Supervisión</h4>
+            <button onclick="closePreviewModal()" style="background:rgba(255,255,255,0.15);border:none;color:white;font-size:1.3rem;cursor:pointer;border-radius:6px;padding:2px 8px;">✕</button>
+        </div>
+        <div class="preview-modal-body">
+            <div id="previewModalContent"></div>
+        </div>
+        <div class="preview-modal-footer">
+            <button class="btn-preview-close" onclick="closePreviewModal()">✕ Cerrar</button>
+            <button class="btn-preview-pdf" onclick="closePreviewModal(); generarInformeCenso()">📄 Generar PDF</button>
+        </div>
+    </div>
+</div>
+
 </div> <div id="censusView" class="view">
     <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
 
@@ -1005,11 +1074,12 @@ header p {
         <p style="font-size:0.7rem;color:#888;margin:0;">Se guarda automáticamente.</p>
     </div>
 
-    <button class="btn-action" style="background:#27ae60; margin:0; height:60px; font-size:1.1rem;" onclick="generarInformeCenso()">
-        🖨️ IMPRIMIR / GUARDAR PDF
-    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0;">
+        <button class="btn-action" style="background:#2980b9;margin:0;height:60px;font-size:1rem;" onclick="vistaPreviaInformeCenso()">👁 VISTA PREVIA</button>
+        <button class="btn-action" style="background:#27ae60;margin:0;height:60px;font-size:1rem;" onclick="generarInformeCenso()">📄 GENERAR PDF</button>
+    </div>
 
-    <div id="censusPrintArea">
+    <div id="censusPrintArea" style="display:none;">
         <div id="censusContent"></div>
     </div>
 </div>
@@ -1361,13 +1431,11 @@ window.downloadData = async function() {
             const cloudInfo  = cloudData.miembrosInfo || {};
             cloudData.miembrosInfo = Object.assign({}, localInfo, cloudInfo);
 
-            // Fusionar listas negras y limpiar nombres borrados
+            // Fusionar listas negras y limpiar nombres borrados — siempre, sin condición
             const deletedUnion = [...new Set([...(cloudData.deletedMembers||[]), ...((localData&&localData.deletedMembers)||[])])];
             cloudData.deletedMembers = deletedUnion;
-            if (deletedUnion.length > 0) {
-                cloudData.hombres = (cloudData.hombres||[]).filter(n => !deletedUnion.includes(n));
-                cloudData.mujeres = (cloudData.mujeres||[]).filter(n => !deletedUnion.includes(n));
-            }
+            cloudData.hombres = (cloudData.hombres||[]).filter(n => !deletedUnion.includes(n));
+            cloudData.mujeres = (cloudData.mujeres||[]).filter(n => !deletedUnion.includes(n));
 
             localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
             alert("✅ Datos actualizados con éxito.");
@@ -1948,12 +2016,11 @@ window.saveHeaderConf = function() {
     localStorage.setItem('lldm_header_conf', JSON.stringify(conf));
 };
 
-window.generarInformeCenso = function() {
+function buildInformeCensoHTML() {
     const iglesia  = document.getElementById('conf-iglesia').value || "Iglesia Local";
     const ministro = document.getElementById('conf-ministro').value || "Ministro Responsable";
     const comision = document.getElementById('comision-nombres').value || '________________________________';
 
-    // ── Leer totales automáticamente del Censo ──
     const censoDB  = JSON.parse(localStorage.getItem('censo_v17_db'));
     let activos = 0, temporales = 0;
     if (censoDB) {
@@ -2016,8 +2083,7 @@ window.generarInformeCenso = function() {
         }
     }
 
-    // ── HTML del informe (compartido para ambas plataformas) ──
-    const reporteHTML = `
+    const html = `
         <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:15px;">
             <div style="font-size:20pt;font-weight:bold;">"LA LUZ DEL MUNDO"</div>
             <div style="font-size:9pt;letter-spacing:1px;margin-bottom:10px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
@@ -2056,6 +2122,24 @@ window.generarInformeCenso = function() {
                 <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div><p style="font-weight:bold;margin:0;">Sello de la Iglesia</p></div>
             </div>
         </div>`;
+
+    return { html, ahora };
+}
+
+function vistaPreviaInformeCenso() {
+    const { html } = buildInformeCensoHTML();
+    document.getElementById('previewModalContent').innerHTML = html;
+    document.getElementById('previewModal').classList.add('open');
+}
+
+function closePreviewModal() {
+    document.getElementById('previewModal').classList.remove('open');
+}
+
+window.generarInformeCenso = function() {
+    const iglesia = document.getElementById('conf-iglesia').value || "Iglesia Local";
+    const { html } = buildInformeCensoHTML();
+    const reporteHTML = html;
 
     // ── APK Android: html2pdf SIN image/html2canvas ──
     if (typeof Android !== 'undefined' && Android.guardarArchivo) {
@@ -2622,15 +2706,19 @@ function sincronizarDesdeCenso() {
         if (hoy.getMonth() < nac.getMonth() || (hoy.getMonth()===nac.getMonth() && hoy.getDate()<nac.getDate())) e--;
         return e < 0 ? 0 : e;
     };
-    let agregados=0, actualizados=0, sinCambio=0;
+    let agregados=0, actualizados=0, sinCambio=0, eliminados=0;
     ['hombres','mujeres'].forEach(tipo => {
-        const adultos = (censoDB[tipo]||[]).filter(m =>
-            m.nombre && m.nombre.trim() !== '' && m.nombre !== 'Nuevo' && calcEdad(m.nacimiento) >= 14
+        // Nombres válidos del censo (mayores de 14)
+        const nombresEnCenso = new Set(
+            (censoDB[tipo]||[])
+                .filter(m => m.nombre && m.nombre.trim() !== '' && m.nombre !== 'Nuevo' && calcEdad(m.nacimiento) >= 14)
+                .map(m => m.nombre.trim())
         );
-        adultos.forEach(m => {
-            const nombre  = m.nombre.trim();
+        // Agregar o actualizar desde censo
+        nombresEnCenso.forEach(nombre => {
+            const m = (censoDB[tipo]||[]).find(x => x.nombre && x.nombre.trim() === nombre);
             // Mapear estado del censo → estado de asistencia
-            const stAsist = m.estado === 'Retirado' ? 'retirado' : 'activo';
+            const stAsist = m && m.estado === 'Retirado' ? 'retirado' : 'activo';
             if (!appData[tipo].includes(nombre)) {
                 appData[tipo].push(nombre);
                 setStatus(nombre, stAsist);
@@ -2643,13 +2731,25 @@ function sincronizarDesdeCenso() {
                 } else { sinCambio++; }
             }
         });
+        // Eliminar activos/retirados que ya no están en censo
+        appData[tipo] = appData[tipo].filter(nombre => {
+            const st = getStatus(nombre);
+            if ((st === 'activo' || st === 'retirado') && !nombresEnCenso.has(nombre)) {
+                if (!appData.deletedMembers) appData.deletedMembers = [];
+                if (!appData.deletedMembers.includes(nombre)) appData.deletedMembers.push(nombre);
+                eliminados++;
+                return false;
+            }
+            return true; // conservar oyentes, restauración y los que sí están en censo
+        });
         appData[tipo] = sortL(appData[tipo]);
     });
     save();
     const partes = [];
-    if (agregados > 0)   partes.push(`✅ ${agregados} miembros nuevos agregados`);
+    if (agregados > 0)    partes.push(`✅ ${agregados} miembros nuevos agregados`);
     if (actualizados > 0) partes.push(`🔄 ${actualizados} estados actualizados`);
-    if (sinCambio > 0)   partes.push(`ℹ️ ${sinCambio} sin cambios`);
+    if (eliminados > 0)   partes.push(`🗑️ ${eliminados} eliminados (ya no están en censo)`);
+    if (sinCambio > 0)    partes.push(`ℹ️ ${sinCambio} sin cambios`);
     alert('SINCRONIZACIÓN COMPLETA\n\n' + (partes.join('\n') || 'No hubo cambios.') +
         '\n\nHermanos: ' + appData.hombres.length + ' | Hermanas: ' + appData.mujeres.length);
     // Si está en la vista de gestión, refrescar
