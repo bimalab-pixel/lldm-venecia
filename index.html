@@ -2196,29 +2196,30 @@ function closePreviewModal() {
 }
 
 window.generarInformeCenso = function() {
-    const iglesia = document.getElementById('conf-iglesia').value || "Iglesia Local";
     const { html } = buildInformeCensoHTML();
-    const reporteHTML = html;
 
-    // ── APK Android: html2pdf SIN image/html2canvas ──
+    // ── APK Android: html2pdf ──
     if (typeof Android !== 'undefined' && Android.guardarArchivo) {
         const element = document.createElement('div');
-        element.style.cssText = "width:800px;padding:20px;background:white;color:black;font-family:Arial,sans-serif;";
-        element.innerHTML = reporteHTML;
+        element.style.cssText = 'width:800px;padding:20px;background:white;color:black;font-family:Arial,sans-serif;';
+        element.innerHTML = html;
         const opt = {
             margin: [10,10,10,10],
-            filename: `Informe_Supervision_${iglesia}.pdf`,
+            filename: 'Informe_Supervision.pdf',
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
         };
         html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
-            Android.guardarArchivo(pdfBase64, "Informe_Supervision.pdf", "application/pdf");
+            Android.guardarArchivo(pdfBase64, 'Informe_Supervision.pdf', 'application/pdf');
         });
         return;
     }
 
-    // ── PWA / Navegador: window.print() ──
-    document.getElementById('censusContent').innerHTML = reporteHTML;
-    window.print();
+    // ── PWA / Navegador: ventana nueva con el reporte completo ──
+    const ventana = window.open('', '_blank', 'width=820,height=700');
+    ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de Supervision<\/title><style>body{font-family:Arial,sans-serif;color:#000;margin:0;padding:24px;background:white;}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:letter portrait;margin:1cm;}@media print{body{padding:0;}}<\/style><\/head><body>' + html + '<\/body><\/html>');
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(function() { ventana.print(); }, 600);
 }
 
 function showCensus() {
