@@ -1079,6 +1079,9 @@ header p {
         <button class="btn-action" style="background:#27ae60;margin:0;height:60px;font-size:1rem;" onclick="generarInformeCenso()">📄 GENERAR PDF</button>
     </div>
 
+    <div style="margin-top:10px;">
+        <button class="btn-action" style="background:#154360;margin:0;height:60px;font-size:1rem;width:100%;" onclick="verListaCompletaMiembros()">📋 VER LISTA COMPLETA DE MIEMBROS</button>
+    </div>
     <div id="censusPrintArea" style="display:none;">
         <div id="censusContent"></div>
     </div>
@@ -1089,6 +1092,15 @@ header p {
         <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
         <h2 id="manageTitle" style="margin-top:0;">Lista</h2>
 
+        <!-- BUSCADOR INTEGRADO -->
+        <div style="position:relative;margin-bottom:12px;">
+            <input type="text" id="manageSearch" placeholder="🔍 Buscar nombre..."
+                   oninput="filterManageList()"
+                   style="margin-bottom:0;padding-right:42px;border-radius:20px;border:2px solid #2980b9;width:100%;box-sizing:border-box;">
+            <button onclick="clearManageSearch()"
+                    style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:#bdc3c7;border:none;border-radius:50%;width:28px;height:28px;color:white;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
         <!-- Tarjetas de conteo -->
         <div id="statusSummary" class="status-summary"></div>
 
@@ -1096,22 +1108,46 @@ header p {
         <div id="censoBanner" class="censo-banner" style="display:none;"></div>
 
         <input type="file" id="txtInput" accept=".txt" style="display:none" onchange="handleFile(event)">
-        <button class="btn-action" style="background:#2980b9; margin-bottom:15px;" onclick="document.getElementById('txtInput').click()">📂 Importar desde archivo .TXT</button>
+        <button class="btn-action" style="background:#2980b9;margin-bottom:12px;" onclick="document.getElementById('txtInput').click()">📂 Importar desde archivo .TXT</button>
 
-        <input type="text" id="newName" placeholder="Nombre completo..." style="margin-bottom:8px;"
-            onkeypress="if(event.key==='Enter') addMem()">
-
-        <!-- Botones de estado para nuevo miembro -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-            <button id="newStBtn-activo" class="status-opt-btn sel-activo" onclick="selectNewSt('activo')">✅ ACTIVO</button>
-            <button id="newStBtn-retirado" class="status-opt-btn" onclick="selectNewSt('retirado')" style="color:#e67e22;">⏸ RETIRADO TEMP.</button>
-            <button id="newStBtn-oyente" class="status-opt-btn" onclick="selectNewSt('oyente')" style="color:#2980b9;">👂 OYENTE</button>
-            <button id="newStBtn-restauracion" class="status-opt-btn" onclick="selectNewSt('restauracion')" style="color:#8e44ad;">🔄 EN RESTAURACIÓN</button>
-        </div>
-        <button class="btn-action" onclick="addMem()" style="background:#27ae60;margin-bottom:8px;">➕ AGREGAR MIEMBRO</button>
-
-        <p>Total: <strong id="memCount">0</strong></p>
+        <!-- LISTA -->
         <ul id="manageList" class="member-list"></ul>
+
+        <!-- BOTÓN AGREGAR (sticky) -->
+        <button onclick="abrirModalAgregar()"
+                style="position:sticky;bottom:10px;width:100%;padding:17px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:12px;font-weight:900;font-size:1.05rem;cursor:pointer;box-shadow:0 4px 15px rgba(39,174,96,0.4);letter-spacing:.5px;margin-top:10px;">
+            ➕ AGREGAR MIEMBRO
+        </button>
+    </div>
+
+    <!-- MODAL AGREGAR MIEMBRO (bottom-sheet) -->
+    <div id="modalAgregarMiembro" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:4000;justify-content:center;align-items:flex-end;">
+        <div style="background:#fff;width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:25px 20px 30px;box-shadow:0 -8px 30px rgba(0,0,0,.2);animation:slideUp .3s ease;">
+            <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 20px;"></div>
+            <h3 style="margin:0 0 18px;color:#2c3e50;font-size:1.1rem;">➕ Agregar Nuevo Miembro</h3>
+
+            <label style="font-size:.78rem;font-weight:700;color:#7f8c8d;text-transform:uppercase;letter-spacing:.5px;">Nombre Completo</label>
+            <input type="text" id="newName" placeholder="Nombre completo..."
+                   style="margin-top:6px;margin-bottom:15px;"
+                   onkeypress="if(event.key==='Enter') addMem()">
+
+            <label style="font-size:.78rem;font-weight:700;color:#7f8c8d;text-transform:uppercase;letter-spacing:.5px;">Estado del Miembro</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;margin-bottom:20px;">
+                <button id="newStBtn-activo"       class="status-opt-btn sel-activo"  onclick="selectNewSt('activo')">✅ ACTIVO</button>
+                <button id="newStBtn-retirado"     class="status-opt-btn"             onclick="selectNewSt('retirado')"      style="color:#e67e22;">⏸ RETIRADO TEMP.</button>
+                <button id="newStBtn-oyente"       class="status-opt-btn"             onclick="selectNewSt('oyente')"        style="color:#2980b9;">👂 OYENTE</button>
+                <button id="newStBtn-restauracion" class="status-opt-btn"             onclick="selectNewSt('restauracion')"  style="color:#8e44ad;">🔄 EN RESTAURACIÓN</button>
+            </div>
+
+            <button onclick="addMem()"
+                    style="width:100%;padding:15px;background:linear-gradient(135deg,#27ae60,#1e8449);color:white;border:none;border-radius:10px;font-weight:900;font-size:1rem;cursor:pointer;margin-bottom:10px;">
+                💾 GUARDAR MIEMBRO
+            </button>
+            <button onclick="cerrarModalAgregar()"
+                    style="width:100%;padding:12px;background:#ecf0f1;color:#7f8c8d;border:none;border-radius:10px;font-weight:700;font-size:.95rem;cursor:pointer;">
+                Cancelar
+            </button>
+        </div>
     </div>
 
 <!-- ══ MODAL CAMBIO DE ESTADO ════════════════════════════════ -->
@@ -1495,8 +1531,8 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
         curType = t; 
         document.getElementById('manageView').classList.add('active'); 
         document.getElementById('manageTitle').innerText = t === 'hombres' ? 'Lista de Hermanos' : 'Lista de Hermanas';
-        document.getElementById('searchContainer').style.display = 'block';
-        document.getElementById('nameSearch').value = '';
+        document.getElementById('searchContainer').style.display = 'none';
+        document.getElementById('manageSearch').value = '';
         renderList(); 
     }
 
@@ -1547,7 +1583,7 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
             const badgeLabel = ST_LABELS[st] || 'Activo';
             const escapedName = n.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             listHtml += `
-                <li class="member-item">
+                <li class="member-item" data-name="${n.toLowerCase()}">
                     <div style="display:flex;flex-direction:column;flex:1;gap:3px;">
                         <span style="font-weight:600">${i+1}. ${n}</span>
                         <span class="status-badge ${badgeClass}" onclick="openStatusModal('${escapedName}',${i})" style="cursor:pointer;width:fit-content;">${badgeLabel}</span>
@@ -1556,7 +1592,6 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
                 </li>`;
         });
         l.innerHTML = listHtml;
-        document.getElementById('memCount').innerText = appData[curType].length;
     }
 
     // ── Modal de cambio de estado ──
@@ -1588,6 +1623,29 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
             else b.style.color = '';
         });
     }
+    // ── Buscador integrado en manageView ──────────────────────────
+    window.filterManageList = function() {
+        const q = document.getElementById('manageSearch').value.toLowerCase();
+        document.querySelectorAll('#manageList li').forEach(li => {
+            li.style.display = (li.dataset.name || '').includes(q) ? '' : 'none';
+        });
+    };
+    window.clearManageSearch = function() {
+        document.getElementById('manageSearch').value = '';
+        filterManageList();
+    };
+
+    // ── Modal agregar miembro ──────────────────────────────────────
+    window.abrirModalAgregar = function() {
+        document.getElementById('newName').value = '';
+        selectNewSt('activo');
+        document.getElementById('modalAgregarMiembro').style.display = 'flex';
+        setTimeout(() => document.getElementById('newName').focus(), 350);
+    };
+    window.cerrarModalAgregar = function() {
+        document.getElementById('modalAgregarMiembro').style.display = 'none';
+    };
+
     function addMem() {
         const i = document.getElementById('newName'), n = i.value.trim();
         if (!n) return;
@@ -1596,6 +1654,7 @@ function showHeader() { document.getElementById('mainHeader').classList.remove('
         appData[curType] = sortL(appData[curType]);
         setStatus(n, _newSt);
         i.value = '';
+        cerrarModalAgregar();
         renderList();
     }
     function delMem(i) {
@@ -2963,6 +3022,164 @@ function renderReporteDiario() {
 
 
 
+// ── LISTA COMPLETA DE MIEMBROS ─────────────────────────────────
+function verListaCompletaMiembros() {
+    const datos = JSON.parse(localStorage.getItem('lldm_v6_total_color')) || { hombres: [], mujeres: [] };
+
+    const filtrar = lista => lista.filter(n => {
+        const st = getStatus(n);
+        return st === 'activo' || st === 'retirado';
+    });
+
+    const hombres = filtrar(datos.hombres);
+    const mujeres = filtrar(datos.mujeres);
+    const totalH  = hombres.length;
+    const totalM  = mujeres.length;
+    const total   = totalH + totalM;
+
+    // Contar activos y retirados del total combinado
+    const todosActivos   = [...hombres, ...mujeres].filter(n => getStatus(n) === 'activo').length;
+    const todosRetirados = [...hombres, ...mujeres].filter(n => getStatus(n) === 'retirado').length;
+
+    const renderSeccion = (lista, titulo, colorBorde) => {
+        if (!lista.length) return '';
+        let filas = lista.map((n, i) => {
+            const st = getStatus(n);
+            const badge = st === 'retirado'
+                ? `<span style="font-size:.6rem;background:#ffecd1;color:#7d4500;padding:2px 7px;border-radius:10px;font-weight:700;">RETIRADO</span>`
+                : `<span style="font-size:.6rem;background:#d4edda;color:#155724;padding:2px 7px;border-radius:10px;font-weight:700;">ACTIVO</span>`;
+            return `<tr style="border-bottom:1px solid #f0f0f0;">
+                <td style="padding:7px 5px;font-size:.78rem;color:#94a3b8;width:28px;text-align:center;">${i+1}</td>
+                <td style="padding:7px 5px;font-size:.88rem;font-weight:600;color:#1e293b;">${n}</td>
+                <td style="padding:7px 5px;text-align:right;">${badge}</td>
+            </tr>`;
+        }).join('');
+        return `
+            <div style="background:${colorBorde};color:white;padding:8px 12px;font-weight:800;font-size:.85rem;border-radius:8px;margin-bottom:4px;display:flex;justify-content:space-between;">
+                <span>${titulo}</span><span>${lista.length} personas</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+                <tbody>${filas}</tbody>
+            </table>`;
+    };
+
+    const html = `
+        ${renderSeccion(hombres, '👨 HERMANOS', '#1a5276')}
+        ${renderSeccion(mujeres, '👩 HERMANAS', '#6c3483')}
+        <div style="background:#0f172a;color:white;border-radius:10px;padding:12px 16px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div style="font-size:.78rem;">
+                    <div style="color:#86efac;">Hermanos: <b>${totalH}</b></div>
+                    <div style="color:#f9a8d4;">Hermanas: <b>${totalM}</b></div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:.65rem;color:#94a3b8;text-transform:uppercase;">TOTAL GENERAL</div>
+                    <div style="font-size:2rem;font-weight:900;color:#d4af37;">${total}</div>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:rgba(134,239,172,.12);border:1px solid rgba(134,239,172,.3);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:.7rem;color:#86efac;font-weight:700;text-transform:uppercase;">Activos</span>
+                    <span style="font-size:1.4rem;font-weight:900;color:#86efac;">${todosActivos}</span>
+                </div>
+                <div style="background:rgba(253,186,116,.12);border:1px solid rgba(253,186,116,.3);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:.7rem;color:#fdba74;font-weight:700;text-transform:uppercase;">Retirados</span>
+                    <span style="font-size:1.4rem;font-weight:900;color:#fdba74;">${todosRetirados}</span>
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById('listaCompletaBody').innerHTML = html;
+    document.getElementById('modalListaCompleta').style.display = 'block';
+}
+
+function cerrarListaCompleta() {
+    document.getElementById('modalListaCompleta').style.display = 'none';
+}
+
+function imprimirListaCompleta() {
+    const contenido = document.getElementById('listaCompletaBody').innerHTML;
+    const iglesia  = document.getElementById('conf-iglesia').value  || 'IGLESIA LOCAL';
+    const ministro = document.getElementById('conf-ministro').value || 'MINISTRO LOCAL';
+    const fecha = new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' }).toUpperCase();
+
+    const ventana = window.open('', '_blank', 'width=800,height=600');
+    ventana.document.write(`<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<title>Lista Completa de Miembros</title>
+<style>
+  body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 20px; }
+  h2 { text-align:center; font-size:14pt; margin:0; }
+  .subtitulo { text-align:center; font-size:8pt; letter-spacing:1px; margin-bottom:4px; }
+  .titulo-banda { background:#000; color:#fff; text-align:center; font-size:11pt; font-weight:900; padding:5px; margin-bottom:10px; }
+  .datos { font-size:9pt; margin-bottom:12px; line-height:1.8; }
+  .seccion-header { color:white; padding:6px 10px; font-weight:800; font-size:.82rem; border-radius:4px; margin-bottom:2px; display:flex; justify-content:space-between; }
+  .sec-h { background:#1a5276; }
+  .sec-m { background:#6c3483; }
+  table { width:100%; border-collapse:collapse; margin-bottom:14px; font-size:9pt; }
+  tr { border-bottom:1px solid #eee; }
+  td { padding:5px 4px; }
+  .num { color:#94a3b8; width:24px; text-align:center; }
+  .badge-a { font-size:.6rem; background:#d4edda; color:#155724; padding:1px 6px; border-radius:8px; font-weight:700; }
+  .badge-r { font-size:.6rem; background:#ffecd1; color:#7d4500; padding:1px 6px; border-radius:8px; font-weight:700; }
+  .totales { background:#0f172a; color:white; border-radius:8px; padding:10px 14px; margin-top:4px; }
+  .tot-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .tot-num { font-size:1.6rem; font-weight:900; color:#d4af37; }
+  .tot-sub { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .tot-box { border-radius:6px; padding:6px 10px; display:flex; justify-content:space-between; align-items:center; }
+  .box-a { background:rgba(134,239,172,.15); border:1px solid rgba(134,239,172,.4); }
+  .box-r { background:rgba(253,186,116,.15); border:1px solid rgba(253,186,116,.4); }
+  .box-a span:first-child { font-size:.65rem; color:#155724; font-weight:700; text-transform:uppercase; }
+  .box-a span:last-child  { font-size:1.2rem; font-weight:900; color:#155724; }
+  .box-r span:first-child { font-size:.65rem; color:#7d4500; font-weight:700; text-transform:uppercase; }
+  .box-r span:last-child  { font-size:1.2rem; font-weight:900; color:#7d4500; }
+  .firmas { margin-top:40px; display:flex; justify-content:space-around; text-align:center; font-size:8pt; }
+  .firmas div div { border-top:1px solid #000; width:180px; margin-bottom:4px; }
+  @media print { body { padding:10px; } }
+</style>
+</head><body>
+<h2>"LA LUZ DEL MUNDO"</h2>
+<div class="subtitulo">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+<div class="titulo-banda">LISTA COMPLETA DE MIEMBROS</div>
+<div class="datos">
+  <b>IGLESIA:</b> ${iglesia.toUpperCase()}<br>
+  <b>MINISTRO:</b> ${ministro.toUpperCase()}<br>
+  <b>FECHA:</b> ${fecha}
+</div>
+${contenido}
+<div class="firmas">
+  <div><div></div>MINISTRO LOCAL</div>
+  <div><div></div>SECRETARIO DE ESTADÍSTICA</div>
+</div>
+</body></html>`);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => { ventana.print(); }, 600);
+}
+
+
+
 </script>
+<!-- ══ MODAL LISTA COMPLETA DE MIEMBROS ══════════════════════════════ -->
+<div id="modalListaCompleta" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:4500;overflow-y:auto;padding:15px;box-sizing:border-box;">
+    <div style="background:white;border-radius:16px;width:100%;max-width:640px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.4);overflow:hidden;">
+        <!-- Header -->
+        <div style="background:#154360;color:white;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="font-weight:800;font-size:1rem;">📋 LISTA COMPLETA DE MIEMBROS</div>
+                <div style="font-size:.72rem;opacity:.7;margin-top:2px;">Activos y Retirados Temporales</div>
+            </div>
+            <button onclick="cerrarListaCompleta()" style="background:rgba(255,255,255,.15);border:none;color:white;border-radius:50%;width:32px;height:32px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+        <!-- Body -->
+        <div id="listaCompletaBody" style="padding:16px;max-height:70vh;overflow-y:auto;"></div>
+        <!-- Footer -->
+        <div style="padding:12px 16px;border-top:1px solid #eee;background:#f8fafc;display:flex;gap:10px;">
+            <button onclick="cerrarListaCompleta()" style="flex:1;padding:13px;background:#95a5a6;color:white;border:none;border-radius:8px;font-weight:bold;font-size:.95rem;cursor:pointer;">Cerrar</button>
+            <button onclick="imprimirListaCompleta()" style="flex:2;padding:13px;background:#154360;color:white;border:none;border-radius:8px;font-weight:bold;font-size:.95rem;cursor:pointer;">🖨️ IMPRIMIR / PDF</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
