@@ -1822,14 +1822,15 @@ function showAttendanceSetup() {
 
     if (!d) return alert("Por favor, seleccione una fecha.");
 
-    // Advertir si nadie fue marcado
+    // Bloquear si nadie fue marcado
     if (ns.length === 0) {
-        if (!confirm("⚠️ No marcaste a nadie en esta asistencia.\n\n¿Deseas guardar el registro vacío de todos modos?\n\n(Si fue un error, presiona Cancelar)")) return;
+        alert("⚠️ No marcaste a nadie en esta asistencia.\n\nNo se puede guardar ni enviar a la nube una asistencia vacía.\n\nMarca al menos un miembro antes de guardar.");
+        return;
     }
 
     // 1. GUARDAR LOCALMENTE — names siempre como array garantizado
     appData.asistencias = appData.asistencias.filter(r => !(r.date === d && r.service === curSvStr && r.type === curAttType));
-    appData.asistencias.push({ date: d, service: curSvStr, type: curAttType, names: Array.isArray(ns) ? ns : [] });
+    appData.asistencias.push({ date: d, service: curSvStr, type: curAttType, names: ns });
 
     save();
 
@@ -1841,10 +1842,7 @@ function showAttendanceSetup() {
     }
 
     // 3. AVISO Y RETORNO
-    const msg = ns.length > 0
-        ? `✅ Asistencia guardada.\n${ns.length} persona(s) registrada(s).\n\nRecuerde subirla a la nube.`
-        : "✅ Registro vacío guardado. Recuerde subirlo a la nube.";
-    alert(msg);
+    alert(`✅ Asistencia guardada.\n${ns.length} persona(s) registrada(s).\n\nRecuerde subirla a la nube.`);
     goHome();
 }
 
