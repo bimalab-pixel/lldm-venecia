@@ -1432,22 +1432,32 @@ window.uploadData = async function() {
 
         // Proteger nube: solo propagar deletedMembers si el local tiene listas
         const localTieneListas = localData.hombres.length > 0 || localData.mujeres.length > 0;
+
+        // Unión de deletedMembers de ambos lados
         const deletedUnion = localTieneListas
             ? [...new Set([...cloudData.deletedMembers, ...localData.deletedMembers])]
             : [...cloudData.deletedMembers];
-        cloudData.deletedMembers = deletedUnion;
+
+        // Un nombre borrado se respeta SOLO si no fue readmitido en ninguna lista activa.
+        const listaActivaUnion = new Set([
+            ...(cloudData.hombres || []), ...(cloudData.mujeres || []),
+            ...(localData.hombres || []), ...(localData.mujeres || [])
+        ]);
+        const deletedFinal = deletedUnion.filter(n => !listaActivaUnion.has(n));
+        cloudData.deletedMembers = deletedFinal;
 
         const fusionarListas = (loc, cld) => {
             const unidos = [...(cld || []), ...(loc || [])];
             return [...new Set(unidos)]
-                .filter(n => !deletedUnion.includes(n))
+                .filter(n => !deletedFinal.includes(n))
                 .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
         };
         cloudData.hombres = fusionarListas(localData.hombres, cloudData.hombres);
         cloudData.mujeres = fusionarListas(localData.mujeres, cloudData.mujeres);
 
+        // Nube prevalece; local solo aporta entradas nuevas que la nube no conoce.
         if (localTieneListas) {
-            cloudData.miembrosInfo = Object.assign({}, cloudData.miembrosInfo, localData.miembrosInfo);
+            cloudData.miembrosInfo = Object.assign({}, localData.miembrosInfo, cloudData.miembrosInfo);
         }
 
         localData.asistencias.forEach(locRes => {
@@ -1495,15 +1505,17 @@ window.downloadData = async function() {
                 }
             }
 
-            // Fusionar miembrosInfo: nube prevalece sobre local
+            // Fusionar miembrosInfo: nube prevalece, local aporta entradas nuevas
             cloudData.miembrosInfo = Object.assign({}, localData.miembrosInfo, cloudData.miembrosInfo);
 
-            // Fusionar listas negras y limpiar borrados
-            const deletedUnion = [...new Set([...cloudData.deletedMembers, ...localData.deletedMembers])];
-            cloudData.deletedMembers = deletedUnion;
-            if (deletedUnion.length > 0) {
-                cloudData.hombres = cloudData.hombres.filter(n => !deletedUnion.includes(n));
-                cloudData.mujeres = cloudData.mujeres.filter(n => !deletedUnion.includes(n));
+            // Fusionar listas negras — respetar readmitidos
+            const deletedUnionD = [...new Set([...cloudData.deletedMembers, ...localData.deletedMembers])];
+            const listaActivaNube = new Set([...(cloudData.hombres || []), ...(cloudData.mujeres || [])]);
+            const deletedFinalD = deletedUnionD.filter(n => !listaActivaNube.has(n));
+            cloudData.deletedMembers = deletedFinalD;
+            if (deletedFinalD.length > 0) {
+                cloudData.hombres = cloudData.hombres.filter(n => !deletedFinalD.includes(n));
+                cloudData.mujeres = cloudData.mujeres.filter(n => !deletedFinalD.includes(n));
             }
 
             localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
