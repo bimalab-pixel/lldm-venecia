@@ -1438,12 +1438,14 @@ window.uploadData = async function() {
             ? [...new Set([...cloudData.deletedMembers, ...localData.deletedMembers])]
             : [...cloudData.deletedMembers];
 
-        // Un nombre borrado se respeta SOLO si no fue readmitido en ninguna lista activa.
-        const listaActivaUnion = new Set([
-            ...(cloudData.hombres || []), ...(cloudData.mujeres || []),
-            ...(localData.hombres || []), ...(localData.mujeres || [])
+        // Un nombre borrado se respeta siempre que no haya sido readmitido
+        // en la lista LOCAL activa (readmisión consciente del usuario local).
+        // Si solo está readmitido en la nube pero fue borrado localmente, se borra.
+        const listaActivaLocal = new Set([
+            ...(localData.hombres || []),
+            ...(localData.mujeres || [])
         ]);
-        const deletedFinal = deletedUnion.filter(n => !listaActivaUnion.has(n));
+        const deletedFinal = deletedUnion.filter(n => !listaActivaLocal.has(n));
         cloudData.deletedMembers = deletedFinal;
 
         const fusionarListas = (loc, cld) => {
@@ -1508,14 +1510,16 @@ window.downloadData = async function() {
             // Fusionar miembrosInfo: nube prevalece, local aporta entradas nuevas
             cloudData.miembrosInfo = Object.assign({}, localData.miembrosInfo, cloudData.miembrosInfo);
 
-            // Fusionar listas negras — respetar readmitidos
+            // Fusionar listas negras — respetar eliminaciones locales
             const deletedUnionD = [...new Set([...cloudData.deletedMembers, ...localData.deletedMembers])];
-            const listaActivaNube = new Set([...(cloudData.hombres || []), ...(cloudData.mujeres || [])]);
-            const deletedFinalD = deletedUnionD.filter(n => !listaActivaNube.has(n));
+            // Un nombre se considera readmitido SOLO si está en la lista LOCAL activa.
+            // Si solo está en la nube pero fue eliminado localmente, se respeta la eliminación.
+            const listaActivaLocal = new Set([...(localData.hombres || []), ...(localData.mujeres || [])]);
+            const deletedFinalD = deletedUnionD.filter(n => !listaActivaLocal.has(n));
             cloudData.deletedMembers = deletedFinalD;
             if (deletedFinalD.length > 0) {
-                cloudData.hombres = cloudData.hombres.filter(n => !deletedFinalD.includes(n));
-                cloudData.mujeres = cloudData.mujeres.filter(n => !deletedFinalD.includes(n));
+                cloudData.hombres = (cloudData.hombres || []).filter(n => !deletedFinalD.includes(n));
+                cloudData.mujeres = (cloudData.mujeres || []).filter(n => !deletedFinalD.includes(n));
             }
 
             localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
