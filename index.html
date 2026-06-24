@@ -2657,9 +2657,18 @@ function generarReporteSemestral() {
 
         lista.forEach((nombre, index) => {
             let totalSemestre = 0;
-            html += `<tr>
-                <td>${index + 1}</td>
-                <td style="text-align:left; padding-left:5px; font-weight:bold;">${nombre}</td>`;
+            const esRetirado = getStatus(nombre) === 'retirado';
+            const trStyle = esRetirado ? ' style="background:#ffe5e5;"' : '';
+            const tdNumStyle = esRetirado ? ' style="background:#ffe5e5;color:#c0392b;"' : '';
+            const tdNombreStyle = esRetirado
+                ? 'text-align:left; padding-left:5px; font-weight:bold; color:#c0392b;'
+                : 'text-align:left; padding-left:5px; font-weight:bold;';
+            const badgeRT = esRetirado
+                ? ` <span style="font-size:.55rem;background:#c0392b;color:#fff;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">RT</span>`
+                : '';
+            html += `<tr${trStyle}>
+                <td${tdNumStyle}>${index + 1}</td>
+                <td style="${tdNombreStyle}">${nombre}${badgeRT}</td>`;
 
             ultimos6Meses.forEach(mes => {
                 let c5=0, c9=0, c6=0, ced=0;
@@ -2676,9 +2685,13 @@ function generarReporteSemestral() {
 
                 let totalMes = c5 + c9 + c6 + ced;
                 totalSemestre += totalMes;
-                html += `<td>${c5||'-'}</td><td>${c9||'-'}</td><td>${c6||'-'}</td><td>${ced||'-'}</td><td style="background:#f2f2f2; font-weight:bold;">${totalMes||'-'}</td>`;
+                const bgCelda = esRetirado ? 'background:#ffe5e5;' : '';
+                const bgTotal = esRetirado ? '#f5b8b8' : '#f2f2f2';
+                html += `<td style="${bgCelda}">${c5||'-'}</td><td style="${bgCelda}">${c9||'-'}</td><td style="${bgCelda}">${c6||'-'}</td><td style="${bgCelda}">${ced||'-'}</td><td style="background:${bgTotal}; font-weight:bold;">${totalMes||'-'}</td>`;
             });
-            html += `<td style="background:#ccc; font-weight:bold;">${totalSemestre||'-'}</td></tr>`;
+            const bgTG = esRetirado ? '#e8a0a0' : '#ccc';
+            const colorTG = esRetirado ? 'color:#7b0000;' : '';
+            html += `<td style="background:${bgTG}; font-weight:bold; ${colorTG}">${totalSemestre||'-'}</td></tr>`;
         });
 
         html += `</tbody></table>`;
