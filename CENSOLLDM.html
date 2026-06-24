@@ -144,11 +144,44 @@ header h1 {
         
         .editable { background: #fffde7; outline: none; border: 1px dashed #999 !important; min-width: 100px; }
 
-        /* TABLA DE ESTADISTICAS ADAPTABLE */
-        .stats-table { width: 100%; margin: 0 auto; border: 3px solid #000; border-collapse: collapse; background: white; color: #000; }
-        .stats-table td { border: 2px solid #000; padding: 10px; font-weight: 900; font-size: 0.9rem; }
-        .row-cat { text-align: left; padding-left: 10px; background: #f8f9fa; }
+        /* TABLA DE ESTADISTICAS — RESPONSIVA, SIN SCROLL */
+        .stats-wrapper {
+            width: 100%;
+            overflow: hidden;
+            margin-top: 15px;
+            box-sizing: border-box;
+        }
+        .stats-table {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            margin: 0;
+            border: 3px solid #000;
+            border-collapse: collapse;
+            background: white;
+            color: #000;
+            table-layout: fixed;
+            box-sizing: border-box;
+        }
+        .stats-table col.col-cat { width: 48%; }
+        .stats-table col.col-num { width: 26%; }
+        .stats-table td, .stats-table th {
+            border: 2px solid #000 !important;
+            padding: 7px 5px;
+            font-weight: 900;
+            font-size: 0.82rem;
+            word-break: break-word;
+            color: #000 !important;
+        }
+        .stats-table td:first-child,
+        .stats-table th:first-child { text-align: left; padding-left: 8px; }
+        .stats-table td:not(:first-child),
+        .stats-table th:not(:first-child) { text-align: center; }
+        .row-cat { text-align: left !important; padding-left: 8px !important; background: #f8f9fa; }
         .total-row { background: #cbd5e1 !important; border-top: 3px solid #000; }
+        @media (max-width: 380px) {
+            .stats-table td, .stats-table th { font-size: 0.72rem; padding: 5px 3px; }
+        }
 
         /* BOTONES */
         .btn { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 0.7rem; }
@@ -411,21 +444,6 @@ header h1 {
         background: white;
     }
 
-    /* Forzar tablas nítidas y bordes negros */
-    .stats-table {
-        width: 100% !important;
-        border: 2px solid #000 !important;
-        border-collapse: collapse !important;
-        margin-top: 10px;
-    }
-
-    .stats-table td, .stats-table th {
-        border: 1px solid #000 !important;
-        color: #000 !important;
-        padding: 8px !important;
-        background: transparent !important;
-    }
-
     /* Ajuste de firmas */
     .seccion-firmas {
         display: flex !important;
@@ -496,6 +514,9 @@ table td:not(.row-cat) {
     
     
     <div class="dash-card c-config" onclick="showView('configView')"><i>⚙️</i><span>Ajustes</span></div>
+    <div class="dash-card" onclick="abrirVistaLista()" style="background: linear-gradient(to bottom, #fff, #f0fdf4); border-bottom: 6px solid #16a34a !important; grid-column: 1 / -1;">
+        <i>👁️</i><span style="color:#15803d;">Ver Lista Completa</span>
+    </div>
 </div>
 <div class="card-asistencia-final" onclick="location.href='index.html'">
     <div class="asistencia-content">
@@ -609,14 +630,18 @@ table td:not(.row-cat) {
 
         <h2 style="text-align:center; color:#000; text-decoration: underline; font-size: 1.2rem; margin-bottom: 15px;">INFORME ESTADÍSTICO</h2>
         
-        <div class="table-wrapper" style="border:none; overflow:visible;">
+        <div class="stats-wrapper">
             <table class="stats-table">
-                <tbody id="statsBody">
-                    </tbody>
+                <colgroup>
+                    <col class="col-cat">
+                    <col class="col-num">
+                    <col class="col-num">
+                </colgroup>
+                <tbody id="statsBody"></tbody>
             </table>
         </div>
 
-        <div id="footerFirmas" class="seccion-firmas" style="margin-top: 80px;">
+        <div id="footerFirmas" class="seccion-firmas">
             <div style="width: 250px;">
                 <br><br>
                 <p style="margin:0; color:#000;">F. ________________________</p>
@@ -651,6 +676,23 @@ table td:not(.row-cat) {
 
     <input type="file" id="importJsonInput" accept=".json" style="display: none;" onchange="importarJSON(event)">
 </div>
+
+<!-- VISTA PREVIA LISTA -->
+<div id="listaView" class="view">
+    <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
+    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
+        <button id="filtroAdultos" onclick="abrirVistaLista('adultos')"
+            style="flex:1; padding:10px; border-radius:8px; border:2px solid #0f172a; background:#0f172a; color:#fff; font-weight:800; font-size:0.75rem; cursor:pointer;">
+            👨👩 ADULTOS
+        </button>
+        <button id="filtroCompleto" onclick="abrirVistaLista('completo')"
+            style="flex:1; padding:10px; border-radius:8px; border:2px solid #16a34a; background:#16a34a; color:#fff; font-weight:800; font-size:0.75rem; cursor:pointer;">
+            👨👩🧒 COMPLETA
+        </button>
+    </div>
+    <div id="listaContenido"></div>
+</div>
+
         
     </div>
 </div>
@@ -662,21 +704,122 @@ table td:not(.row-cat) {
 </div>
 
 <script>
+// =====================================================
+//   VISTA PREVIA — LISTA INTERNA HTML
+// =====================================================
+function abrirVistaLista(modo = 'completo') {
+    showView('listaView');
+
+    document.getElementById('filtroAdultos').style.opacity  = modo === 'adultos'  ? '1' : '0.45';
+    document.getElementById('filtroCompleto').style.opacity = modo === 'completo' ? '1' : '0.45';
+
+    const church   = (document.getElementById('churchName').value   || 'IGLESIA LOCAL').toUpperCase();
+    const minister = (document.getElementById('ministerName').value || 'MINISTRO LOCAL').toUpperCase();
+    const fecha    = new Date().toLocaleDateString('es-SV', { day:'numeric', month:'long', year:'numeric' });
+
+    const estiloSeccion = `background:#0f172a; color:#fff; font-weight:900; font-size:0.8rem;
+        padding:8px 10px; letter-spacing:1px; margin:16px 0 0; border-radius:6px 6px 0 0;`;
+    const estiloTabla = `width:100%; border-collapse:collapse; font-size:0.78rem;`;
+    const estiloTh    = `background:#e2e8f0; border:1px solid #000; padding:6px 4px; font-weight:900; text-align:center;`;
+    const estiloTd    = (bg) => `border:1px solid #ccc; padding:6px 4px; background:${bg}; font-weight:700;`;
+
+    const buildSeccion = (titulo, datos, esKids = false) => {
+        if (!datos || datos.length === 0) return `<p style="color:#94a3b8; font-size:0.8rem; margin:8px 0;">Sin registros en esta sección.</p>`;
+        let filas = '';
+        datos.forEach((m, i) => {
+            const esRet = m.estado === 'Retirado';
+            const bg    = esRet ? '#fff1f2' : (i % 2 === 0 ? '#fff' : '#f8fafc');
+            const colorNombre = esRet ? '#b91c1c' : '#0f172a';
+            if (esKids) {
+                const edad = calcEdad(m.nacimiento);
+                filas += `<tr>
+                    <td style="${estiloTd(bg)} text-align:center; width:32px;">${i+1}</td>
+                    <td style="${estiloTd(bg)} color:${colorNombre};">${(m.nombre||'').toUpperCase()}</td>
+                    <td style="${estiloTd(bg)} text-align:center; width:40px;">${m.genero==='F'?'👧':'👦'}</td>
+                    <td style="${estiloTd(bg)} text-align:center; width:44px;">${edad} años</td>
+                </tr>`;
+            } else {
+                const estadoLabel = esRet ? '🔴 RET.' : '🟢 ACT.';
+                filas += `<tr>
+                    <td style="${estiloTd(bg)} text-align:center; width:32px;">${i+1}</td>
+                    <td style="${estiloTd(bg)} color:${colorNombre};">${(m.nombre||'').toUpperCase()}</td>
+                    <td style="${estiloTd(bg)} text-align:center; width:60px;">${(m.grupo||'—')}</td>
+                    <td style="${estiloTd(bg)} text-align:center; width:54px; font-size:0.7rem;">${estadoLabel}</td>
+                </tr>`;
+            }
+        });
+
+        const totalActivos   = datos.filter(m => m.estado === 'Activo').length;
+        const totalRetirados = datos.filter(m => m.estado === 'Retirado').length;
+        const resumenPie     = esKids
+            ? `Total: ${datos.length} | 👦 ${datos.filter(m=>m.genero!=='F').length} | 👧 ${datos.filter(m=>m.genero==='F').length}`
+            : `Total: ${datos.length} | 🟢 Activos: ${totalActivos} | 🔴 Retirados: ${totalRetirados}`;
+
+        const headerCols = esKids
+            ? `<th style="${estiloTh} width:32px;">N°</th><th style="${estiloTh}">NOMBRE</th><th style="${estiloTh} width:40px;">G</th><th style="${estiloTh} width:44px;">EDAD</th>`
+            : `<th style="${estiloTh} width:32px;">N°</th><th style="${estiloTh}">NOMBRE</th><th style="${estiloTh} width:60px;">GRUPO</th><th style="${estiloTh} width:54px;">ESTADO</th>`;
+
+        return `
+            <div style="${estiloSeccion}">${titulo} <span style="font-weight:400; font-size:0.7rem; opacity:0.75;">(${datos.length})</span></div>
+            <table style="${estiloTabla}">
+                <thead><tr>${headerCols}</tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+            <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-top:none; padding:6px 10px; font-size:0.72rem; font-weight:800; color:#334155; border-radius:0 0 6px 6px;">
+                ${resumenPie}
+            </div>`;
+    };
+
+    let html = `
+        <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:6px;">
+            <div style="font-size:1rem; font-weight:900; color:#0f172a;">IGLESIA LA LUZ DEL MUNDO</div>
+            <div style="font-size:0.85rem; font-weight:700; color:#334155;">${church}</div>
+            <div style="font-size:0.7rem; color:#64748b; margin-top:3px;">MINISTRO: ${minister}</div>
+            <div style="font-size:0.68rem; color:#94a3b8;">${fecha.toUpperCase()}</div>
+        </div>`;
+
+    html += buildSeccion('👨‍💼 VARONES', db.hombres);
+    html += buildSeccion('👩‍💼 MUJERES', db.mujeres);
+    if (modo === 'completo') {
+        html += buildSeccion('🧒 NIÑEZ (0–13 AÑOS)', db.kids, true);
+    }
+
+    const totalActivos   = [...db.hombres, ...db.mujeres].filter(m => m.estado === 'Activo').length;
+    const totalRetirados = [...db.hombres, ...db.mujeres].filter(m => m.estado === 'Retirado').length;
+    const totalNinez     = modo === 'completo' ? db.kids.length : 0;
+    const granTotal      = totalActivos + totalRetirados + totalNinez;
+
+    html += `
+        <div style="margin-top:18px; background:#0f172a; border-radius:10px; padding:14px 16px; color:#fff;">
+            <div style="font-size:0.7rem; font-weight:900; letter-spacing:1px; opacity:0.6; margin-bottom:8px;">RESUMEN</div>
+            <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:4px;">
+                <span>🟢 Activos (14+)</span><span style="font-weight:900;">${totalActivos}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:4px;">
+                <span>🔴 Retirados Temp.</span><span style="font-weight:900;">${totalRetirados}</span>
+            </div>
+            ${modo === 'completo' ? `<div style="display:flex; justify-content:space-between; font-size:0.82rem; margin-bottom:4px;">
+                <span>🧒 Niñez</span><span style="font-weight:900;">${totalNinez}</span>
+            </div>` : ''}
+            <div style="border-top:1px solid #334155; margin-top:8px; padding-top:8px; display:flex; justify-content:space-between; font-size:0.95rem;">
+                <span style="font-weight:900; color:#d4af37;">GRAN TOTAL</span>
+                <span style="font-weight:900; font-size:1.1rem; color:#d4af37;">${granTotal}</span>
+            </div>
+        </div>`;
+
+    document.getElementById('listaContenido').innerHTML = html;
+}
+
 async function actualizarApp() {
     if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
         for (let registration of registrations) {
-            await registration.unregister(); // Elimina el sw viejo
+            await registration.unregister();
         }
-        
-        // Limpia el caché de archivos
         const cacheNames = await caches.keys();
-        await Promise.all(
-            cacheNames.map(name => caches.delete(name))
-        );
-        
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
         alert("Actualizando sistema... La página se recargará.");
-        window.location.reload(true); // Recarga forzada
+        window.location.reload(true);
     } else {
         window.location.reload(true);
     }
@@ -815,7 +958,7 @@ window.onbeforeunload = () => {
         document.getElementById(id).classList.add('active');
         window.scrollTo(0,0);
         if(id === 'statsView') calculate();
-        if(id.includes('View') && !['mainMenu','statsView','configView'].includes(id)) renderTable(id.replace('View', ''));
+        if(id.includes('View') && !['mainMenu','statsView','configView','listaView'].includes(id)) renderTable(id.replace('View', ''));
     }
 
     // --- FUNCIÓN ÚNICA Y CORREGIDA PARA MOSTRAR TABLAS ---
@@ -1136,8 +1279,8 @@ let item = {
     const totalAdultos = s.activos + s.retirados;
 
     document.getElementById('statsBody').innerHTML = `
-        <tr><th colspan="3" style="background:#2c3e50; color:#fff; border:2px solid #000; padding:10px;">CUADRO DE TOTALES POR GRUPO</th></tr>
-        <tr style="background:#f2f2f2;"><th>CATEGORÍA</th><th>HOMBRES</th><th>MUJERES</th></tr>
+        <tr><th colspan="3" style="background:#2c3e50 !important; color:#ffffff !important; border:2px solid #000; padding:10px; text-align:center; font-size:1rem; letter-spacing:1px;">CUADRO RESUMEN</th></tr>
+        <tr style="background:#f2f2f2;"><th>CATEGORÍA</th><th style="white-space:nowrap;">HOMBRES</th><th style="white-space:nowrap;">MUJERES</th></tr>
         <tr><td class="row-cat">Casados Chicos (≤30)</td><td>${s.H.c30}</td><td>${s.F.c30}</td></tr>
         <tr><td class="row-cat">Casados Medianos (≤45)</td><td>${s.H.c45}</td><td>${s.F.c45}</td></tr>
         <tr><td class="row-cat">Casados Grandes (45+)</td><td>${s.H.cG}</td><td>${s.F.cG}</td></tr>
