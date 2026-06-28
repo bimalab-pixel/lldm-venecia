@@ -1510,17 +1510,18 @@ window.downloadData = async function() {
             // Fusionar miembrosInfo: nube prevalece, local aporta entradas nuevas
             cloudData.miembrosInfo = Object.assign({}, localData.miembrosInfo, cloudData.miembrosInfo);
 
-            // Fusionar listas negras — respetar eliminaciones locales
-            const deletedUnionD = [...new Set([...cloudData.deletedMembers, ...localData.deletedMembers])];
-            // Un nombre se considera readmitido SOLO si está en la lista LOCAL activa.
-            // Si solo está en la nube pero fue eliminado localmente, se respeta la eliminación.
-            const listaActivaLocal = new Set([...(localData.hombres || []), ...(localData.mujeres || [])]);
-            const deletedFinalD = deletedUnionD.filter(n => !listaActivaLocal.has(n));
-            cloudData.deletedMembers = deletedFinalD;
-            if (deletedFinalD.length > 0) {
-                cloudData.hombres = (cloudData.hombres || []).filter(n => !deletedFinalD.includes(n));
-                cloudData.mujeres = (cloudData.mujeres || []).filter(n => !deletedFinalD.includes(n));
-            }
+            // ── Al BAJAR: la nube manda en listas de miembros ────────────────
+            // Las listas hombres/mujeres y deletedMembers vienen tal cual de la nube.
+            // Solo fusionamos asistencias locales que no existan en la nube.
+            const cloudAsistSet = new Set(
+                cloudData.asistencias.map(r => `${r.date}|${r.service}|${r.type}`)
+            );
+            (localData.asistencias || []).forEach(locRec => {
+                const key = `${locRec.date}|${locRec.service}|${locRec.type}`;
+                if (!cloudAsistSet.has(key)) {
+                    cloudData.asistencias.push(locRec);
+                }
+            });
 
             localStorage.setItem('lldm_v6_total_color', JSON.stringify(cloudData));
             appData = cloudData;
