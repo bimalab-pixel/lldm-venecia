@@ -578,6 +578,10 @@ header p {
     #censusPrintArea, #censusPrintArea * { visibility: visible; }
     #censusPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
 
+    /* Cuadro Mensual (Sábana de Asistencia) */
+    #stats-print-area, #stats-print-area * { visibility: visible; }
+    #stats-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+
     .no-print { display: none !important; }
 
     /* Colores forzados */
@@ -1188,6 +1192,7 @@ header p {
     <div class="no-print" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
         <button class="btn-action btn-back" onclick="goHome()" style="margin:0;">⬅ Volver</button>
         <button onclick="window.print()" style="margin:0;background:#8e44ad;color:white;border:none;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer;">📄 IMPRIMIR / PDF</button>
+        <button onclick="copiarTablasTSV('specialContainer', this)" style="margin:0;background:#1e8449;color:white;border:none;border-radius:8px;padding:10px 16px;font-weight:bold;cursor:pointer;">📋 Copiar a Excel/Sheets</button>
     </div>
 
     <!-- Controles -->
@@ -1232,19 +1237,23 @@ header p {
 
     <div id="statsView" class="view" style="max-width: 100%;">
         <button class="btn-action btn-back" onclick="goHome()">⬅ Volver</button>
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-            <input type="month" id="sMonth" onchange="renderSheet()" style="margin:0;">
-            <select id="sGroup" onchange="renderSheet()" style="margin:0;">
+        <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+            <input type="month" id="sMonth" onchange="renderSheet()" style="margin:0; flex:1; min-width:140px;">
+            <select id="sGroup" onchange="renderSheet()" style="margin:0; flex:1; min-width:120px;">
                 <option value="hombres">Hombres</option>
                 <option value="mujeres">Mujeres</option>
-
             </select>
-
-        <button onclick="descargarPDF()" style="background:#e74c3c; color:white; border:none; border-radius:8px; padding:0 15px; cursor:pointer; font-weight:bold;">
-            PDF 📄
-        </button>
-    </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <button onclick="descargarPDF()" style="flex:1; background:#e74c3c; color:white; border:none; border-radius:8px; padding:10px 12px; cursor:pointer; font-weight:bold;">
+                📄 PDF
+            </button>
+            <button onclick="copiarTablasTSV('sheetContainer', this)" style="flex:1; background:#1e8449; color:white; border:none; border-radius:8px; padding:10px 12px; cursor:pointer; font-weight:bold;">
+                📋 Excel/Sheets
+            </button>
+        </div>
     <div id="sheetContainer" class="table-wrapper"></div>
+    <div id="stats-print-area"></div>
 </div>
 
     <div id="avgView" class="view">
@@ -1260,6 +1269,7 @@ header p {
     <div class="no-print" style="padding: 15px; background: #eee; margin-bottom: 20px; border-radius: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <button class="btn-back" onclick="goHome()" style="margin:0;">⬅ Volver al Menú</button>
         <button class="btn-action" onclick="window.print()" style="margin:0; background:#27ae60; width: auto; padding: 10px 20px;">📄 DESCARGAR PDF / IMPRIMIR</button>
+        <button class="btn-action" onclick="copiarTablasTSV('semestral-content', this)" style="margin:0; background:#1e8449; width: auto; padding: 10px 20px;">📋 Copiar a Excel/Sheets</button>
 
         <div style="display:flex; align-items:center; gap:6px; margin-left:10px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid #ccc; flex-wrap:wrap;">
             <label style="font-size:.8rem; font-weight:bold;">Mes inicial:</label>
@@ -1301,6 +1311,7 @@ header p {
         <button class="btn-back" onclick="goHome()" style="margin:0;">⬅ Volver</button>
         <input type="date" id="dailyReportDate" style="margin:0; flex:1; min-width:140px;" onchange="renderReporteDiario()">
         <button id="btnImprimirDiario" onclick="imprimirReporteDiario()" style="margin:0; background:#ca8a04; color:white; border:none; border-radius:8px; padding:10px 16px; font-weight:bold; cursor:pointer;">📄 IMPRIMIR / PDF</button>
+        <button onclick="copiarReporteDiarioTSV(this)" style="margin:0; background:#1e8449; color:white; border:none; border-radius:8px; padding:10px 16px; font-weight:bold; cursor:pointer;">📋 Copiar a Excel/Sheets</button>
     </div>
 
     <!-- Tabs -->
@@ -2396,7 +2407,7 @@ window.descargarPDF = function() {
     if (!mesInput) return alert("Por favor seleccione un mes");
 
     const [year, month] = mesInput.split('-').map(Number);
-    const fechaUltimo = new Date(year, month, 0); 
+    const fechaUltimo = new Date(year, month, 0);
     const nombreMes = fechaUltimo.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
     const periodoStr = `DEL 1 AL ${fechaUltimo.getDate()} DE ${nombreMes} DE ${year}`;
 
@@ -2404,59 +2415,75 @@ window.descargarPDF = function() {
     if (!originalTable) return alert("No hay datos en la tabla. Seleccione un mes con registros.");
 
     const headerHTML = originalTable.querySelector('thead').outerHTML;
-    const filas = Array.from(originalTable.querySelectorAll('tbody tr'));
+    const bodyHTML = originalTable.querySelector('tbody').outerHTML;
+    const nombreArchivo = `Control_${grupo}_${mesInput}.pdf`;
 
-    // AJUSTE FINAL: 14 personas * 3 horarios = 42 filas por página
-    const filasPorPagina = 42; 
+    // Estilos propios de la tabla para el reporte (independientes de la vista en pantalla)
+    const tableStyles = `
+        <style>
+            table.sheet-table { border-collapse: collapse !important; table-layout: fixed; }
+            .sheet-table th, .sheet-table td {
+                border: 0.6pt solid #000 !important;
+                padding: 0 !important;
+                font-size: 7pt !important;
+                text-align: center;
+                height: 15px !important;
+                line-height: 15px !important;
+                position: static !important;
+                left: auto !important;
+                top: auto !important;
+            }
+            /* Columna de NOMBRES: más ancha y con salto de línea (usa las 3 filas de alto
+               que ya tiene por el rowspan) para que ningún nombre quede cortado */
+            .col-name {
+                width: 210px !important;
+                text-align: left !important;
+                padding: 2px 4px !important;
+                font-weight: bold;
+                font-size: 7pt !important;
+                white-space: normal !important;
+                overflow: visible !important;
+                word-break: break-word;
+                height: auto !important;
+                line-height: 1.15 !important;
+                vertical-align: middle;
+            }
+            .col-time { width: 30px !important; font-size: 5.8pt !important; background: #f2f2f2 !important; }
+            .sheet-table th:not(.col-name):not(.col-time),
+            .sheet-table td:not(.col-name):not(.col-time) { width: 26px !important; }
+            /* Columna TOTAL: es la última celda de cada fila/encabezado.
+               Se define aparte porque el <th> de "TOTAL" reutiliza la clase .col-name */
+            .sheet-table thead tr:first-child th:last-child {
+                width: 42px !important;
+                font-size: 9pt !important;
+            }
+            .sheet-table tbody tr td:last-child {
+                width: 42px !important;
+                font-size: 10pt !important;
+                font-weight: 900 !important;
+            }
+            .dot-red, .dot-cyan, .dot-black { font-size: 9pt !important; line-height: 1; margin: 0; padding: 0; }
+            .dot-red { color: #c0392b !important; }
+            .dot-cyan { color: #00acc1 !important; }
+            .dot-black { color: #2c3e50 !important; }
+            /* Totales en negro por defecto; solo el total de 9/ED queda en rojo */
+            .txt-total-negro { color: #000000 !important; font-weight: bold; }
+            .txt-red { color: #c0392b !important; font-weight: bold; }
+            .txt-special-blue { color: #0000ff !important; font-weight: bold; }
+            thead { display: table-header-group; }
+            tbody tr { page-break-inside: avoid; }
+        </style>`;
 
-    const contenedorPrincipal = document.createElement('div');
+    // Ancho real de la tabla según las columnas fijas del CSS de impresión
+    // (nombre 210 + hora 30 + un día por cada día del mes a 26px + total 42)
+    const diasDelMes = fechaUltimo.getDate();
+    const anchoTabla = 210 + 30 + (diasDelMes * 26) + 42;
 
-    for (let i = 0; i < filas.length; i += filasPorPagina) {
-        const bloqueFilas = filas.slice(i, i + filasPorPagina).map(f => f.outerHTML).join('');
-        const esUltimaPagina = (i + filasPorPagina) >= filas.length;
-
-        const pagina = document.createElement('div');
-        pagina.style.cssText = "page-break-after: always; background: white; width: 1350px; padding: 12px; box-sizing: border-box; font-family: Arial;";
-
-        // Firmas compactas solo al final del documento
-        const htmlFirmas = esUltimaPagina ? `
-            <div style="margin-top: 12px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
-                <div>
-                    <div style="border-top: 1.5px solid #000; width: 250px; margin-bottom: 4px;"></div>
-                    <b>MINISTRO RESPONSABLE</b>
-                </div>
-                <div>
-                    <div style="border-top: 1.5px solid #000; width: 250px; margin-bottom: 4px;"></div>
-                    <b>SECRETARIO DE ESTADÍSTICA</b>
-                </div>
-            </div>
-        ` : "";
-
-        pagina.innerHTML = `
-            <style>
-                .sheet-table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; }
-                .sheet-table th, .sheet-table td { 
-                    border: 0.5pt solid #000 !important; 
-                    padding: 0px !important; 
-                    font-size: 6.5pt !important; 
-                    text-align: center;
-                    height: 14px !important; 
-                    line-height: 14px !important;
-                }
-                .col-name { width: 155px !important; text-align: left !important; padding-left: 4px !important; font-weight: bold; overflow: hidden; white-space: nowrap; }
-                .col-time { width: 35px !important; font-size: 5.5pt !important; background: #f2f2f2 !important; }
-                
-                /* Columnas de días y totales fijas a 31px */
-                .sheet-table th:not(.col-name):not(.col-time), 
-                .sheet-table td:not(.col-name):not(.col-time) {
-                    width: 31px !important; 
-                }
-
-                .dot-red, .dot-cyan, .dot-black { font-size: 8.5pt !important; line-height: 1; margin: 0; padding: 0; }
-                .txt-red { color: #ff0000 !important; font-weight: bold; }
-                .txt-special-blue { color: #0000ff !important; font-weight: bold; }
-            </style>
-
+    // Contenido completo del reporte (encabezado + tabla + firmas), todo dentro
+    // de un contenedor con el mismo ancho que la tabla para que el encabezado
+    // no quede más ancho que ella.
+    const reportHTML = `
+        <div style="width:${anchoTabla}px; margin:0 auto;">
             <div style="text-align: center; border: 1.5px solid #000; padding: 5px; margin-bottom: 6px;">
                 <div style="font-size: 15pt; font-weight: bold;">"LA LUZ DEL MUNDO"</div>
                 <div style="font-size: 7.2pt; letter-spacing: 0.5px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
@@ -2471,27 +2498,53 @@ window.descargarPDF = function() {
 
             <table class="sheet-table">
                 ${headerHTML}
-                <tbody>${bloqueFilas}</tbody>
+                ${bodyHTML}
             </table>
 
-            ${htmlFirmas}
-        `;
-        contenedorPrincipal.appendChild(pagina);
+            <div style="margin-top: 12px; display: flex; justify-content: space-around; text-align: center; font-size: 10pt;">
+                <div>
+                    <div style="border-top: 1.5px solid #000; width: 250px; margin-bottom: 4px;"></div>
+                    <b>MINISTRO RESPONSABLE</b>
+                </div>
+                <div>
+                    <div style="border-top: 1.5px solid #000; width: 250px; margin-bottom: 4px;"></div>
+                    <b>SECRETARIO DE ESTADÍSTICA</b>
+                </div>
+            </div>
+        </div>`;
+
+    // ── APK Android: se genera el PDF con html2pdf (captura real del contenido) ──
+    // Se evita window.print(), que en el WebView de Android produce PDFs casi en blanco.
+    if (typeof Android !== 'undefined' && Android.guardarArchivo) {
+        const element = document.createElement('div');
+        // Ancho exacto según el ancho real de la tabla, más el padding
+        element.style.cssText = `position:fixed; left:-99999px; top:0; width:${anchoTabla + 24}px; padding:12px; background:#ffffff; color:#000; font-family:Arial,sans-serif;`;
+        element.innerHTML = tableStyles + reportHTML;
+        document.body.appendChild(element);
+
+        const opt = {
+            margin: [4, 4, 4, 4],
+            filename: nombreArchivo,
+            html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
+            jsPDF: { unit: 'mm', format: 'legal', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(element).output('datauristring').then(function(pdfBase64) {
+            document.body.removeChild(element);
+            Android.guardarArchivo(pdfBase64, nombreArchivo, 'application/pdf');
+        }).catch(function(err) {
+            document.body.removeChild(element);
+            alert('Error al generar el PDF: ' + err);
+        });
+        return;
     }
 
-    const opt = {
-        margin: 0,
-        filename: `Asistencia_14Pers_Oficio_${grupo}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            width: 1350 
-        },
-        jsPDF: { unit: 'pt', format: 'legal', orientation: 'landscape' }
-    };
-
-    html2pdf().set(opt).from(contenedorPrincipal).save();
+    // ── PWA / Navegador de escritorio: ventana nueva + impresión nativa ──
+    const ventana = window.open('', '_blank', 'width=1100,height=750');
+    ventana.document.write('<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Control de Asistencia<\/title>' + tableStyles + '<style>body{font-family:Arial,sans-serif;color:#000;margin:0;padding:14px;background:#fff;}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}@page{size:legal landscape;margin:0.5cm;}<\/style><\/head><body>' + reportHTML + '<\/body><\/html>');
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(function() { ventana.print(); }, 600);
 };
 
 function filterNames() {
@@ -2965,12 +3018,17 @@ window.addEventListener('beforeprint', function() {
     const semestral = document.getElementById('view-semestral');
     const diario    = document.getElementById('view-reporte-diario');
     const especial  = document.getElementById('specialView');
+    const statsV    = document.getElementById('statsView');
+    const statsPA   = document.getElementById('stats-print-area');
 
     // Eliminar style dinámico previo si existe
     const prevStyle = document.getElementById('dynamic-print-style');
     if (prevStyle) prevStyle.remove();
 
-    if (semestral && semestral.classList.contains('active')) {
+    const necesitaLandscape = (semestral && semestral.classList.contains('active')) ||
+        (statsV && statsV.classList.contains('active') && statsPA && statsPA.innerHTML.trim());
+
+    if (necesitaLandscape) {
         document.body.classList.add('print-landscape');
         // Inyectar @page landscape dinámicamente para Chrome Android
         const s = document.createElement('style');
@@ -2992,8 +3050,98 @@ window.addEventListener('afterprint', function() {
     if (s) s.remove();
     const h = document.getElementById('special-print-header');
     if (h) h.style.display = 'none';
+    const statsPA = document.getElementById('stats-print-area');
+    if (statsPA) statsPA.innerHTML = '';
 });
 
+
+// ══════════════════════════════════════════════════════════
+// ── COPIAR TABLAS A TSV (Excel / Google Sheets) ──────────────
+// ══════════════════════════════════════════════════════════
+function filaATSV(tr, rowspanMap) {
+    const celdas = Array.from(tr.children).filter(el => el.tagName === 'TD' || el.tagName === 'TH');
+    const fila = [];
+    let ci = 0;
+    const llenarPendientes = () => {
+        while (rowspanMap[ci] && rowspanMap[ci].remaining > 0) {
+            fila[ci] = rowspanMap[ci].value;
+            rowspanMap[ci].remaining--;
+            ci++;
+        }
+    };
+    celdas.forEach(td => {
+        llenarPendientes();
+        const colspan = parseInt(td.getAttribute('colspan') || '1', 10);
+        const rowspan = parseInt(td.getAttribute('rowspan') || '1', 10);
+        let txt = (td.innerText || td.textContent || '').replace(/\s+/g, ' ').trim().replace(/\t/g, ' ');
+        for (let k = 0; k < colspan; k++) {
+            fila[ci] = txt;
+            if (rowspan > 1) rowspanMap[ci] = { value: txt, remaining: rowspan - 1 };
+            ci++;
+        }
+    });
+    llenarPendientes();
+    return fila.join('\t');
+}
+
+function tablaATSV(tabla) {
+    const rowspanMap = {};
+    return Array.from(tabla.querySelectorAll('tr')).map(tr => filaATSV(tr, rowspanMap)).join('\n');
+}
+
+function contenedorATSV(container) {
+    const tablas = container.querySelectorAll('table');
+    if (!tablas.length) return '';
+    return Array.from(tablas).map(t => tablaATSV(t)).join('\n\n').trim();
+}
+
+function feedbackBotonCopiar(btn, ok) {
+    if (!btn) return;
+    const original = btn.getAttribute('data-original') || btn.innerHTML;
+    btn.setAttribute('data-original', original);
+    btn.innerHTML = ok ? '✅ Copiado' : '⚠️ No se pudo copiar';
+    setTimeout(() => { btn.innerHTML = original; }, 1800);
+}
+
+async function copiarTablasTSV(containerId, btn) {
+    const cont = document.getElementById(containerId);
+    const tsv = cont ? contenedorATSV(cont) : '';
+    if (!tsv) {
+        alert('No hay datos para copiar. Genera el reporte primero.');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(tsv);
+        feedbackBotonCopiar(btn, true);
+    } catch (e) {
+        // Fallback para WebView / navegadores sin permiso de portapapeles
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = tsv;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            feedbackBotonCopiar(btn, true);
+        } catch (e2) {
+            feedbackBotonCopiar(btn, false);
+            alert('No se pudo copiar automáticamente. Copia el reporte manualmente.');
+        }
+    }
+}
+
+// Copia el reporte diario según el tab activo (Resumen o Por Culto)
+function copiarReporteDiarioTSV(btn) {
+    if (_dailyTab === 'porculto') {
+        const sel = document.getElementById('cultoSelect');
+        if (!sel) { alert('Selecciona una fecha y un culto primero.'); return; }
+        exportarPDFCultoDiario(true); // true = solo construir la tabla, sin imprimir
+    }
+    copiarTablasTSV('daily-print-content', btn);
+}
 
 // ── DISPATCHER DE IMPRESIÓN SEGÚN TAB ACTIVO ─────────────────
 function imprimirReporteDiario() {
@@ -3126,7 +3274,7 @@ function renderCultoPorFecha() {
 }
 
 // ── IMPRIMIR LISTA POR CULTO — mismo sistema que el tab Resumen ─────────────
-function exportarPDFCultoDiario() {
+function exportarPDFCultoDiario(soloConstruir) {
     const date  = document.getElementById('dailyReportDate').value;
     const sel   = document.getElementById('cultoSelect');
     const culto = sel ? sel.value : null;
@@ -3212,6 +3360,8 @@ function exportarPDFCultoDiario() {
             <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div>MINISTRO LOCAL</div>
             <div><div style="border-top:1.5px solid #000;width:220px;margin-bottom:5px;"></div>SECRETARIO DE ESTADÍSTICA</div>
         </div>`;
+
+    if (soloConstruir) return;
 
     // Dar tiempo al navegador/WebView para renderizar antes de imprimir
     setTimeout(function() { window.print(); }, 600);
@@ -3543,8 +3693,9 @@ ${contenido}
         <!-- Body -->
         <div id="listaCompletaBody" style="padding:16px;max-height:70vh;overflow-y:auto;"></div>
         <!-- Footer -->
-        <div style="padding:12px 16px;border-top:1px solid #eee;background:#f8fafc;display:flex;gap:10px;">
+        <div style="padding:12px 16px;border-top:1px solid #eee;background:#f8fafc;display:flex;gap:10px;flex-wrap:wrap;">
             <button onclick="cerrarListaCompleta()" style="flex:1;padding:13px;background:#95a5a6;color:white;border:none;border-radius:8px;font-weight:bold;font-size:.95rem;cursor:pointer;">Cerrar</button>
+            <button onclick="copiarTablasTSV('listaCompletaBody', this)" style="flex:2;padding:13px;background:#1e8449;color:white;border:none;border-radius:8px;font-weight:bold;font-size:.95rem;cursor:pointer;">📋 Excel/Sheets</button>
             <button onclick="imprimirListaCompleta()" style="flex:2;padding:13px;background:#154360;color:white;border:none;border-radius:8px;font-weight:bold;font-size:.95rem;cursor:pointer;">🖨️ IMPRIMIR / PDF</button>
         </div>
     </div>
