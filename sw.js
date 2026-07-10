@@ -22,8 +22,18 @@ const CDN_ASSETS = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // Archivos locales: DEBEN cachearse para que la app funcione offline
-      await cache.addAll(LOCAL_ASSETS);
+      // Archivos locales: se cachean uno por uno para que un solo
+      // archivo que falle no arruine toda la instalación offline
+      await Promise.all(
+        LOCAL_ASSETS.map(url =>
+          fetch(url)
+            .then(res => {
+              if (res.ok) return cache.put(url, res);
+              console.warn(`[SW] Local no cacheado (status ${res.status}): ${url}`);
+            })
+            .catch(err => console.error(`[SW] Error cacheando local: ${url}`, err))
+        )
+      );
       console.log('[SW] Archivos locales cacheados ✓');
 
       // CDN: se intenta cachear pero si falla no bloquea la instalación
