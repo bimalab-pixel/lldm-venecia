@@ -44,22 +44,25 @@
             margin: 0; padding: 0; user-select: none;
         }
 
-       /* HEADER OSCURO */
+       /* HEADER OSCURO — mismo estilo que Control LLDM */
 header { 
-    background: #0f172a; 
-    padding: 20px 15px; 
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    padding: 14px 12px; 
     text-align: center; 
-    border-bottom: 3px solid #d4af37;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    border-bottom-left-radius: 20px;
-    border-bottom-right-radius: 20px;
+    border-bottom: 2px solid #d4af37;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    margin-bottom: 15px;
 }
 
 header h1 { 
     color: #ffffff; 
-    font-size: 1.2rem; 
-    margin-bottom: 10px; 
+    font-size: 1.1rem; 
+    margin: 0 0 5px 0; 
+    font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 /* Estilo para los Inputs */
@@ -112,20 +115,21 @@ header h1 {
         .dash-card {
             background: #ffffff; padding: 20px 10px; border-radius: 15px; text-align: center;
             cursor: pointer; border: 1px solid #e0e6ed; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; min-height: 110px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: 0.2s;
+            align-items: center; justify-content: center; min-height: 125px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.2s ease-in-out;
+            position: relative; overflow: hidden;
         }
-        .dash-card:active { transform: scale(0.95); }
-        .dash-card i { font-style: normal; font-size: 2.2rem; margin-bottom: 8px; }
-        .dash-card span { font-weight: 700; font-size: 0.75rem; color: #34495e; text-transform: uppercase; }
+        .dash-card:active { transform: scale(0.98); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .dash-card i { display:block; font-style: normal; font-size: 2.8rem; margin-bottom: 12px; line-height: 1; width:100%; text-align:center; }
+        .dash-card span { font-weight: 700; font-size: 0.85rem; color: #34495e; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; }
 
-        .c-men { background: linear-gradient(to bottom, #ffffff, #f0f7ff); border-bottom: 6px solid var(--neon-blue) !important; }
-        .c-women { background: linear-gradient(to bottom, #ffffff, #faf5ff); border-bottom: 6px solid var(--neon-purple) !important; }
-        .c-kids { background: linear-gradient(to bottom, #ffffff, #f0fff4); border-bottom: 6px solid var(--neon-green) !important; }
-        .c-stats { background: linear-gradient(to bottom, #ffffff, #fffaf0); border-bottom: 6px solid var(--neon-orange) !important; }
-        .c-config { background: #34495e !important; border-bottom: 6px solid #1a252f !important; }
+        .c-men { background: linear-gradient(to bottom, #ffffff, #f0f7ff); border-bottom: 5px solid var(--neon-blue) !important; }
+        .c-women { background: linear-gradient(to bottom, #ffffff, #faf5ff); border-bottom: 5px solid var(--neon-purple) !important; }
+        .c-kids { background: linear-gradient(to bottom, #ffffff, #f0fff4); border-bottom: 5px solid var(--neon-green) !important; }
+        .c-stats { background: linear-gradient(to bottom, #ffffff, #fffaf0); border-bottom: 5px solid var(--neon-orange) !important; }
+        .c-config { background: #34495e !important; border-bottom: 5px solid #1a252f !important; }
         .c-config span { color: #ffffff !important; }
-        .c-cloud { border-bottom: 6px solid #64748b !important; }
+        .c-cloud { border-bottom: 5px solid #64748b !important; }
 
         .view { display: none; background: #ffffff; padding: 15px; border-radius: 15px; margin-bottom: 30px; border: 2px solid #000; }
         .active { display: block; }
@@ -432,11 +436,12 @@ header h1 {
         display: none !important; 
     }
 
-    #areaImprimirTotales, #areaImprimirTotales * {
+    #areaImprimirTotales, #areaImprimirTotales *,
+    #areaImprimirListado, #areaImprimirListado * {
         visibility: visible;
     }
 
-    #areaImprimirTotales {
+    #areaImprimirTotales, #areaImprimirListado {
         position: absolute;
         left: 0;
         top: 0;
@@ -496,11 +501,11 @@ table td:not(.row-cat) {
     <div class="dash-card c-kids" onclick="showView('kidsView')"><i>👶</i><span>Niñez</span></div>
     <div class="dash-card c-stats" onclick="showView('statsView')"><i>📊</i><span>Totales</span></div>
     
-    <div class="dash-card" onclick="exportarCensoTXT()" style="background: #334155; border-bottom: 6px solid #94a3b8;">
+    <div class="dash-card" onclick="exportarCensoTXT()" style="background: #334155; border-bottom: 5px solid #94a3b8;">
     <i style="color: #cbd5e1;">📝</i><span style="color: white;">Exportar Lista General TXT</span>
 </div>
 
-    <div class="dash-card" onclick="abrirModalPDF()" style="background: linear-gradient(to bottom, #1a0533, #3b0764); border-bottom: 6px solid #d4af37 !important;">
+    <div class="dash-card" onclick="abrirModalPDF()" style="background: linear-gradient(to bottom, #1a0533, #3b0764); border-bottom: 5px solid #d4af37 !important;">
     <i>📄</i><span style="color: #d4af37;">Exportar Lista PDF</span>
 </div>
 
@@ -514,7 +519,7 @@ table td:not(.row-cat) {
     
     
     <div class="dash-card c-config" onclick="showView('configView')"><i>⚙️</i><span>Ajustes</span></div>
-    <div class="dash-card" onclick="abrirVistaLista()" style="background: linear-gradient(to bottom, #fff, #f0fdf4); border-bottom: 6px solid #16a34a !important; grid-column: 1 / -1;">
+    <div class="dash-card" onclick="abrirVistaLista()" style="background: linear-gradient(to bottom, #fff, #f0fdf4); border-bottom: 5px solid #16a34a !important; grid-column: 1 / -1;">
         <i>👁️</i><span style="color:#15803d;">Ver Lista Completa</span>
     </div>
 </div>
@@ -616,8 +621,11 @@ table td:not(.row-cat) {
    <div id="statsView" class="view">
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     
-    <button class="btn btn-blue" onclick="imprimirSistema()" style="width:100%; margin-bottom:15px; background:#27ae60; color:white; font-size:1rem;">
+    <button class="btn btn-blue" onclick="imprimirSistema()" style="width:100%; margin-bottom:10px; background:#27ae60; color:white; font-size:1rem;">
         🖨️ IMPRIMIR REPORTE DEL SISTEMA
+    </button>
+    <button class="btn btn-blue" onclick="copiarSistemaTSV(this)" style="width:100%; margin-bottom:15px; background:#217346; color:white; font-size:1rem;">
+        📋 COPIAR A EXCEL / GOOGLE SHEETS
     </button>
 
     <div id="areaImprimirTotales">
@@ -657,9 +665,49 @@ table td:not(.row-cat) {
             </div>
         </div>
     </div>
+
+    <button class="btn btn-blue" onclick="abrirModalListados()" style="width:100%; margin-top:15px; background:#6d28d9; color:white; font-size:1rem;">
+        📋 GENERAR LISTADOS POR CATEGORÍA
+    </button>
 </div>
 
-    <div id="configView" class="view">
+<div id="listadoGrupoView" class="view">
+    <button class="btn btn-back" onclick="showView('statsView')">⬅ VOLVER A TOTALES</button>
+    <button class="btn btn-blue" onclick="imprimirListadoGrupo()" style="width:100%; margin-bottom:10px; background:#27ae60; color:white; font-size:1rem;">
+        🖨️ IMPRIMIR ESTE LISTADO
+    </button>
+    <button class="btn btn-blue" onclick="copiarListadoGrupoTSV()" style="width:100%; margin-bottom:15px; background:#217346; color:white; font-size:1rem;">
+        📋 COPIAR A EXCEL / GOOGLE SHEETS
+    </button>
+
+    <div id="areaImprimirListado">
+        <div style="text-align:center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
+            <h1 style="margin:0; font-size:1.6rem; color:#000;">LA LUZ DEL MUNDO</h1>
+            <h2 id="printIglesiaLista" style="margin:5px 0; font-size:1.2rem; color:#000;"></h2>
+            <p id="printMinistroLista" style="margin:2px 0; font-weight:bold; color:#000;"></p>
+            <p id="printFechaLista" style="margin:0; font-size:0.85rem; color:#000;"></p>
+        </div>
+
+        <h2 id="tituloListadoGrupo" style="text-align:center; color:#000; text-decoration: underline; font-size: 1.15rem; margin-bottom: 15px;"></h2>
+
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f2f2f2;">
+                    <th style="border:1px solid #000; padding:6px; color:#000;">#</th>
+                    <th style="border:1px solid #000; padding:6px; color:#000;">Nombre</th>
+                    <th style="border:1px solid #000; padding:6px; color:#000;">Sexo</th>
+                    <th style="border:1px solid #000; padding:6px; color:#000;">Nacimiento</th>
+                    <th style="border:1px solid #000; padding:6px; color:#000;">Edad</th>
+                </tr>
+            </thead>
+            <tbody id="bodyListadoGrupo"></tbody>
+        </table>
+
+        <p id="totalListadoGrupo" style="margin-top:14px; font-weight:bold; color:#000;"></p>
+    </div>
+</div>
+
+<div id="configView" class="view">
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     <h2 style="font-size:1.1rem;">Configuración</h2>
     
@@ -958,7 +1006,7 @@ window.onbeforeunload = () => {
         document.getElementById(id).classList.add('active');
         window.scrollTo(0,0);
         if(id === 'statsView') calculate();
-        if(id.includes('View') && !['mainMenu','statsView','configView','listaView'].includes(id)) renderTable(id.replace('View', ''));
+        if(id.includes('View') && !['mainMenu','statsView','configView','listaView','listadoGrupoView'].includes(id)) renderTable(id.replace('View', ''));
     }
 
     // --- FUNCIÓN ÚNICA Y CORREGIDA PARA MOSTRAR TABLAS ---
@@ -1236,8 +1284,8 @@ let item = {
 
     function calculate() {
     const s = { 
-        H: { c30:0, c45:0, cG:0, solo:0, joven:0, nino:0, total:0 }, 
-        F: { c30:0, c45:0, cG:0, solo:0, joven:0, nina:0, total:0 }, 
+        H: { c30:0, c45:0, cG:0, solo:0, adol:0, joven:0, nino:0, total:0 }, 
+        F: { c30:0, c45:0, cG:0, solo:0, adol:0, joven:0, nina:0, total:0 }, 
         activos: 0, 
         retirados: 0 
     };
@@ -1258,7 +1306,7 @@ let item = {
             if(e < 14) { 
                 if(g==='F') s.F.nina++; else s.H.nino++; 
             }
-            else if(m.grupo && (m.grupo.includes('Joven'))) t.joven++;
+            else if(m.grupo && (m.grupo.includes('Joven'))) { if(e <= 17) t.adol++; else t.joven++; }
             else if(m.grupo && (m.grupo.includes('Solo') || m.grupo.includes('Sola'))) t.solo++;
             else { 
                 if(e <= 30) t.c30++; 
@@ -1272,8 +1320,8 @@ let item = {
     proc(db.mujeres, 'F'); 
     proc(db.kids, 'H');
 
-    s.H.total = s.H.c30 + s.H.c45 + s.H.cG + s.H.solo + s.H.joven + s.H.nino;
-    s.F.total = s.F.c30 + s.F.c45 + s.F.cG + s.F.solo + s.F.joven + s.F.nina;
+    s.H.total = s.H.c30 + s.H.c45 + s.H.cG + s.H.solo + s.H.adol + s.H.joven + s.H.nino;
+    s.F.total = s.F.c30 + s.F.c45 + s.F.cG + s.F.solo + s.F.adol + s.F.joven + s.F.nina;
 
     // Nuevo cálculo: Suma solo de adultos (Activos + Retirados)
     const totalAdultos = s.activos + s.retirados;
@@ -1285,7 +1333,8 @@ let item = {
         <tr><td class="row-cat">Casados Medianos (≤45)</td><td>${s.H.c45}</td><td>${s.F.c45}</td></tr>
         <tr><td class="row-cat">Casados Grandes (45+)</td><td>${s.H.cG}</td><td>${s.F.cG}</td></tr>
         <tr><td class="row-cat">Solos / Solas</td><td>${s.H.solo}</td><td>${s.F.solo}</td></tr>
-        <tr><td class="row-cat">Jóvenes</td><td>${s.H.joven}</td><td>${s.F.joven}</td></tr>
+        <tr><td class="row-cat">Adolescentes (14-17)</td><td>${s.H.adol}</td><td>${s.F.adol}</td></tr>
+        <tr><td class="row-cat">Jóvenes (18+)</td><td>${s.H.joven}</td><td>${s.F.joven}</td></tr>
         <tr><td class="row-cat">Niñez (0-13)</td><td>${s.H.nino}</td><td>${s.F.nina}</td></tr>
         <tr class="total-row"><td class="row-cat">TOTAL POR GÉNERO</td><td>${s.H.total}</td><td>${s.F.total}</td></tr>
         
@@ -1701,6 +1750,89 @@ function exportarCensoTXT() {
     }
 }
 
+
+// ══════════════════════════════════════════════════════════
+// ── COPIAR TABLAS A TSV (Excel / Google Sheets) — genérico ──
+// ══════════════════════════════════════════════════════════
+function filaATSV(tr, rowspanMap) {
+    const celdas = Array.from(tr.children).filter(el => el.tagName === 'TD' || el.tagName === 'TH');
+    const fila = [];
+    let ci = 0;
+    const llenarPendientes = () => {
+        while (rowspanMap[ci] && rowspanMap[ci].remaining > 0) {
+            fila[ci] = rowspanMap[ci].value;
+            rowspanMap[ci].remaining--;
+            ci++;
+        }
+    };
+    celdas.forEach(td => {
+        llenarPendientes();
+        const colspan = parseInt(td.getAttribute('colspan') || '1', 10);
+        const rowspan = parseInt(td.getAttribute('rowspan') || '1', 10);
+        let txt = (td.innerText || td.textContent || '').replace(/\s+/g, ' ').trim().replace(/\t/g, ' ');
+        for (let k = 0; k < colspan; k++) {
+            fila[ci] = txt;
+            if (rowspan > 1) rowspanMap[ci] = { value: txt, remaining: rowspan - 1 };
+            ci++;
+        }
+    });
+    llenarPendientes();
+    return fila.join('\t');
+}
+
+function tablaATSV(tabla) {
+    const rowspanMap = {};
+    return Array.from(tabla.querySelectorAll('tr')).map(tr => filaATSV(tr, rowspanMap)).join('\n');
+}
+
+function contenedorATSV(container) {
+    const tablas = container.querySelectorAll('table');
+    if (!tablas.length) return '';
+    return Array.from(tablas).map(t => tablaATSV(t)).join('\n\n').trim();
+}
+
+function feedbackBotonCopiar(btn, ok) {
+    if (!btn) return;
+    const original = btn.getAttribute('data-original') || btn.innerHTML;
+    btn.setAttribute('data-original', original);
+    btn.innerHTML = ok ? '✅ Copiado' : '⚠️ No se pudo copiar';
+    setTimeout(() => { btn.innerHTML = original; }, 1800);
+}
+
+async function copiarTablasTSV(containerId, btn) {
+    const cont = document.getElementById(containerId);
+    const tsv = cont ? contenedorATSV(cont) : '';
+    if (!tsv) {
+        alert('No hay datos para copiar. Genera el reporte primero.');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(tsv);
+        feedbackBotonCopiar(btn, true);
+    } catch (e) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = tsv;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            feedbackBotonCopiar(btn, true);
+        } catch (e2) {
+            feedbackBotonCopiar(btn, false);
+            alert('No se pudo copiar automáticamente. Copia el reporte manualmente.');
+        }
+    }
+}
+
+// Copia el reporte del sistema (cuadro de totales) asegurando que esté actualizado
+function copiarSistemaTSV(btn) {
+    calculate();
+    copiarTablasTSV('areaImprimirTotales', btn);
+}
 
 function imprimirSistema() {
     // 1. Asegurar que los totales estén actualizados
@@ -2196,6 +2328,153 @@ window.exportarCensoPDF = function(modo = 'completo') {
 <script>
 function abrirModalPDF()  { document.getElementById('modalPDF').classList.add('open'); }
 function cerrarModalPDF() { document.getElementById('modalPDF').classList.remove('open'); }
+</script>
+
+<!-- MODAL SELECCIÓN DE LISTADO POR CATEGORÍA -->
+<div id="modalListados" class="modal-overlay" onclick="if(event.target===this)cerrarModalListados()">
+  <div class="modal-card" style="padding-bottom:28px;">
+    <p class="modal-title" style="color:#0f172a;">📋 Listado por Categoría</p>
+    <p style="font-size:0.82rem; color:#64748b; margin:-8px 0 18px;">Elige la categoría que deseas listar (nombre, fecha de nacimiento y edad):</p>
+
+    <div style="display:grid; gap:10px; max-height:55vh; overflow-y:auto;">
+        <button onclick="generarListadoCategoria('c30')" class="btn-cat-list">Casados Chicos (≤30)</button>
+        <button onclick="generarListadoCategoria('c45')" class="btn-cat-list">Casados Medianos (≤45)</button>
+        <button onclick="generarListadoCategoria('cG')" class="btn-cat-list">Casados Grandes (45+)</button>
+        <button onclick="generarListadoCategoria('solo')" class="btn-cat-list">Solos / Solas</button>
+        <button onclick="generarListadoCategoria('adol')" class="btn-cat-list">Adolescentes (14-17)</button>
+        <button onclick="generarListadoCategoria('joven')" class="btn-cat-list">Jóvenes (18+)</button>
+        <button onclick="generarListadoCategoria('nino')" class="btn-cat-list">Niñez (0-13)</button>
+    </div>
+
+    <button onclick="cerrarModalListados()" class="modal-btn-cancel" style="width:100%; margin-top:14px;">Cancelar</button>
+  </div>
+</div>
+
+<style>
+.btn-cat-list {
+    display:flex; align-items:center; justify-content:space-between;
+    background:#f8fafc; border:2px solid #0f172a; border-radius:12px;
+    padding:12px 16px; cursor:pointer; text-align:left; font-weight:800;
+    color:#0f172a; font-size:0.85rem;
+}
+.btn-cat-list:active { opacity:0.8; transform:scale(0.98); }
+</style>
+
+<script>
+function abrirModalListados()  { document.getElementById('modalListados').classList.add('open'); }
+function cerrarModalListados() { document.getElementById('modalListados').classList.remove('open'); }
+
+const CATEGORIA_LABELS = {
+    c30:   'CASADOS CHICOS (≤30 AÑOS)',
+    c45:   'CASADOS MEDIANOS (≤45 AÑOS)',
+    cG:    'CASADOS GRANDES (45+ AÑOS)',
+    solo:  'SOLOS / SOLAS',
+    adol:  'ADOLESCENTES (14-17 AÑOS)',
+    joven: 'JÓVENES (18 AÑOS EN ADELANTE)',
+    nino:  'NIÑEZ (0-13 AÑOS)'
+};
+
+let ultimoListadoGrupo = [];
+let ultimoListadoGrupoCat = '';
+
+function clasificarCategoria(m, esKid) {
+    const e = calcEdad(m.nacimiento);
+    if (esKid || e < 14) return 'nino';
+    if (m.grupo && m.grupo.includes('Joven')) return (e <= 17) ? 'adol' : 'joven';
+    if (m.grupo && (m.grupo.includes('Solo') || m.grupo.includes('Sola'))) return 'solo';
+    if (e <= 30) return 'c30';
+    if (e <= 45) return 'c45';
+    return 'cG';
+}
+
+function generarListadoCategoria(cat) {
+    let lista = [];
+
+    db.hombres.forEach(m => { if (clasificarCategoria(m, false) === cat) lista.push({ ...m, sexo: 'H' }); });
+    db.mujeres.forEach(m => { if (clasificarCategoria(m, false) === cat) lista.push({ ...m, sexo: 'F' }); });
+    if (cat === 'nino') {
+        db.kids.forEach(m => {
+            const sx = (String(m.genero || 'H').toUpperCase().charAt(0) === 'F') ? 'F' : 'H';
+            lista.push({ ...m, sexo: sx });
+        });
+    }
+
+    lista.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
+
+    ultimoListadoGrupo    = lista;
+    ultimoListadoGrupoCat = cat;
+
+    const iglesiaInput  = document.getElementById('churchName').value || "IGLESIA LOCAL";
+    const ministroInput = document.getElementById('ministerName').value || "MINISTRO LOCAL";
+    const fechaOpciones  = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const fechaTexto     = new Date().toLocaleDateString('es-SV', fechaOpciones);
+
+    document.getElementById('printIglesiaLista').innerText  = iglesiaInput.toUpperCase();
+    document.getElementById('printMinistroLista').innerText = "MINISTRO: " + ministroInput.toUpperCase();
+    document.getElementById('printFechaLista').innerText    = "REPORTE GENERADO: " + fechaTexto.toUpperCase();
+    document.getElementById('tituloListadoGrupo').innerText = 'LISTADO: ' + (CATEGORIA_LABELS[cat] || '');
+
+    document.getElementById('bodyListadoGrupo').innerHTML = lista.map((m, i) => `
+        <tr>
+            <td style="border:1px solid #000; padding:6px; text-align:center; color:#000;">${i + 1}</td>
+            <td style="border:1px solid #000; padding:6px; color:#000;">${m.nombre || '—'}</td>
+            <td style="border:1px solid #000; padding:6px; text-align:center; color:#000;">${m.sexo}</td>
+            <td style="border:1px solid #000; padding:6px; text-align:center; color:#000;">${m.nacimiento || '—'}</td>
+            <td style="border:1px solid #000; padding:6px; text-align:center; color:#000;">${calcEdad(m.nacimiento)}</td>
+        </tr>
+    `).join('') || `<tr><td colspan="5" style="text-align:center; padding:12px; color:#000;">Sin registros en esta categoría</td></tr>`;
+
+    document.getElementById('totalListadoGrupo').innerText = `Total en esta categoría: ${lista.length}`;
+
+    cerrarModalListados();
+    showView('listadoGrupoView');
+}
+
+function imprimirListadoGrupo() {
+    window.print();
+}
+
+function copiarListadoGrupoTSV() {
+    if (!ultimoListadoGrupo.length) {
+        alert("⚠️ No hay datos en este listado para copiar.");
+        return;
+    }
+
+    const encabezado = ['Nombre', 'Sexo', 'Nacimiento', 'Edad'].join('\t');
+    const filas = ultimoListadoGrupo.map(m => [
+        (m.nombre || '').replace(/\t/g, ' '),
+        m.sexo || '',
+        m.nacimiento || '',
+        calcEdad(m.nacimiento)
+    ].join('\t'));
+
+    const tsv = [encabezado, ...filas].join('\n');
+
+    const avisar = () => alert(`✅ ${ultimoListadoGrupo.length} registro(s) copiados.\nPega directamente en Excel o Google Sheets (Ctrl+V).`);
+
+    const copiarConTextarea = () => {
+        const ta = document.createElement('textarea');
+        ta.value = tsv;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+            document.execCommand('copy');
+            avisar();
+        } catch (e) {
+            alert("❌ No se pudo copiar automáticamente. Selecciona y copia manualmente desde la tabla.");
+        }
+        document.body.removeChild(ta);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tsv).then(avisar).catch(copiarConTextarea);
+    } else {
+        copiarConTextarea();
+    }
+}
 </script>
 
 <!-- FAB AGREGAR MIEMBRO -->
