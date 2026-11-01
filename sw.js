@@ -1,4 +1,4 @@
-const CACHE_NAME = 'venecia-stats-v8';
+const CACHE_NAME = 'venecia-stats-v9';
 
 const LOCAL_ASSETS = [
   './index.html',
