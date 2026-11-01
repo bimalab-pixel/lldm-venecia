@@ -900,11 +900,18 @@ function refrescarTabla(t) {
         retirados: 0 
     };
     
-    const proc = (list, defG) => {
+    const proc = (list, defG, esNinez) => {
         list.forEach(m => {
             const e = calcEdad(m.nacimiento);
             const g = String(m.genero || defG).toUpperCase().charAt(0) === 'F' ? 'F' : 'H';
             const t = g === 'F' ? s.F : s.H;
+
+            // Todo lo que está en la lista de Niñez cuenta como niño/a (aún no es miembro),
+            // sin importar la edad. Solo pasa a adultos cuando se bautiza y se mueve de lista.
+            if (esNinez) {
+                if (g === 'F') s.F.nina++; else s.H.nino++;
+                return;
+            }
 
             // LÓGICA DE ESTADOS (Solo mayores de 14 años)
             if (e >= 14) {
@@ -928,7 +935,7 @@ function refrescarTabla(t) {
 
     proc(db.hombres, 'H'); 
     proc(db.mujeres, 'F'); 
-    proc(db.kids, 'H');
+    proc(db.kids, 'H', true);
 
     s.H.total = s.H.c30 + s.H.c45 + s.H.cG + s.H.solo + s.H.adol + s.H.joven + s.H.nino;
     s.F.total = s.F.c30 + s.F.c45 + s.F.cG + s.F.solo + s.F.adol + s.F.joven + s.F.nina;
