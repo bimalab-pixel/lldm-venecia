@@ -1,102 +1,74 @@
-const CACHE_NAME = 'venecia-stats-v9';
+/* Service Worker - Lldm Estadística Venecia
+   Para publicar una versión nueva, cambia el número de CACHE (por ejemplo lldm-v9). */
+const CACHE = 'lldm-v8';
 
-const LOCAL_ASSETS = [
+const PRECACHE = [
+  './',
   './index.html',
   './CENSOLLDM.html',
-  './manifest.json',
-  './logo-venecia-192.png',
-  './logo-venecia-512.png',
+  './manifest-control.json',
+  './icons/control-192.png',
+  './icons/control-512.png',
+  './icons/control-maskable-512.png'
 ];
 
-const CDN_ASSETS = [
-  'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js',
-  'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js'
-];
-
-// 1. Instalación: cachea locales primero (crítico), luego CDN (opcional)
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      // Archivos locales: se cachean uno por uno para que un solo
-      // archivo que falle no arruine toda la instalación offline
-      await Promise.all(
-        LOCAL_ASSETS.map(url =>
-          fetch(url)
-            .then(res => {
-              if (res.ok) return cache.put(url, res);
-              console.warn(`[SW] Local no cacheado (status ${res.status}): ${url}`);
-            })
-            .catch(err => console.error(`[SW] Error cacheando local: ${url}`, err))
-        )
-      );
-      console.log('[SW] Archivos locales cacheados ✓');
-
-      // CDN: se intenta cachear pero si falla no bloquea la instalación
-      await Promise.all(
-        CDN_ASSETS.map(url =>
-          fetch(url, { mode: 'cors' })
-            .then(res => {
-              if (res.ok) return cache.put(url, res);
-            })
-            .catch(err => console.warn(`[SW] CDN no cacheado: ${url}`, err))
-        )
-      );
-      console.log('[SW] Instalación completa ✓');
-    })
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE).then((cache) =>
+      // Cada archivo por separado: si falta uno, los demás se guardan igual
+      Promise.all(PRECACHE.map((url) => cache.add(url).catch(() => null)))
+    ).then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// 2. Activación: elimina cachés de versiones anteriores
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(k => k !== CACHE_NAME)
-          .map(k => {
-            console.log('[SW] Borrando caché antigua:', k);
-            return caches.delete(k);
-          })
-      )
-    )
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      // Solo borra cachés de esta app (prefijo lldm-), nunca las de otras apps del mismo sitio
+      Promise.all(keys.filter((k) => k.startsWith('lldm-') && k !== CACHE).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// 3. Fetch: Cache First con actualización en background
-self.addEventListener('fetch', e => {
-  // Ignorar peticiones no-GET (Firebase sync, POST, etc.)
-  if (e.request.method !== 'GET') return;
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
 
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) {
-        // Sirve desde caché inmediatamente
-        // Actualiza en background si hay red disponible
-        fetch(e.request)
-          .then(res => {
-            if (res && res.status === 200) {
-              caches.open(CACHE_NAME).then(cache => cache.put(e.request, res));
-            }
-          })
-          .catch(() => {}); // Sin red: silencia el error
+  // Páginas: primero la red (así llegan las actualizaciones); sin internet, la copia guardada
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetch(req).then((res) => {
+        const copia = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copia));
+        return res;
+      }).catch(() => caches.match(req).then((r) => r || caches.match('./index.html')))
+    );
+    return;
+  }
 
-        return cached;
-      }
+  // Archivos propios (iconos, manifest): primero la copia guardada
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(req).then((r) => r || fetch(req).then((res) => {
+        if (res && res.ok) { const copia = res.clone(); caches.open(CACHE).then((c) => c.put(req, copia)); }
+        return res;
+      }))
+    );
+    return;
+  }
 
-      // No está en caché: intenta la red
-      return fetch(e.request).catch(() => {
-        // Sin red y sin caché: si es navegación, sirve index.html como fallback
-        if (e.request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-      });
-    })
-  );
+  // Librerías externas (Firebase, Excel, fuentes): se guardan para poder abrir sin internet.
+  // Las llamadas de datos (Firestore, etc.) no se tocan.
+  if (['script', 'style', 'font'].includes(req.destination)) {
+    event.respondWith(
+      caches.match(req).then((guardada) => {
+        const red = fetch(req).then((res) => {
+          if (res && (res.ok || res.type === 'opaque')) { const copia = res.clone(); caches.open(CACHE).then((c) => c.put(req, copia)); }
+          return res;
+        }).catch(() => guardada);
+        return guardada || red;
+      })
+    );
+  }
 });

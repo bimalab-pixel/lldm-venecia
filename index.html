@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#154360">
+    <link rel="manifest" href="manifest-control.json">
+    <link rel="icon" href="icons/control-192.png">
+    <link rel="apple-touch-icon" href="icons/control-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Control LLDM - Cloud V7</title>
     <style>
         :root {
@@ -579,6 +585,12 @@ header p {
         margin: 0.4cm; 
     }
 
+    /* Hoja semestral: cada "PÁGINA N" arranca en hoja nueva, completa y sin cortarse */
+    .page-break + .page-break { break-before: page; page-break-before: always; }
+    .page-break > div:last-child { break-inside: avoid; page-break-inside: avoid; }
+    .semestral-table thead { display: table-header-group; }
+    .semestral-table tr { break-inside: avoid; page-break-inside: avoid; }
+
     /* Forzar impresión de colores de fondo (filas retirados temporales) */
     * {
         -webkit-print-color-adjust: exact !important;
@@ -598,6 +610,12 @@ header p {
     border-collapse: collapse;
     font-size: 7.5px; /* Ajuste para 30 filas */
     font-family: Arial, sans-serif;
+}
+
+.semestral-table th.semestral-franja {
+    background: #000 !important; color: #fff !important;
+    font-size: 9pt; font-weight: bold; padding: 3px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
 }
 
 .semestral-table th, .semestral-table td {
@@ -1185,7 +1203,7 @@ header p {
 <div id="view-semestral" class="view" style="background:white;">
     <div class="no-print" style="padding: 15px; background: #eee; margin-bottom: 20px; border-radius: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <button class="btn-back" onclick="goHome()" style="margin:0;">⬅ Volver al Menú</button>
-        <button class="btn-action" onclick="window.print()" style="margin:0; background:#27ae60; width: auto; padding: 10px 20px;">📄 DESCARGAR PDF / IMPRIMIR</button>
+        <button class="btn-action" onclick="limpiarImpresion();imprimirSistema('Reporte_Semestral','landscape','letter')" style="margin:0; background:#27ae60; width: auto; padding: 10px 20px;">📄 DESCARGAR PDF / IMPRIMIR</button>
 
         <div style="display:flex; align-items:center; gap:6px; margin-left:10px; background:#fff; padding:6px 10px; border-radius:8px; border:1px solid #ccc; flex-wrap:wrap;">
             <label style="font-size:.8rem; font-weight:bold;">Mes inicial:</label>
@@ -1397,81 +1415,174 @@ header p {
     };
 </script>
 
-<!-- Librerías PDF con defer para no bloquear el arranque de la app -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-
 <script>
-// ── FUNCIÓN CENTRAL DE PDF PARA APK ANDROID ──────────────────────────────
-// Captura el elemento como imagen con html2canvas y lo inserta en jsPDF.
-// Esto evita el PDF en blanco que ocurre cuando html2pdf intenta renderizar
-// HTML complejo directamente en WebView Android.
-//
-// @param element    - El div ya insertado en el DOM (position:absolute;left:-9999px)
-// @param filename   - Nombre del archivo PDF
-// @param orientacion - 'portrait' | 'landscape'
-// @param formato    - 'letter' | 'legal'
-async function generarPDFdesdeHTML(element, filename, orientacion, formato) {
-    // Guard: librerías PDF cargadas con defer, verificar disponibilidad
-    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-        alert('Las librerías de PDF aún no están listas. Intenta de nuevo en unos segundos o verifica tu conexión a internet.');
-        return;
+// ── IMPRESIÓN DEL SISTEMA (window.print) ─────────────────────────────────
+// Un solo patrón para todos los cuadros: se arma el documento en un área
+// temporal (#print-root), se fija el tamaño de hoja con @page y se abre el
+// diálogo de impresión del dispositivo (Android o PC). Las tablas repiten su
+// encabezado en cada página y las filas no se parten entre páginas.
+function limpiarImpresion() {
+    ['print-root', 'print-style'].forEach(function (id) {
+        var e = document.getElementById(id);
+        if (e) e.remove();
+    });
+    document.body.classList.remove('printing-doc');
+    if (window.__tituloOriginal !== undefined) {
+        document.title = window.__tituloOriginal;
+        window.__tituloOriginal = undefined;
     }
-    // Dimensiones en mm según formato y orientación
-    const dims = {
-        letter:  { portrait: [216, 279], landscape: [279, 216] },
-        legal:   { portrait: [216, 356], landscape: [356, 216] }
-    };
-    const [pW, pH] = dims[formato][orientacion];
+}
 
-    try {
-        const canvas = await html2canvas(element, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff',
-            logging: false,
-            width: element.scrollWidth,
-            height: element.scrollHeight,
-            windowWidth: element.scrollWidth,
-            windowHeight: element.scrollHeight
+// Puente de impresión: en el APK usa el adaptador nativo del WebView; en navegador usa window.print()
+function imprimirSistema(titulo, orientacion, formato) {
+    if (typeof Android !== 'undefined' && Android.imprimir) {
+        Android.imprimir(titulo || document.title, orientacion || 'portrait', formato || 'letter');
+    } else {
+        window.print();
+    }
+}
+
+function imprimirDocumento(html, opts) {
+    opts = opts || {};
+    limpiarImpresion();
+    var tam = (opts.formato || 'letter') + ' ' + (opts.orientacion || 'portrait');
+    var st = document.createElement('style');
+    st.id = 'print-style';
+    st.textContent =
+        '@page{size:' + tam + ';margin:' + (opts.margen || '8mm') + ';}' +
+        '#print-root{display:none;}' +
+        '@media print{' +
+        'html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:visible!important;}' +
+        'body.printing-doc>*:not(#print-root){display:none!important;}' +
+        'body.printing-doc #print-root{display:block!important;position:static!important;width:100%;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:10pt;}' +
+        '#print-root,#print-root *{visibility:visible!important;box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}' +
+        '#print-root table{width:100%;border-collapse:collapse;}' +
+        '#print-root thead{display:table-header-group;}' +
+        '#print-root tr,#print-root .no-corte,#print-root .special-member-card,#print-root .special-totals-row{break-inside:avoid;page-break-inside:avoid;}' +
+        '#print-root .special-group-title,#print-root .titulo-seccion{break-after:avoid;page-break-after:avoid;}' +
+        '#print-root .salto-pagina{break-before:page;page-break-before:always;}' +
+        '#print-root .enc-doc{text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;}' +
+        '#print-root .enc-1{font-size:16pt;font-weight:900;}' +
+        '#print-root .enc-2{font-size:8pt;margin:2px 0;}' +
+        '#print-root .enc-3{font-size:10pt;font-weight:bold;letter-spacing:1px;}' +
+        '#print-root .enc-barra{background:#000!important;color:#fff!important;font-size:11pt;font-weight:900;padding:4px;margin:5px 0;text-transform:uppercase;}' +
+        '#print-root .enc-4{font-size:9pt;font-weight:bold;}' +
+        '#print-root .fila-titulo-rep{background:#000!important;color:#fff!important;font-size:8pt;padding:2px 4px;text-align:center;text-transform:uppercase;}' +
+        '#print-root .firmas{display:flex;justify-content:space-around;text-align:center;margin-top:36px;font-size:9pt;break-inside:avoid;page-break-inside:avoid;}' +
+        '#print-root .firmas div div{border-top:1.5px solid #000;width:200px;margin:0 auto 4px;}' +
+        '#print-root .sheet-table{table-layout:fixed;min-width:0!important;width:100%!important;border-collapse:collapse;border:1px solid #000;font-size:7.5px;}' +
+        '#print-root .sheet-table th,#print-root .sheet-table td{position:static!important;padding:1px 0!important;line-height:1.15;border:1px solid #000!important;overflow:hidden;}' +
+        '#print-root .sheet-table .txt-total-negro,#print-root .sheet-table .txt-red,#print-root .sheet-table .txt-special-blue{font-size:7.5px!important;font-weight:bold;}' +
+        '#print-root .sheet-table thead th{background:#f2f3f4!important;}' +
+        '#print-root .sheet-table thead th.fila-titulo-rep{background:#000!important;color:#fff!important;}' +
+        '#print-root .sheet-table td.col-name,#print-root .sheet-table th.col-name{min-width:0!important;width:auto!important;text-align:left!important;padding-left:2px!important;font-size:7.5px;}' +
+        '#print-root .sheet-table th.col-name:last-child{text-align:center!important;padding-left:0!important;}' +
+        '#print-root .sheet-table td.col-time{min-width:0!important;width:auto!important;font-size:6px;}' +
+        '}';
+    document.head.appendChild(st);
+
+    var root = document.createElement('div');
+    root.id = 'print-root';
+    root.innerHTML = html;
+    document.body.appendChild(root);
+    document.body.classList.add('printing-doc');
+    if (typeof opts.post === 'function') {
+        try { opts.post(root); } catch (e) { console.warn('post-impresión', e); }
+    }
+    if (opts.titulo) {
+        window.__tituloOriginal = document.title;
+        document.title = opts.titulo; // nombre sugerido al "Guardar como PDF"
+    }
+    // El WebView de Android avisa 'afterprint' apenas abre el diálogo (no al cerrarlo), así
+    // que NO se limpia ahí: el contenido queda oculto en pantalla (solo se ve al imprimir)
+    // y se retira en el siguiente toque/tecla del usuario dentro de la app o en la
+    // siguiente impresión.
+    var armarLimpieza = function () {
+        var ya = false;
+        var hacer = function () {
+            if (ya) return; ya = true;
+            ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+                document.removeEventListener(ev, hacer, true);
+            });
+            limpiarImpresion();
+        };
+        ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+            document.addEventListener(ev, hacer, true);
         });
+    };
+    setTimeout(function () {
+        try { imprimirSistema(opts.titulo || document.title, opts.orientacion, opts.formato); }
+        catch (e) { limpiarImpresion(); alert('No se pudo abrir la impresión: ' + e.message); return; }
+        // Se arma tras un respiro para que el toque que abrió la impresión no la borre
+        setTimeout(armarLimpieza, 3000);
+    }, 300);
+}
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation, unit: 'mm', format: formato });
+// Fila de título repetida en cada página dentro del <thead> de una tabla
+function agregarTituloRepetido(tabla, texto) {
+    if (!tabla || !tabla.tHead || !tabla.tHead.rows.length) return;
+    var n = 0, f = tabla.tHead.rows[0].cells;
+    for (var i = 0; i < f.length; i++) n += f[i].colSpan || 1;
+    var tr = document.createElement('tr');
+    var th = document.createElement('th');
+    th.colSpan = n; th.className = 'fila-titulo-rep'; th.textContent = texto;
+    tr.appendChild(th);
+    tabla.tHead.insertBefore(tr, tabla.tHead.firstChild);
+    return n;
+}
 
-        const margen = 10;
-        const areaW = pW - margen * 2;
-        const areaH = pH - margen * 2;
-
-        // Escalar la imagen para que quepa en la página manteniendo proporciones
-        const imgW = canvas.width;
-        const imgH = canvas.height;
-        const ratio = Math.min(areaW / imgW * (canvas.width / (areaW / areaW)), areaH / (imgH * areaW / imgW));
-        const finalW = areaW;
-        const finalH = imgH * (areaW / imgW);
-
-        // Si el contenido es más alto que una página, dividir en páginas
-        const mmPerPx = areaW / imgW;
-        const altoPaginaPx = areaH / mmPerPx;
-        let offsetY = 0;
-
-        while (offsetY < imgH) {
-            if (offsetY > 0) doc.addPage();
-            doc.addImage(imgData, 'JPEG', margen, margen, areaW, finalH, '', 'FAST', 0, -(offsetY * mmPerPx));
-            offsetY += altoPaginaPx;
-        }
-
-        const pdfBase64 = doc.output('datauristring');
-
-        if (typeof Android !== 'undefined' && Android.guardarArchivo) {
-            Android.guardarArchivo(pdfBase64, filename, 'application/pdf');
-        } else {
-            doc.save(filename);
-        }
-    } catch(err) {
-        alert('Error al generar PDF: ' + err.message);
+// Sábana de asistencia: columnas fijas, 3 filas por persona sin partirse, título repetido
+function prepararHojaAsistencia(root, textoTitulo) {
+    // Versión "una tabla por página": no depende de encabezados repetidos ni de bloques
+    // que no se parten, que el WebView de Android no imprime bien en tablas grandes.
+    var t = root.querySelector('table.sheet-table');
+    if (!t || !t.tBodies.length) return;
+    var n = agregarTituloRepetido(t, textoTitulo) || 0;
+    var thead = t.tHead;
+    var tb = t.tBodies[0];
+    var filas = Array.prototype.slice.call(tb.rows), i = 0, grupos = [], pie = [];
+    while (i < filas.length) {
+        var p = filas[i].cells[0];
+        if (p && p.classList.contains('col-name') && p.getAttribute('rowspan') === '3') { grupos.push(filas.slice(i, i + 3)); i += 3; }
+        else { pie = filas.slice(i); break; }
     }
+    var PRIMERA = 13, RESTO = 15;   // personas por hoja (la primera lleva el encabezado del documento)
+    var hojas = [], k = 0;
+    while (k < grupos.length) {
+        var cupo = hojas.length === 0 ? PRIMERA : RESTO;
+        hojas.push(grupos.slice(k, k + cupo));
+        k += cupo;
+    }
+    if (!hojas.length) hojas.push([]);
+    var ultima = hojas[hojas.length - 1];
+    if (ultima.length > RESTO - 3 && pie.length) hojas.push([]);   // el pie necesita espacio
+    function colgrupo() {
+        var cg = document.createElement('colgroup');
+        for (var c = 0; c < n; c++) {
+            var col = document.createElement('col');
+            if (c === 0) col.style.width = '42mm';
+            else if (c === 1) col.style.width = '9mm';
+            else if (c === n - 1) col.style.width = '10mm';
+            cg.appendChild(col);
+        }
+        return cg;
+    }
+    var padre = t.parentNode, ref = t.nextSibling;
+    hojas.forEach(function (g, idx) {
+        var nt = document.createElement('table');
+        nt.className = t.className;
+        nt.appendChild(colgrupo());
+        nt.appendChild(thead.cloneNode(true));
+        var nb = document.createElement('tbody');
+        g.forEach(function (grupo) { grupo.forEach(function (r) { nb.appendChild(r); }); });
+        if (idx === hojas.length - 1) pie.forEach(function (r) { nb.appendChild(r); });
+        nt.appendChild(nb);
+        var w = document.createElement('div');
+        if (idx > 0) w.className = 'salto-pagina';
+        w.appendChild(nt);
+        padre.insertBefore(w, ref);
+    });
+    t.remove();
 }
 </script>
 
@@ -2188,19 +2299,12 @@ function closePreviewModal() {
     document.getElementById('previewModal').classList.remove('open');
 }
 
-window.generarInformeCenso = async function() {
+window.generarInformeCenso = function() {
     const { html, ahora } = buildInformeCensoHTML();
-
-    // Ancho carta portrait en puntos: 216mm - 20mm márgenes = 196mm ≈ 556pt
-    const element = document.createElement('div');
-    element.style.cssText = 'width:556pt;padding:0;margin:0;background:white;color:black;font-family:Arial,sans-serif;position:absolute;left:-9999px;top:0;';
-    element.innerHTML = html;
-
-    document.body.appendChild(element);
-
-    const filename = `Reporte_Supervision_${ahora.toISOString().split('T')[0]}.pdf`;
-    await generarPDFdesdeHTML(element, filename, 'portrait', 'letter');
-    document.body.removeChild(element);
+    imprimirDocumento('<div class="no-corte">' + html + '</div>', {
+        formato: 'letter', orientacion: 'portrait', margen: '10mm',
+        titulo: `Reporte_Supervision_${ahora.toISOString().split('T')[0]}`
+    });
 }
 
 
@@ -2370,55 +2474,28 @@ window.descargarPDF = async function() {
     const nombreMes = fechaUltimo.toLocaleString('es-ES', { month: 'long' }).toUpperCase();
     const periodoStr = `ASISTENCIA DEL 1 AL ${fechaUltimo.getDate()} DE ${nombreMes} ${year}`;
 
-    // 3. Configuración para el PDF
-    const opt = {
-        margin: [5, 5, 5, 5],
-        filename: `Reporte_${grupo}_${nombreMes}.pdf`,
-        jsPDF: { unit: 'mm', format: 'legal', orientation: 'landscape' }
-    };
-
-    // 4. Crear el clon para impresión
-    // Legal landscape: 356mm - 10mm márgenes = 346mm ≈ 980pt
-    const element = document.createElement('div');
-    element.style.cssText = 'width:980pt;margin:0;padding:0;background:white;position:absolute;left:-9999px;top:0;';
-
-    // Obtenemos el contenido de la tabla actual
+    // 3. Documento a imprimir (legal horizontal, encabezado de tabla repetido por página)
     const tablaHTML = document.getElementById('sheetContainer').innerHTML;
-
-    element.innerHTML = `
-        <div style="padding: 20px; text-align: center; font-family: 'Segoe UI', Arial, sans-serif; color: black;">
-            <div style="font-size: 22pt; font-weight: bold; margin-bottom: 2px;">"LA LUZ DEL MUNDO"</div>
-            <div style="font-size: 10pt; margin-bottom: 5px;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
-            <div style="font-size: 13pt; font-weight: bold; letter-spacing: 2px;">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
-            <div style="font-size: 16pt; font-weight: 900; background: #000; color: #fff; margin: 15px 0; padding: 5px; text-transform: uppercase;">
-                CONTROL DE ASISTENCIA - ${grupo.toUpperCase()}
-            </div>
-            <div style="font-size: 12pt; font-weight: bold; margin-bottom: 20px; line-height:1.5;">
-                IGLESIA: ${iglesia.toUpperCase()} &nbsp; | &nbsp; MINISTRO: ${ministro.toUpperCase()}
-                <br>
-                <span style="font-size: 14pt; color: #c0392b;">${periodoStr}</span>
-            </div>
-            <div style="width: 100%;">
-                ${tablaHTML}
-            </div>
-            <div style="margin-top: 50px; display: flex; justify-content: space-around;">
-                <div style="text-align: center;">
-                    <div style="border-top: 2px solid #000; width: 250px; margin-bottom: 5px;"></div>
-                    <span style="font-weight: bold; font-size:10pt;">MINISTRO RESPONSABLE</span>
-                </div>
-                <div style="text-align: center;">
-                    <div style="border-top: 2px solid #000; width: 250px; margin-bottom: 5px;"></div>
-                    <span style="font-weight: bold; font-size:10pt;">SECRETARIO DE ESTADÍSTICA</span>
-                </div>
-            </div>
+    const tituloRep = `CONTROL DE ASISTENCIA - ${grupo.toUpperCase()} | ${iglesia.toUpperCase()} | ${periodoStr}`;
+    const html = `
+        <div class="enc-doc">
+            <div class="enc-1">"LA LUZ DEL MUNDO"</div>
+            <div class="enc-2">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
+            <div class="enc-3">MINISTERIO DE ORGANIZACIÓN Y ESTADÍSTICA</div>
+            <div class="enc-barra">CONTROL DE ASISTENCIA - ${grupo.toUpperCase()}</div>
+            <div class="enc-4">IGLESIA: ${iglesia.toUpperCase()} &nbsp;|&nbsp; MINISTRO: ${ministro.toUpperCase()} &nbsp;|&nbsp; <span style="color:#c0392b;">${periodoStr}</span></div>
         </div>
-    `;
+        ${tablaHTML}
+        <div class="firmas">
+            <div><div></div><b>MINISTRO RESPONSABLE</b></div>
+            <div><div></div><b>SECRETARIO DE ESTADÍSTICA</b></div>
+        </div>`;
 
-    document.body.appendChild(element);
-
-    // 5. Ejecutar generación
-    await generarPDFdesdeHTML(element, `Reporte_${nombreMes}.pdf`, 'landscape', 'legal');
-    document.body.removeChild(element);
+    imprimirDocumento(html, {
+        formato: 'legal', orientacion: 'landscape', margen: '6mm',
+        titulo: `Reporte_${grupo}_${nombreMes}`,
+        post: function (root) { prepararHojaAsistencia(root, tituloRep); }
+    });
 };
 
 function filterNames() {
@@ -2625,18 +2702,19 @@ function generarReporteSemestral(manual) {
     const procesarGrupo = (lista, titulo) => {
         if (!lista || lista.length === 0) return;
 
-        // MODIFICADO: AHORA 30 FILAS POR PÁGINA
-        for (let i = 0; i < lista.length; i += 30) {
-            const chunk = lista.slice(i, i + 30);
+        // Una sola tabla continua por lista: el navegador/Android la reparte en las hojas
+        // que hagan falta (llenándolas) y repite en cada hoja la franja y el encabezado.
+        {
+            const i = 0;
+            const chunk = lista;
             const divPagina = document.createElement('div');
             divPagina.className = 'page-break';
+            const totalCols = 3 + ultimos6Meses.length * 5;
             
             let html = `
-                <div style="background:#000; color:#fff; padding:3px; font-weight:bold; margin-top:10px; text-align:center; font-size:9pt;">
-                    ${titulo} - PÁGINA ${Math.floor(i/30) + 1}
-                </div>
                 <table class="semestral-table">
                     <thead>
+                        <tr><th colspan="${totalCols}" class="semestral-franja">${titulo}</th></tr>
                         <tr class="bg-gris">
                             <th rowspan="2" style="width:20px;">N°</th>
                             <th rowspan="2" style="width:170px;">NOMBRE COMPLETO</th>
@@ -2692,7 +2770,7 @@ function generarReporteSemestral(manual) {
             html += `</tbody></table>`;
             
             // Firmas al final de la última página de cada lista
-            if (i + 30 >= lista.length) {
+            {
                 html += `
                 <div style="margin-top:20px; display:flex; justify-content:space-around; text-align:center; font-size:8pt; font-family: Arial;">
                     <div><div style="border-top:1px solid #000; width:180px; margin-bottom:3px;"></div>MINISTRO RESPONSABLE</div>
@@ -2792,9 +2870,7 @@ async function exportarPDFEspecial() {
     const [yr,mo]  = mIn.split('-').map(Number);
     const nombreMes = new Date(yr,mo-1,1).toLocaleString('es-ES',{month:'long',year:'numeric'}).toUpperCase();
     const labels = {oyente_h:'OYENTES – HERMANOS',oyente_m:'OYENTES – HERMANAS',restauracion_h:'RESTAURACIÓN – HERMANOS',restauracion_m:'RESTAURACIÓN – HERMANAS'};
-    const element = document.createElement('div');
-    element.style.cssText = 'width:556pt;padding:0;margin:0;background:white;font-family:Arial,sans-serif;color:#000;position:absolute;left:-9999px;top:0;';
-    element.innerHTML = `
+    const html = `
         <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;">
             <div style="font-size:16pt;font-weight:900;">"LA LUZ DEL MUNDO"</div>
             <div style="font-size:8pt;margin:3px 0;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
@@ -2802,9 +2878,7 @@ async function exportarPDFEspecial() {
             <div style="font-size:8.5pt;margin-top:4px;"><b>IGLESIA:</b> ${iglesia.toUpperCase()} | <b>MINISTRO:</b> ${ministro.toUpperCase()} | <b>MES:</b> ${nombreMes}</div>
         </div>
         ${cont.innerHTML}`;
-    document.body.appendChild(element);
-    await generarPDFdesdeHTML(element, `Oyentes_${nombreMes}.pdf`, 'portrait', 'letter');
-    document.body.removeChild(element);
+    imprimirDocumento(html, {formato: 'letter', orientacion: 'portrait', titulo: `Oyentes_${nombreMes}`});
 }
 
 // ── REPORTE DIARIO ────────────────────────────────────────────
@@ -3106,10 +3180,7 @@ async function exportarPDFDiario() {
             <td style="padding:8px;border:1px solid #000;text-align:center;font-weight:bold;background:#e2d9f3;color:#4a235a;">${c.restauracion}</td>
         </tr>`;
     });
-    const element = document.createElement('div');
-    element.style.cssText = 'width:556pt;padding:0;margin:0;background:white;font-family:Arial,sans-serif;color:#000;position:absolute;left:-9999px;top:0;';
-    document.body.appendChild(element);
-    element.innerHTML = `
+    const html = `
         <div style="text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:14px;">
             <div style="font-size:16pt;font-weight:900;">"LA LUZ DEL MUNDO"</div>
             <div style="font-size:8pt;margin:3px 0;">IGLESIA DEL DIOS VIVO, COLUMNA Y APOYO DE LA VERDAD</div>
@@ -3147,8 +3218,7 @@ async function exportarPDFDiario() {
             <div><div style="border-top:1.5px solid #000;width:200px;margin-bottom:4px;"></div>MINISTRO LOCAL</div>
             <div><div style="border-top:1.5px solid #000;width:200px;margin-bottom:4px;"></div>SECRETARIO DE ESTADÍSTICA</div>
         </div>`;
-    await generarPDFdesdeHTML(element, `Reporte_Diario_${date}.pdf`, 'portrait', 'letter');
-    document.body.removeChild(element);
+    imprimirDocumento(html, {formato: 'letter', orientacion: 'portrait', titulo: `Reporte_Diario_${date}`});
 }
 
 
@@ -3252,5 +3322,71 @@ function cerrarListaCompleta() {
     </div>
 </div>
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (e) { console.warn('SW no registrado', e); });
+  });
+}
+</script>
+
+<!-- Banner de instalación de la PWA: aparece solo si el navegador permite instalar y desaparece al instalar -->
+<div id="pwa-install" style="display:none;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:99999;background:#154360;color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 6px 20px rgba(0,0,0,.35);align-items:center;gap:10px;font-family:inherit;">
+    <div style="flex:1;font-size:14px;line-height:1.3;"><b>Instala la app</b><br><span style="opacity:.85;font-size:12px;">Ábrela como aplicación y úsala sin conexión.</span></div>
+    <button id="pwa-install-btn" type="button" style="background:#D4AF37;color:#154360;border:none;border-radius:10px;padding:10px 16px;font-weight:bold;font-size:14px;margin:0;width:auto;">Instalar</button>
+    <button id="pwa-install-x" type="button" aria-label="Cerrar" style="background:transparent;color:#fff;border:none;font-size:20px;line-height:1;padding:6px 8px;margin:0;width:auto;">&times;</button>
+</div>
+<style>@media print{#pwa-install{display:none!important;}}</style>
+<script>
+(function () {
+    var banner = document.getElementById('pwa-install');
+    var btn = document.getElementById('pwa-install-btn');
+    var cerrar = document.getElementById('pwa-install-x');
+    var evento = null;
+    // No mostrar dentro del APK, ni si ya se está usando como app instalada
+    function yaEsApp() {
+        return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+               window.navigator.standalone === true ||
+               typeof window.Android !== 'undefined' ||
+               location.protocol === 'file:';
+    }
+    function ocultar() { banner.style.display = 'none'; }
+    function mostrar() {
+        if (yaEsApp() || !evento) return;
+        try {
+            var t = parseInt(localStorage.getItem('pwaInstallCerrado') || '0', 10);
+            if (t && Date.now() - t < 3 * 24 * 3600 * 1000) return;   // si lo cerró, vuelve a ofrecerse en 3 días
+        } catch (e) {}
+        banner.style.display = 'flex';
+    }
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        evento = e;
+        mostrar();
+    });
+    btn.addEventListener('click', function () {
+        if (!evento) return;
+        var ev = evento;
+        ev.prompt();
+        if (ev.userChoice && ev.userChoice.then) {
+            ev.userChoice.then(function (r) {
+                evento = null;
+                ocultar();
+                if (r && r.outcome !== 'accepted') {
+                    try { localStorage.setItem('pwaInstallCerrado', String(Date.now())); } catch (e) {}
+                }
+            });
+        } else { evento = null; ocultar(); }
+    });
+    cerrar.addEventListener('click', function () {
+        ocultar();
+        try { localStorage.setItem('pwaInstallCerrado', String(Date.now())); } catch (e) {}
+    });
+    window.addEventListener('appinstalled', function () {
+        evento = null;
+        ocultar();
+    });
+})();
+</script>
 </body>
 </html>

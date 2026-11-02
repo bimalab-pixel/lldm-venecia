@@ -3,10 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#154360">
+    <link rel="manifest" href="manifest-control.json">
+    <link rel="icon" href="icons/control-192.png">
+    <link rel="apple-touch-icon" href="icons/control-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Censo LLDM - Venecia</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    
     
    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
@@ -519,7 +525,7 @@ header h1 {
     <button class="btn btn-back" onclick="showView('mainMenu')">⬅ VOLVER AL MENÚ</button>
     
     <button class="btn btn-blue" onclick="exportarCensoAPK()" style="width:100%; margin-bottom:15px; background:#27ae60; color:white;">
-        🖨️ GUARDAR REPORTE (PDF APK)
+        🖨️ IMPRIMIR / GUARDAR PDF
     </button>
 
     <div id="areaImprimirTotales">
@@ -568,7 +574,7 @@ header h1 {
 <div id="listadoGrupoView" class="view">
     <button class="btn btn-back" onclick="showView('statsView')">⬅ VOLVER A TOTALES</button>
     <button class="btn btn-blue" onclick="exportarListadoGrupoPDF()" style="width:100%; margin-bottom:10px; background:#27ae60; color:white;">
-        💾 GUARDAR LISTADO (PDF APK)
+        🖨️ IMPRIMIR / GUARDAR LISTADO
     </button>
     <button class="btn btn-blue" onclick="copiarListadoGrupoTSV()" style="width:100%; margin-bottom:15px; background:#217346; color:white;">
         📋 COPIAR A EXCEL / GOOGLE SHEETS
@@ -1332,41 +1338,15 @@ function exportarCensoAPK() {
     document.getElementById('printFecha').innerText = "REPORTE GENERADO: " + fechaTexto.toUpperCase();
     document.getElementById('firmaMinistroNombre').innerText = ministroInput.toUpperCase();
 
-    // 4. Configurar el PDF para el puente Base64
+    // 4. Imprimir con el sistema (Android o PC)
     const elemento = document.getElementById('areaImprimirTotales');
-    
-    // Mostramos temporalmente los campos para capturarlos
-    document.getElementById('headerImpresion').style.display = 'block';
-    document.getElementById('footerFirmas').style.display = 'flex';
-
-    const opciones = {
-        margin: [10, 10, 10, 10],
-        filename: `Censo_${iglesiaInput.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-    };
-
-    // 5. Generar Base64 y enviar al puente Android
-    html2pdf().set(opciones).from(elemento).output('datauristring').then(function(pdfBase64) {
-        // Limpiamos el prefijo del string Base64
-        const base64Limpio = pdfBase64.split(',')[1];
-        const nombreArchivo = `Reporte_${iglesiaInput.replace(/\s+/g, '_')}.pdf`;
-
-        if (typeof Android !== 'undefined' && Android.guardarArchivo) {
-            // Envío al puente nativo del APK
-            Android.guardarArchivo(base64Limpio, nombreArchivo, "application/pdf");
-        } else {
-            // Si no hay puente, descarga normal (para pruebas en PC)
-            const link = document.createElement('a');
-            link.href = pdfBase64;
-            link.download = nombreArchivo;
-            link.click();
+    imprimirDocumento(elemento.innerHTML, {
+        formato: 'letter', orientacion: 'portrait', margen: '10mm',
+        titulo: `Censo_${iglesiaInput.replace(/\s+/g, '_')}`,
+        post: function (root) {
+            const h = root.querySelector('#headerImpresion'); if (h) h.style.display = 'block';
+            const f = root.querySelector('#footerFirmas');    if (f) { f.style.display = 'flex'; f.style.breakInside = 'avoid'; }
         }
-
-        // Ocultamos de nuevo para la vista del usuario
-        document.getElementById('headerImpresion').style.display = 'none';
-        document.getElementById('footerFirmas').style.display = 'none';
     });
 }
 
@@ -1374,303 +1354,131 @@ function exportarCensoAPK() {
 
 
 // =====================================================
-//   EXPORTAR CENSO A PDF — FORMATO OFICIAL LLDM
-//   (jsPDF directo — compatible APK y navegador)
+//   EXPORTAR CENSO — FORMATO OFICIAL LLDM (impresión del sistema)
 // =====================================================
-window.exportarCensoPDF = function(modo = 'completo') {
+window.exportarCensoPDF = function(modo) {
+    modo = modo || 'completo';
     cerrarModalPDF();
 
-    if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-        s.onload = () => window.exportarCensoPDF();
-        document.head.appendChild(s);
-        return;
-    }
-
-    const { jsPDF } = window.jspdf || window;
+    const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const church   = (document.getElementById('churchName').value   || 'IGLESIA LOCAL').toUpperCase();
     const minister = (document.getElementById('ministerName').value || 'MINISTRO LOCAL').toUpperCase();
-    const fechaOpts = { day: 'numeric', month: 'long', year: 'numeric' };
-    const fecha = new Date().toLocaleDateString('es-SV', fechaOpts);
+    const fecha = new Date().toLocaleDateString('es-SV', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    const doc    = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-    const PW     = 210;
-    const PH     = 297;
-    const ML     = 14;
-    const MR     = 14;
-    const MT     = 14;
-    const MB     = 14;
-    const CW     = PW - ML - MR;
-    const BOTTOM = PH - MB;
-
-    let y = MT;
-
-    const BLACK  = [0, 0, 0];
-    const WHITE  = [255, 255, 255];
-    const LGRAY  = [224, 224, 224];
-    const MGRAY  = [245, 245, 245];
-    const DGRAY  = [208, 208, 208];
-    const TOTBG  = [232, 232, 232];
-
-    const checkPage = (h) => {
-        if (y + h > BOTTOM) { doc.addPage(); y = MT; }
-    };
-
-    const hline = (x1, x2, yy, lw = 0.3, color = BLACK) => {
-        doc.setDrawColor(...color); doc.setLineWidth(lw); doc.line(x1, yy, x2, yy);
-    };
-
-    const fillRect = (x, yy, w, h, color) => {
-        doc.setFillColor(...color); doc.rect(x, yy, w, h, 'F');
-    };
-
-    const strokeRect = (x, yy, w, h, lw = 0.3, color = BLACK) => {
-        doc.setDrawColor(...color); doc.setLineWidth(lw); doc.rect(x, yy, w, h, 'S');
-    };
-
-    const txt = (text, x, yy, size, style = 'normal', align = 'left', color = BLACK) => {
-        doc.setFontSize(size); doc.setFont('helvetica', style);
-        doc.setTextColor(...color); doc.text(String(text), x, yy, { align });
-    };
-
-    const cell = (text, x, yy, w, h, size = 8, fontStyle = 'normal', halign = 'left', bgColor = null, textColor = BLACK) => {
-        if (bgColor) fillRect(x, yy, w, h, bgColor);
-        doc.setDrawColor(...BLACK); doc.setLineWidth(0.25); doc.rect(x, yy, w, h, 'S');
-        doc.setFontSize(size); doc.setFont('helvetica', fontStyle); doc.setTextColor(...textColor);
-        const px = halign === 'center' ? x + w / 2 : halign === 'right' ? x + w - 1.5 : x + 1.8;
-        doc.text(String(text), px, yy + h * 0.65, { align: halign });
-    };
-
-    const drawHeader = () => {
-        const bh = 28;
-        strokeRect(ML, y, CW, bh, 0.5);
-        fillRect(ML, y, CW, bh, WHITE);
-        const sepY = y + bh - 7;
-        hline(ML, ML + CW, sepY, 0.3);
-        txt('IGLESIA LA LUZ DEL MUNDO', ML + CW / 2, y + 7,  13, 'bold',   'center');
-        txt(church,                     ML + CW / 2, y + 13,  11, 'bold',   'center');
-        txt('REPORTE GENERAL DE CENSO', ML + CW / 2, y + 19,  9,  'normal', 'center');
-        txt(`FECHA: ${fecha}`,         ML + 3,      y + 25, 8, 'bold', 'left');
-        txt(`MINISTRO: ${minister}`,   ML + CW - 3, y + 25, 8, 'bold', 'right');
-        y += bh + 4;
-    };
-
-    const drawSectionTitle = (titulo) => {
-        checkPage(10);
-        fillRect(ML, y, CW, 7, BLACK);
-        txt(titulo, ML + CW / 2, y + 5, 9, 'bold', 'center', WHITE);
-        y += 7;
-    };
-
-    const drawTableHeader = (cols, rowH = 6) => {
-        checkPage(rowH + 2);
-        cols.forEach(c => { cell(c.label, c.x, y, c.w, rowH, 8, 'bold', c.align || 'left', LGRAY); });
-        y += rowH;
-    };
-
-    const drawTotalsRow = (text) => {
-        checkPage(7);
-        fillRect(ML, y, CW, 6, TOTBG);
-        strokeRect(ML, y, CW, 6, 0.25);
-        txt(text, ML + 2, y + 4.2, 8, 'bold', 'left');
-        y += 6;
-    };
-
-    const calcEdad = (nacimiento) => {
+    const edadDe = (nacimiento) => {
         if (!nacimiento) return 0;
-        const hoy = new Date();
-        const nac = new Date(nacimiento);
+        const hoy = new Date(), nac = new Date(nacimiento);
         let edad = hoy.getFullYear() - nac.getFullYear();
-        const m = hoy.getMonth() - nac.getMonth();
-        if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+        const mm = hoy.getMonth() - nac.getMonth();
+        if (mm < 0 || (mm === 0 && hoy.getDate() < nac.getDate())) edad--;
         return edad;
     };
 
-    const drawAdultos = (secId, titulo) => {
+    const TH  = 'border:1px solid #000;padding:3px 4px;background:#e0e0e0;font-size:9pt;font-weight:bold;';
+    const TD  = 'border:1px solid #000;padding:3px 5px;font-size:9pt;';
+    const TOT = 'border:1px solid #000;padding:4px 6px;font-size:9pt;font-weight:bold;background:#e8e8e8;';
+
+    const tabla = (titulo, ncols, encabezados, filas, totalTxt) => `
+        <table>
+            <thead>
+                <tr><th colspan="${ncols}" class="fila-titulo-rep" style="font-size:9pt;padding:4px;">${esc(titulo)} — ${esc(church)}</th></tr>
+                <tr>${encabezados}</tr>
+            </thead>
+            <tbody>
+                ${filas}
+                <tr><td colspan="${ncols}" style="${TOT}">${totalTxt}</td></tr>
+            </tbody>
+        </table>`;
+
+    const seccionAdultos = (secId, titulo, saltar) => {
         const datos = db[secId];
-        if (!datos || datos.length === 0) return { act: 0, ret: 0 };
-        let actSec = 0, retSec = 0;
-        const wN   = 12;
-        const wGrp = 32;
-        const wEst = 30;
-        const wNom = CW - wN - wGrp - wEst;
-        const cols = [
-            { label: 'N°',             x: ML,                    w: wN,   align: 'center' },
-            { label: 'NOMBRE COMPLETO',x: ML + wN,               w: wNom, align: 'left'   },
-            { label: 'GRUPO',          x: ML + wN + wNom,        w: wGrp, align: 'center' },
-            { label: 'ESTADO',         x: ML + wN + wNom + wGrp, w: wEst, align: 'center' },
-        ];
-        drawSectionTitle(titulo);
-        drawTableHeader(cols, 6);
-        datos.forEach((m, i) => {
+        if (!datos || datos.length === 0) return { html: '', act: 0, ret: 0 };
+        let act = 0, ret = 0;
+        const filas = datos.map((m, i) => {
             const esRet = m.estado === 'Retirado';
-            if (esRet) { retSec++; } else { actSec++; }
-            const nombre = (m.nombre || '').toUpperCase();
-            const grupo  = (m.grupo  || '---').toUpperCase();
-            const rowH = esRet ? 9 : 6;
-            const values = [String(i + 1), nombre, grupo, esRet ? '' : 'ACTIVO'];
-            checkPage(rowH + 1);
-            const bg = esRet ? [255, 235, 235] : (i % 2 === 0 ? WHITE : MGRAY);
-            const RED = [180, 0, 0];
-            [cols[0], cols[1], cols[2], cols[3]].forEach((c, ci) => {
-                fillRect(c.x, y, c.w, rowH, bg);
-                doc.setDrawColor(...BLACK); doc.setLineWidth(0.25); doc.rect(c.x, y, c.w, rowH, 'S');
-                if (ci === 3 && esRet) {
-                    doc.setFontSize(7.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...RED);
-                    doc.text('RETIRADO',  c.x + c.w / 2, y + rowH * 0.38, { align: 'center' });
-                    doc.text('TEMPORAL',  c.x + c.w / 2, y + rowH * 0.75, { align: 'center' });
-                } else {
-                    doc.setFontSize(8); doc.setFont('helvetica', ci === 1 ? 'bold' : 'normal');
-                    doc.setTextColor(...(esRet ? RED : BLACK));
-                    const val = values[ci];
-                    const px = c.align === 'center' ? c.x + c.w / 2 : c.x + 1.8;
-                    doc.text(val, px, y + rowH * 0.65, { align: c.align });
-                }
-            });
-            y += rowH;
-        });
+            if (esRet) ret++; else act++;
+            const bg  = esRet ? '#ffebeb' : (i % 2 === 0 ? '#fff' : '#f5f5f5');
+            const col = esRet ? 'color:#b40000;' : '';
+            return `<tr style="background:${bg};${col}">
+                <td style="${TD}text-align:center;width:12mm;">${i + 1}</td>
+                <td style="${TD}font-weight:bold;">${esc((m.nombre || '').toUpperCase())}</td>
+                <td style="${TD}text-align:center;width:32mm;">${esc((m.grupo || '---').toUpperCase())}</td>
+                <td style="${TD}text-align:center;width:30mm;${esRet ? 'font-size:7.5pt;font-weight:bold;' : ''}">${esRet ? 'RETIRADO<br>TEMPORAL' : 'ACTIVO'}</td>
+            </tr>`;
+        }).join('');
         const cat = secId === 'hombres' ? 'varones' : 'mujeres';
-        drawTotalsRow(`Total ${cat} registrados: ${datos.length}  |  Activos: ${actSec}  |  Retirados temporales: ${retSec}`);
-        return { act: actSec, ret: retSec };
+        const enc = `<th style="${TH}">N°</th><th style="${TH}text-align:left;">NOMBRE COMPLETO</th><th style="${TH}">GRUPO</th><th style="${TH}">ESTADO</th>`;
+        const t = tabla(titulo, 4, enc, filas, `Total ${cat} registrados: ${datos.length}  |  Activos: ${act}  |  Retirados temporales: ${ret}`);
+        return { html: saltar ? `<div class="salto-pagina">${t}</div>` : t, act, ret };
     };
 
-    const drawNinez = () => {
+    const seccionNinez = () => {
         const datos = db['kids'];
-        if (!datos || datos.length === 0) return { ninos: 0, ninas: 0 };
+        if (!datos || datos.length === 0) return { html: '', ninos: 0, ninas: 0 };
         let ninos = 0, ninas = 0;
-        const wN   = 12;
-        const wEd  = 25;
-        const wNom = CW - wN - wEd;
-        const cols = [
-            { label: 'N°',              x: ML,             w: wN,   align: 'center' },
-            { label: 'NOMBRE COMPLETO', x: ML + wN,        w: wNom, align: 'left'   },
-            { label: 'EDAD',            x: ML + wN + wNom, w: wEd,  align: 'center' },
-        ];
-        drawSectionTitle('LISTADO DE NIÑEZ (0 – 13 AÑOS)');
-        drawTableHeader(cols, 6);
-        datos.forEach((m, i) => {
+        const filas = datos.map((m, i) => {
             if (m.genero === 'F') ninas++; else ninos++;
-            const nombre = (m.nombre || '').toUpperCase();
-            const edad   = calcEdad(m.nacimiento);
-            const edadTxt = edad === 1 ? '1 año' : `${edad} años`;
-            const rowH = 6;
-            checkPage(rowH + 1);
-            const bg = i % 2 === 0 ? WHITE : MGRAY;
-            cols.forEach((c, ci) => {
-                fillRect(c.x, y, c.w, rowH, bg);
-                doc.setDrawColor(...BLACK); doc.setLineWidth(0.25); doc.rect(c.x, y, c.w, rowH, 'S');
-                doc.setFontSize(8); doc.setFont('helvetica', ci === 1 ? 'bold' : 'normal');
-                doc.setTextColor(...BLACK);
-                const val = ci === 0 ? String(i+1) : ci === 1 ? nombre : edadTxt;
-                const px = c.align === 'center' ? c.x + c.w / 2 : c.x + 1.8;
-                doc.text(val, px, y + rowH * 0.65, { align: c.align });
-            });
-            y += rowH;
-        });
-        drawTotalsRow(`Total niñez registrada: ${datos.length}  |  Niños: ${ninos}  |  Niñas: ${ninas}`);
-        return { ninos, ninas };
+            const ed = edadDe(m.nacimiento);
+            return `<tr style="background:${i % 2 === 0 ? '#fff' : '#f5f5f5'};">
+                <td style="${TD}text-align:center;width:12mm;">${i + 1}</td>
+                <td style="${TD}font-weight:bold;">${esc((m.nombre || '').toUpperCase())}</td>
+                <td style="${TD}text-align:center;width:25mm;">${ed === 1 ? '1 año' : ed + ' años'}</td>
+            </tr>`;
+        }).join('');
+        const enc = `<th style="${TH}">N°</th><th style="${TH}text-align:left;">NOMBRE COMPLETO</th><th style="${TH}">EDAD</th>`;
+        const t = tabla('LISTADO DE NIÑEZ (0 – 13 AÑOS)', 3, enc, filas, `Total niñez registrada: ${datos.length}  |  Niños: ${ninos}  |  Niñas: ${ninas}`);
+        return { html: `<div class="salto-pagina">${t}</div>`, ninos, ninas };
     };
 
-    const drawResumen = (totalActivos, totalRetirados, ninosCont, ninasCont) => {
-        const totalMiembros = totalActivos + totalRetirados;
-        const granTotal     = totalMiembros + ninosCont + ninasCont;
-        const incluyeNinez  = modo === 'completo';
-        checkPage(60);
-        y += 4;
-        drawSectionTitle('RESUMEN DE ESTADÍSTICAS');
-        const wCat = CW - 30;
-        const wVal = 30;
-        const xVal = ML + wCat;
-        const rH   = 7;
-        checkPage(rH + 1);
-        cell('CATEGORÍA', ML, y, wCat, rH, 8, 'bold', 'left',   LGRAY);
-        cell('CANTIDAD',  xVal, y, wVal, rH, 8, 'bold', 'center', LGRAY);
-        y += rH;
-        const rows = [
-            ['Total Miembros Activos',     String(totalActivos),   WHITE, 'normal'],
-            ['Total Retirados Temporales', String(totalRetirados), MGRAY, 'normal'],
-            ['TOTAL MIEMBROS REGISTRADOS', String(totalMiembros), DGRAY, 'bold'  ],
-            ...(incluyeNinez ? [
-                ['Total Niños (varones)',   String(ninosCont),              WHITE,         'normal'],
-                ['Total Niñas (mujeres)',   String(ninasCont),              MGRAY,         'normal'],
-                ['TOTAL GENERAL DE NIÑEZ', String(ninosCont + ninasCont),  [232,232,232], 'bold'  ],
-            ] : []),
-        ];
-        rows.forEach(([label, val, bg, style]) => {
-            checkPage(rH + 1);
-            cell(label, ML,   y, wCat, rH, 8, style,  'left',   bg);
-            cell(val,   xVal, y, wVal, rH, 8, 'bold',  'center', bg);
-            y += rH;
-        });
-        checkPage(10);
-        fillRect(ML, y, CW, 9, BLACK);
-        strokeRect(ML, y, CW, 9, 0.5);
-        const labelGranTotal = incluyeNinez
-            ? `GRAN TOTAL — CENSO GENERAL   ${granTotal} (NIÑEZ Y REGISTRADOS)`
-            : `TOTAL GENERAL — ADULTOS REGISTRADOS   ${totalMiembros}`;
-        txt(labelGranTotal, ML + CW / 2, y + 6, 11, 'bold', 'center', WHITE);
-        y += 9;
-    };
+    const V = seccionAdultos('hombres', 'LISTADO DE VARONES', false);
+    const M = seccionAdultos('mujeres', 'LISTADO DE MUJERES', !!V.html);
+    const N = modo === 'completo' ? seccionNinez() : { html: '', ninos: 0, ninas: 0 };
 
-    const drawFirmas = () => {
-        checkPage(30);
-        y += 18;
-        const xL = ML + 10;
-        const xR = ML + CW / 2 + 10;
-        const lineW = 65;
-        hline(xL, xL + lineW, y, 0.5);
-        hline(xR, xR + lineW, y, 0.5);
-        y += 1;
-        txt(`Firma: ___________________________`, xL, y + 5, 8, 'normal', 'left');
-        txt(`Firma: ___________________________`, xR, y + 5, 8, 'normal', 'left');
-        y += 10;
-        txt(minister,        xL + lineW / 2, y, 8, 'bold',   'center');
-        txt('COMISIÓN LOCAL', xR + lineW / 2, y, 8, 'bold',   'center');
-        y += 5;
-        txt('Ministro Local', xL + lineW / 2, y, 7.5, 'normal', 'center');
-        txt('Sello y Fecha',  xR + lineW / 2, y, 7.5, 'normal', 'center');
-        y += 10;
-        hline(ML, ML + CW, y, 0.3);
-        y += 4;
-        txt(`Iglesia La Luz del Mundo — ${church}`, ML + CW / 2, y, 7.5, 'normal', 'center', [120, 120, 120]);
-    };
+    const totalActivos = V.act + M.act, totalRetirados = V.ret + M.ret;
+    const totalMiembros = totalActivos + totalRetirados;
+    const granTotal = totalMiembros + N.ninos + N.ninas;
+    const incluyeNinez = modo === 'completo';
+    const fila = (label, val, bg, bold) => `<tr style="background:${bg};">
+        <td style="${TD}${bold ? 'font-weight:bold;' : ''}">${label}</td>
+        <td style="${TD}text-align:center;font-weight:bold;width:30mm;">${val}</td></tr>`;
+    const resumen = `
+        <div class="no-corte" style="margin-top:14px;">
+            <div class="titulo-seccion" style="background:#000;color:#fff;text-align:center;font-weight:bold;font-size:9pt;padding:4px;">RESUMEN DE ESTADÍSTICAS</div>
+            <table>
+                <tr><th style="${TH}text-align:left;">CATEGORÍA</th><th style="${TH}width:30mm;">CANTIDAD</th></tr>
+                ${fila('Total Miembros Activos', totalActivos, '#fff')}
+                ${fila('Total Retirados Temporales', totalRetirados, '#f5f5f5')}
+                ${fila('TOTAL MIEMBROS REGISTRADOS', totalMiembros, '#d0d0d0', true)}
+                ${incluyeNinez ? fila('Total Niños (varones)', N.ninos, '#fff') + fila('Total Niñas (mujeres)', N.ninas, '#f5f5f5') + fila('TOTAL GENERAL DE NIÑEZ', N.ninos + N.ninas, '#e8e8e8', true) : ''}
+            </table>
+            <div style="background:#000;color:#fff;text-align:center;font-weight:bold;font-size:11pt;padding:6px;">
+                ${incluyeNinez ? `GRAN TOTAL — CENSO GENERAL   ${granTotal} (NIÑEZ Y REGISTRADOS)` : `TOTAL GENERAL — ADULTOS REGISTRADOS   ${totalMiembros}`}
+            </div>
+            <div style="display:flex;justify-content:space-around;text-align:center;margin-top:44px;font-size:8.5pt;">
+                <div style="width:45%;"><div style="border-top:1.5px solid #000;margin-bottom:4px;"></div><b>${esc(minister)}</b><br>Ministro Local</div>
+                <div style="width:45%;"><div style="border-top:1.5px solid #000;margin-bottom:4px;"></div><b>COMISIÓN LOCAL</b><br>Sello y Fecha</div>
+            </div>
+            <div style="border-top:1px solid #000;margin-top:14px;padding-top:3px;text-align:center;font-size:7.5pt;color:#777;">Iglesia La Luz del Mundo — ${esc(church)}</div>
+        </div>`;
 
-    // Construir el documento
-    drawHeader();
-    const { act: vAct, ret: vRet } = drawAdultos('hombres', 'LISTADO DE VARONES');
-    doc.addPage(); y = MT;
-    const { act: mAct, ret: mRet } = drawAdultos('mujeres', 'LISTADO DE MUJERES');
+    const html = `
+        <div style="border:1.5px solid #000;text-align:center;margin-bottom:10px;">
+            <div style="padding:6px 0 4px;">
+                <div style="font-size:13pt;font-weight:bold;">IGLESIA LA LUZ DEL MUNDO</div>
+                <div style="font-size:11pt;font-weight:bold;">${esc(church)}</div>
+                <div style="font-size:9pt;">REPORTE GENERAL DE CENSO</div>
+            </div>
+            <div style="border-top:1px solid #000;display:flex;justify-content:space-between;padding:3px 8px;font-size:8pt;font-weight:bold;">
+                <span>FECHA: ${esc(fecha)}</span><span>MINISTRO: ${esc(minister)}</span>
+            </div>
+        </div>
+        ${V.html}${M.html}${N.html}${resumen}`;
 
-    let ninos = 0, ninas = 0;
-    if (modo === 'completo') {
-        doc.addPage(); y = MT;
-        ({ ninos, ninas } = drawNinez());
-    }
-
-    drawResumen(vAct + mAct, vRet + mRet, ninos, ninas);
-    drawFirmas();
-
-    // ── Guardar: APK o Navegador ──
     const sufijo = modo === 'adultos' ? '_SoloAdultos' : '_Completo';
-    const nombreArchivo = `Censo_${church.replace(/\s+/g, '_')}${sufijo}_${new Date().toISOString().slice(0, 10)}.pdf`;
-
-    if (typeof Android !== 'undefined' && Android.guardarArchivo) {
-        try {
-            const pdfBlob = doc.output('arraybuffer');
-            const bytes = new Uint8Array(pdfBlob);
-            let binary = '';
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            const base64 = btoa(binary);
-            Android.guardarArchivo(base64, nombreArchivo, 'application/pdf');
-        } catch (e) {
-            alert('Error al exportar PDF en Android: ' + e.message);
-        }
-    } else {
-        doc.save(nombreArchivo);
-    }
+    imprimirDocumento(html, {
+        formato: 'a4', orientacion: 'portrait', margen: '12mm',
+        titulo: `Censo_${church.replace(/\s+/g, '_')}${sufijo}_${new Date().toISOString().slice(0, 10)}`
+    });
 };
 
 
@@ -1748,34 +1556,22 @@ function generarListadoCategoria(cat) {
     showView('listadoGrupoView');
 }
 
-// Exporta el listado actual a PDF usando el mismo puente html2pdf + Android usado en exportarCensoAPK
+// Imprime el listado actual con el sistema (Android o PC)
 function exportarListadoGrupoPDF() {
-    if (!ultimoListadoGrupo.length && !confirm("Esta categoría no tiene registros. ¿Deseas generar el PDF de todos modos?")) return;
+    if (!ultimoListadoGrupo.length && !confirm("Esta categoría no tiene registros. ¿Deseas imprimir de todos modos?")) return;
 
-    const iglesiaInput  = document.getElementById('churchName').value || "IGLESIA LOCAL";
-    const catLabel      = (CATEGORIA_LABELS[ultimoListadoGrupoCat] || 'Listado').replace(/[^A-Za-z0-9]+/g, '_');
-    const nombreArchivo = `Listado_${catLabel}_${iglesiaInput.replace(/\s+/g, '_')}.pdf`;
+    const iglesiaInput = document.getElementById('churchName').value || "IGLESIA LOCAL";
+    const catLabel     = (CATEGORIA_LABELS[ultimoListadoGrupoCat] || 'Listado').replace(/[^A-Za-z0-9]+/g, '_');
+    const tituloRep    = 'LISTADO: ' + (CATEGORIA_LABELS[ultimoListadoGrupoCat] || '') + ' — ' + iglesiaInput;
 
     const elemento = document.getElementById('areaImprimirListadoGrupo');
-
-    const opciones = {
-        margin: [10, 10, 10, 10],
-        filename: nombreArchivo,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opciones).from(elemento).output('datauristring').then(function(pdfBase64) {
-        const base64Limpio = pdfBase64.split(',')[1];
-
-        if (typeof Android !== 'undefined' && Android.guardarArchivo) {
-            Android.guardarArchivo(base64Limpio, nombreArchivo, "application/pdf");
-        } else {
-            const link = document.createElement('a');
-            link.href = pdfBase64;
-            link.download = nombreArchivo;
-            link.click();
+    imprimirDocumento(elemento.innerHTML, {
+        formato: 'letter', orientacion: 'portrait', margen: '10mm',
+        titulo: `Listado_${catLabel}_${iglesiaInput.replace(/\s+/g, '_')}`,
+        post: function (root) {
+            const t = root.querySelector('table');
+            agregarTituloRepetido(t, tituloRep);
+            root.querySelectorAll('th').forEach(function (th) { if (!th.classList.contains('fila-titulo-rep')) th.style.background = '#e0e0e0'; });
         }
     });
 }
@@ -2240,5 +2036,157 @@ document.addEventListener('keydown', function(e) {
   </svg>
 </button>
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (e) { console.warn('SW no registrado', e); });
+  });
+}
+</script>
+<script>
+// ── IMPRESIÓN DEL SISTEMA (window.print) ─────────────────────────────────
+// Un solo patrón para todos los cuadros: se arma el documento en un área
+// temporal (#print-root), se fija el tamaño de hoja con @page y se abre el
+// diálogo de impresión del dispositivo (Android o PC). Las tablas repiten su
+// encabezado en cada página y las filas no se parten entre páginas.
+function limpiarImpresion() {
+    ['print-root', 'print-style'].forEach(function (id) {
+        var e = document.getElementById(id);
+        if (e) e.remove();
+    });
+    document.body.classList.remove('printing-doc');
+    if (window.__tituloOriginal !== undefined) {
+        document.title = window.__tituloOriginal;
+        window.__tituloOriginal = undefined;
+    }
+}
+
+// Puente de impresión: en el APK usa el adaptador nativo del WebView; en navegador usa window.print()
+function imprimirSistema(titulo, orientacion, formato) {
+    if (typeof Android !== 'undefined' && Android.imprimir) {
+        Android.imprimir(titulo || document.title, orientacion || 'portrait', formato || 'letter');
+    } else {
+        window.print();
+    }
+}
+
+function imprimirDocumento(html, opts) {
+    opts = opts || {};
+    limpiarImpresion();
+    var tam = (opts.formato || 'letter') + ' ' + (opts.orientacion || 'portrait');
+    var st = document.createElement('style');
+    st.id = 'print-style';
+    st.textContent =
+        '@page{size:' + tam + ';margin:' + (opts.margen || '8mm') + ';}' +
+        '#print-root{display:none;}' +
+        '@media print{' +
+        'html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:visible!important;}' +
+        'body.printing-doc>*:not(#print-root){display:none!important;}' +
+        'body.printing-doc #print-root{display:block!important;position:static!important;width:100%;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:10pt;}' +
+        '#print-root,#print-root *{visibility:visible!important;box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}' +
+        '#print-root table{width:100%;border-collapse:collapse;}' +
+        '#print-root thead{display:table-header-group;}' +
+        '#print-root tr,#print-root .no-corte,#print-root .special-member-card,#print-root .special-totals-row{break-inside:avoid;page-break-inside:avoid;}' +
+        '#print-root .special-group-title,#print-root .titulo-seccion{break-after:avoid;page-break-after:avoid;}' +
+        '#print-root .salto-pagina{break-before:page;page-break-before:always;}' +
+        '#print-root .enc-doc{text-align:center;border-bottom:2px solid #000;padding-bottom:5px;margin-bottom:8px;}' +
+        '#print-root .enc-1{font-size:16pt;font-weight:900;}' +
+        '#print-root .enc-2{font-size:8pt;margin:2px 0;}' +
+        '#print-root .enc-3{font-size:10pt;font-weight:bold;letter-spacing:1px;}' +
+        '#print-root .enc-barra{background:#000!important;color:#fff!important;font-size:11pt;font-weight:900;padding:4px;margin:5px 0;text-transform:uppercase;}' +
+        '#print-root .enc-4{font-size:9pt;font-weight:bold;}' +
+        '#print-root .fila-titulo-rep{background:#000!important;color:#fff!important;font-size:8pt;padding:2px 4px;text-align:center;text-transform:uppercase;}' +
+        '#print-root .firmas{display:flex;justify-content:space-around;text-align:center;margin-top:36px;font-size:9pt;break-inside:avoid;page-break-inside:avoid;}' +
+        '#print-root .firmas div div{border-top:1.5px solid #000;width:200px;margin:0 auto 4px;}' +
+        '#print-root .sheet-table{table-layout:fixed;min-width:0!important;width:100%!important;border-collapse:collapse;border:1px solid #000;font-size:7.5px;}' +
+        '#print-root .sheet-table th,#print-root .sheet-table td{position:static!important;padding:1px 0!important;line-height:1.15;border:1px solid #000!important;overflow:hidden;}' +
+        '#print-root .sheet-table thead th{background:#f2f3f4!important;}' +
+        '#print-root .sheet-table thead th.fila-titulo-rep{background:#000!important;color:#fff!important;}' +
+        '#print-root .sheet-table td.col-name,#print-root .sheet-table th.col-name{min-width:0!important;width:auto!important;text-align:left!important;padding-left:2px!important;font-size:7.5px;}' +
+        '#print-root .sheet-table th.col-name:last-child{text-align:center!important;padding-left:0!important;}' +
+        '#print-root .sheet-table td.col-time{min-width:0!important;width:auto!important;font-size:6px;}' +
+        '#print-root .sheet-table tbody{break-inside:avoid;page-break-inside:avoid;}' +
+        '}';
+    document.head.appendChild(st);
+
+    var root = document.createElement('div');
+    root.id = 'print-root';
+    root.innerHTML = html;
+    document.body.appendChild(root);
+    document.body.classList.add('printing-doc');
+    if (typeof opts.post === 'function') {
+        try { opts.post(root); } catch (e) { console.warn('post-impresión', e); }
+    }
+    if (opts.titulo) {
+        window.__tituloOriginal = document.title;
+        document.title = opts.titulo; // nombre sugerido al "Guardar como PDF"
+    }
+    // El WebView de Android avisa 'afterprint' apenas abre el diálogo (no al cerrarlo), así
+    // que NO se limpia ahí: el contenido queda oculto en pantalla (solo se ve al imprimir)
+    // y se retira en el siguiente toque/tecla del usuario dentro de la app o en la
+    // siguiente impresión.
+    var armarLimpieza = function () {
+        var ya = false;
+        var hacer = function () {
+            if (ya) return; ya = true;
+            ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+                document.removeEventListener(ev, hacer, true);
+            });
+            limpiarImpresion();
+        };
+        ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+            document.addEventListener(ev, hacer, true);
+        });
+    };
+    setTimeout(function () {
+        try { imprimirSistema(opts.titulo || document.title, opts.orientacion, opts.formato); }
+        catch (e) { limpiarImpresion(); alert('No se pudo abrir la impresión: ' + e.message); return; }
+        // Se arma tras un respiro para que el toque que abrió la impresión no la borre
+        setTimeout(armarLimpieza, 3000);
+    }, 300);
+}
+
+// Fila de título repetida en cada página dentro del <thead> de una tabla
+function agregarTituloRepetido(tabla, texto) {
+    if (!tabla || !tabla.tHead || !tabla.tHead.rows.length) return;
+    var n = 0, f = tabla.tHead.rows[0].cells;
+    for (var i = 0; i < f.length; i++) n += f[i].colSpan || 1;
+    var tr = document.createElement('tr');
+    var th = document.createElement('th');
+    th.colSpan = n; th.className = 'fila-titulo-rep'; th.textContent = texto;
+    tr.appendChild(th);
+    tabla.tHead.insertBefore(tr, tabla.tHead.firstChild);
+    return n;
+}
+
+// Sábana de asistencia: columnas fijas, 3 filas por persona sin partirse, título repetido
+function prepararHojaAsistencia(root, textoTitulo) {
+    var t = root.querySelector('table.sheet-table');
+    if (!t || !t.tBodies.length) return;
+    var n = agregarTituloRepetido(t, textoTitulo) || 0;
+    var cg = document.createElement('colgroup');
+    for (var c = 0; c < n; c++) {
+        var col = document.createElement('col');
+        if (c === 0) col.style.width = '42mm';
+        else if (c === 1) col.style.width = '9mm';
+        else if (c === n - 1) col.style.width = '10mm';
+        cg.appendChild(col);
+    }
+    t.insertBefore(cg, t.firstChild);
+    var tb = t.tBodies[0];
+    var filas = Array.prototype.slice.call(tb.rows), i = 0, grupos = [];
+    while (i < filas.length) {
+        var p = filas[i].cells[0];
+        if (p && p.classList.contains('col-name') && p.getAttribute('rowspan') === '3') { grupos.push(filas.slice(i, i + 3)); i += 3; }
+        else { grupos.push(filas.slice(i)); break; }
+    }
+    grupos.forEach(function (g) {
+        var nb = document.createElement('tbody');
+        g.forEach(function (r) { nb.appendChild(r); });
+        t.appendChild(nb);
+    });
+    tb.remove();
+}
+</script>
 </body>
 </html>
