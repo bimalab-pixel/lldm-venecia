@@ -1,5 +1,5 @@
 /* Service Worker - Lldm Estadística Venecia
-   Para publicar una versión nueva, cambia el número de CACHE (por ejemplo lldm-v9). */
+   Para publicar una versión nueva, cambia el número de CACHE (por ejemplo lldm-v1). */
 const CACHE = 'lldm-v8';
 
 const PRECACHE = [
